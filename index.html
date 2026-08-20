@@ -162,18 +162,19 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <span class="pill"><span class="dot"></span> Effective slab: <b id="effPill" style="margin-left:2px">—</b></span>
     <span class="pill" id="cloudPill" title="Cloud sync"><span class="dot" style="background:#9AA7B4"></span> Local only</span>
     <div class="spacer"></div>
-    <button class="btn sm" onclick="loadWorkspace()">Load workspace</button>
-    <button class="btn sm primary" onclick="saveWorkspace()">Save workspace</button>
   </div>
   <nav id="nav">
     <div class="navlabel">Operate</div>
     <button data-view="dashboard" class="active"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</button>
     <button data-view="cars"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M4 13l1.5-4.5A2 2 0 0 1 7.4 7h9.2a2 2 0 0 1 1.9 1.5L20 13H4Z"/></svg> Cars</button>
+    <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg> Stock &amp; VIN</button>
     <button data-view="upload"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V4M8 8l4-4 4 4M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg> Upload data</button>
     <button data-view="payouts"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v12H3zM3 10h18M7 15h4"/></svg> Payouts</button>
+    <button data-view="scoring"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Scoring</button>
     <div class="navlabel">Configure</div>
+    <button data-view="targets"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg> Targets <span class="lock">🔒</span></button>
     <button data-view="slabs"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg> Slabs & settings <span class="lock">🔒</span></button>
-    <button data-view="history"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v6h6M3 9a9 9 0 1 0 2-5"/><path d="M12 7v5l3 2"/></svg> Slab history</button>
+    
   </nav>
   <main>
     <!-- DASHBOARD -->
@@ -181,6 +182,8 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <h1>Dashboard</h1>
       <p class="sub">A live read of everything entered. Change any slab and the whole engine recomputes.</p>
       <div class="grid g4" id="statRow"></div>
+      <div id="tgtHeadline"></div>
+      <div id="monitorBox"></div>
       <div class="section-title"><h2>The slab curve</h2><span class="pill blue" style="background:var(--blue-soft)">Reference model: <select id="refModel" onchange="renderCurve()" style="border:0;background:none;font-weight:700;color:var(--deep)"></select></span></div>
       <div class="slab-viz">
         <div style="color:var(--muted);font-size:12.5px">What each additional car pays a consultant this month. The step up is the pull to sell one more.</div>
@@ -203,6 +206,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <button class="btn" onclick="exportCars()">Export CSV</button>
         <button class="btn primary" onclick="openCarForm()">+ Add car</button>
       </div>
+      <div id="carWarn"></div>
       <div id="carFormWrap"></div>
       <div class="tablewrap" style="margin-top:6px"><table id="carsTable"><thead></thead><tbody></tbody></table></div>
     </section>
@@ -255,6 +259,58 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <div id="payFoot"></div>
     </section>
 
+    <!-- STOCK -->
+    <section class="view" id="view-stock">
+      <h1>Stock &amp; VIN incentives</h1>
+      <p class="sub">Every car in the yard, with the incentive it carries. Add a VIN at stock-in; it drops out when it\'s paid.</p>
+      <div class="bar">
+        <button class="btn primary" onclick="openStockForm()">+ Add VIN</button>
+        <button class="btn" onclick="downloadStockPDF()">Download stock sheet (PDF)</button>
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn" onclick="seedCatalogue()">Load Hyundai catalogue</button>
+      </div>
+      <div id="stockFormWrap"></div>
+      <div id="stockSegments"></div>
+    </section>
+
+    <!-- TARGETS -->
+    <section class="view" id="view-targets">
+      <div id="tgtLock" class="card pad lockcard" style="display:none">
+        <div class="ring">🔒</div><h2 style="font-size:16px">Admin only</h2>
+        <p class="hint">Targets are set by the admin. Unlock under Slabs & settings first.</p>
+        <button class="btn primary" style="width:100%;justify-content:center" onclick="show('slabs')">Go to Slabs & settings</button>
+      </div>
+      <div id="tgtBody">
+        <h1>Monthly targets</h1>
+        <p class="sub">Type the company\'s five numbers. They cascade to units and consultants by headcount — a trainee counts as half. Override any cell.</p>
+        <div class="card pad">
+          <div class="bar" style="margin:0 0 6px;align-items:end">
+            <div class="field"><label>Month</label><input id="tgtMonth" placeholder="SEP-2026" style="width:130px" onchange="renderTargets()"></div>
+            <button class="btn" onclick="copyLastTargets()">Copy last month</button>
+          </div>
+          <div class="section-title" style="margin:14px 0 8px"><h2>Company target</h2></div>
+          <div id="companyTargets" class="formgrid"></div>
+          <div class="section-title" style="margin:16px 0 8px"><h2>Penetration targets · all consultants</h2><span style="font-size:12px;color:var(--muted)">% of retails</span></div>
+          <div id="penTargetsBox" class="formgrid"></div>
+        </div>
+        <div class="section-title"><h2>Cascade — units & consultants</h2><span style="font-size:12px;color:var(--muted)">blank = auto by headcount; type a number to override</span></div>
+        <div class="tablewrap"><table id="cascadeTable"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- SCORING -->
+    <section class="view" id="view-scoring">
+      <h1>Consultant scoring</h1>
+      <p class="sub">The sales funnel for every consultant, ranked. Enquiries → test drives → bookings → retails → deliveries.</p>
+      <div class="bar">
+        <div class="field"><label>Month</label><select id="scMonth" onchange="renderScoring()"></select></div>
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn" onclick="exportScoring()">Export CSV</button>
+      </div>
+      <div class="note blue">Enquiries, test drives and bookings are typed in. Retails and deliveries are counted from the cars automatically. The <b>Funnel score</b> is the weighted conversion across the five stages.</div>
+      <div class="tablewrap" style="margin-top:6px"><table id="scoreTable"><thead></thead><tbody></tbody></table></div>
+    </section>
+
     <!-- SLABS -->
     <section class="view" id="view-slabs">
       <div id="slabLock">
@@ -292,21 +348,32 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
           <div id="cloudMsg" style="font-size:12.5px;color:var(--muted);margin-top:10px"></div>
           <div class="note blue" style="margin-top:10px">First time: fill this browser with data, then <b>Push everything up</b> to seed the Sheet. After that every device just <b>Connect &amp; pull</b>.</div>
         </div>
-        <div class="section-title"><h2>Variant × aging rate table</h2><span style="font-size:12px;color:var(--muted)">Aging = Retail − Stock received</span></div>
-        <div class="tablewrap"><table class="ratetable" id="rateTable"><thead><tr><th>Model</th><th class="num">Within 60d</th><th class="num">60–150d</th><th class="num">Above 150d</th></tr></thead><tbody></tbody></table></div>
-        <div style="margin-top:8px"><button class="btn sm" onclick="addRateRow()">+ Add model</button></div>
+        <details style="margin-top:16px">
+          <summary style="cursor:pointer;font-weight:700;color:var(--muted);font-size:13px">Fallback pricing — variant × aging table <span style="font-weight:400">(rarely used: only for a car whose VIN isn\'t in the ledger)</span></summary>
+          <div class="tablewrap" style="margin-top:10px"><table class="ratetable" id="rateTable"><thead><tr><th>Model</th><th class="num">Within 60d</th><th class="num">60–150d</th><th class="num">Above 150d</th></tr></thead><tbody></tbody></table></div>
+          <div style="margin-top:8px"><button class="btn sm" onclick="addRateRow()">+ Add model</button></div>
+        </details>
+        <div class="section-title"><h2>VIN incentive pricing</h2><span style="font-size:12px;color:var(--muted)">incentive = % of dealer margin, kept between floor and ceiling</span></div>
+        <div class="card pad" style="margin-bottom:6px">
+          <div class="paramgrid">
+            <div class="param"><label>Global % (fallback)</label><input type="number" step="any" id="pcGlobal" onchange="setPricing('globalPct',this.value,true)"></div>
+            <div class="param"><label>Floor ₹</label><input type="number" id="pcFloor" onchange="setPricing('incentiveFloor',this.value)"></div>
+            <div class="param"><label>Ceiling ₹</label><input type="number" id="pcCeil" onchange="setPricing('incentiveCeiling',this.value)"></div>
+            <div class="param"><label>Discount buffer % (budgets for typical discount)</label><input type="number" step="any" id="pcBuf" onchange="setPricing('discountBuffer',(num(this.value)/100),true)"></div>
+          </div>
+          <div class="section-title" style="margin:14px 0 8px"><h2 style="font-size:13px">Per-model %</h2><button class="btn sm" onclick="applyPricing()">Recompute defaults</button></div>
+          <div class="tablewrap"><table id="pricingTable"><thead><tr><th>Model</th><th class="num">% of margin</th></tr></thead><tbody></tbody></table></div>
+          <div id="pricingMsg" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+        </div>
+        <div class="section-title"><h2>Sales consultants</h2><span style="font-size:12px;color:var(--muted)">Add or remove people; set Consultant or Trainee</span></div>
+        <div class="tablewrap"><table id="rosterTable"><thead><tr><th>Name</th><th>Outlet</th><th>Type</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div style="margin-top:8px"><button class="btn sm" onclick="addConsultant()">+ Add consultant</button></div>
         <div class="section-title"><h2>Parameters</h2></div>
         <div class="card pad"><div class="paramgrid" id="paramGrid"></div></div>
       </div>
     </section>
 
-    <!-- HISTORY -->
-    <section class="view" id="view-history">
-      <h1>Slab history</h1>
-      <p class="sub">Every slab you've saved, by the month it took effect. Open any to see exactly what applied then.</p>
-      <div id="histList"></div>
-      <div id="histView"></div>
-    </section>
+    
   </main>
 </div>
 <div id="keyGate" style="display:none;position:fixed;inset:0;background:rgba(11,31,51,.55);place-items:center;z-index:200">
@@ -326,15 +393,21 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 /* ============================ DEFAULTS ============================ */
 const MONTHS=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 function defaultSettings(){return{
-  target:5, floorConfirmed:2, floorFresher:2, up1:1.10, up2:1.20,
-  brDays:30, brPen:0.50, csiPen:0.25, rdDays:15, rdPen:0.25, waiveAbove:6,
+  target:6, floorConfirmed:1, floorFresher:1, floorWaiveAt:8, floorPolicy:4, up1:1.10, up2:1.20,
+  brDays:30, brPen:0.50, csiPen:0.25, rdDays:15, rdPen:0.25, waiveAbove:8,
   profitLimit:0.06, ew:300, accPct:0.05, exch:500, sot:100,
-  boosterPerCar:300, mgrPerCar:300, boosterThreshold:1.25, boPct:0.25,
+  boosterPerCar:300, mgrPerCar:300, boosterThreshold:1.0, boPct:0.25,
   aging1:60, aging2:150, tsrFull:0.90, tsrMin:0.51,
-  wCSI:15,wTAT:30,wETB:30,wATT:5,wUP:5,wPROF:15,
+  wCSI:15,wTAT:25,wETB:15,wTGT:35,wATT:5,wUP:5,wPROF:0, tsrVersion:2, tsrWeightVersion:3,
   tatEB:18,tatBR:15,tatBD:30,tatRD:15, ebW:[20,25,20,5,30],
-  topThr:6, topAmt:5000, dreamThr:18, dreamAmt:10000, fresherTarget:2,
-  defaultGate:1.0,
+  topThr:8, topAmt:5000, fresherTarget:2, traineeFactor:0.85, refBrokerageFactor:0.5,
+  defaultGate:1.0, discountBuffer:0,
+  consultants:[], clawbacks:[],
+  targetVolWeights:{enq:10,td:15,bk:20,rt:30,de:25},
+  penTargets:{insurance:0.70,finance:0.50,exchange:0.30},
+  targetsByMonth:{},
+  vinMode:true, globalPct:0.10, incentiveFloor:4000, incentiveCeiling:20000, ageFlags:[90,150,180],
+  modelPct:{"NIOS": 0.113, "PRIME HB": 0.231, "AURA": 0.113, "PRIME SD": 0.181, "EXTER PE": 0.091, "ALL NEW I20": 0.07, "I20 N LINE": 0.064, "VERNA PE": 0.064, "VENUE": 0.05, "VENUE N LINE": 0.064, "CRETA": 0.069, "CRETA N LINE": 0.075, "ALCAZAR": 0.094, "CRETA EV": 0.11, "IONIQ 5": 0.1},
   leads:{Haldia:"Om Prakash",Tamluk:"Sujan Maity",Contai:"Gopal Singha"},
   rates:{
     "ALCAZAR":[8000,8500,9000],"AURA":[5500,5800,6200],"AURA - COMMERCIAL (PRIME SD)":[5000,5250,5500],
@@ -346,17 +419,17 @@ function defaultSettings(){return{
 };}
 
 const PARAM_DEFS=[
- ["target","Confirmed monthly target"],["floorConfirmed","Confirmed floor (unpaid cars)"],["floorFresher","Fresher floor (unpaid cars)"],
+ ["target","Monthly target (top of 100% band)"],["floorConfirmed","Floor – consultant (unpaid cars)"],["floorFresher","Floor – trainee (unpaid cars)"],["floorWaiveAt","Waive floor at N retails (all cars pay)"],
  ["up1","Uplift band 1 (car target+1)"],["up2","Uplift band 2 (cars > target+1)"],
  ["brDays","Booking→Retail limit (days)"],["brPen","Booking→Retail penalty"],["csiPen","CSI penalty (<100)"],
  ["rdDays","Retail→Delivery limit (days)"],["rdPen","Retail→Delivery penalty"],["waiveAbove","Waive penalties above N cars"],
- ["profitLimit","Profit limit (cost-on-sales)"],["ew","EW add-on ₹"],["accPct","Accessories add-on (% of value)"],
+ ["profitLimit","Profit gate (cost-on-sales) · INACTIVE"],["traineeFactor","Trainee per-car factor (× base)"],["refBrokerageFactor","Referral/brokerage factor (× base)"],["ew","EW add-on ₹"],["accPct","Accessories add-on (% of value)"],
  ["exch","Exchange add-on ₹"],["sot","SOT add-on ₹"],["boosterPerCar","Outlet booster ₹/car"],
  ["mgrPerCar","Manager override ₹/car"],["boosterThreshold","Outlet booster threshold"],["boPct","Back Office share"],
  ["aging1","Aging band 1 upper (days)"],["aging2","Aging band 2 upper (days)"],
  ["tsrFull","TSR: full pay above"],["tsrMin","TSR: minimum to earn"],
  ["topThr","Top-seller threshold (retails/mo)"],["topAmt","Top-seller cheque ₹"],
- ["dreamThr","Dream-It threshold (retails/qtr)"],["dreamAmt","Dream-It cheque ₹"],
+ 
  ["fresherTarget","Fresher target (planning)"],["defaultGate","Default TSR gate when unset"]
 ];
 
@@ -377,16 +450,40 @@ function settingsFor(monthKey, snapshots, current){
   (snapshots||[]).forEach(s=>{ const sn=monthNum(s.effMonth); if(sn!==null && (mn===null||sn<=mn) && sn>bestN){best=s;bestN=sn;} });
   return best? best.settings : current;
 }
+/* ---- target cascade (company -> unit -> consultant, by headcount; trainee = 0.5) ---- */
+function hcOf(t){ return (["trainee","fresher"].indexOf(String(t).toLowerCase())>=0)?0.5:1; }
+function cascadeCtx(month, S){
+  const T=(S.targetsByMonth&&S.targetsByMonth[month]);
+  const roster=S.consultants||[]; let compHC=0, unitHC={};
+  roster.forEach(c=>{ const h=hcOf(c.tenure); compHC+=h; unitHC[c.outlet]=(unitHC[c.outlet]||0)+h; });
+  return {T:(T&&T.company)?T:null, roster, compHC, unitHC};
+}
+function unitTargetFor(outlet, month, S){
+  const c=cascadeCtx(month,S); if(!c.T) return null; const comp=c.T.company; const over=(c.T.overUnit&&c.T.overUnit[outlet])||{};
+  const uh=c.unitHC[outlet]||0, out={};
+  ["enq","td","bk","rt","de"].forEach(m=>{ out[m]= (over[m]!==undefined&&over[m]!=="")? num(over[m]) : (c.compHC>0? Math.round(num(comp[m])*uh/c.compHC):0); });
+  return out;
+}
+function scTargetFor(name, outlet, tenure, month, S){
+  const c=cascadeCtx(month,S); if(!c.T) return null; const ut=unitTargetFor(outlet,month,S); if(!ut) return null;
+  const over=(c.T.overSC&&c.T.overSC[name])||{}; const uh=c.unitHC[outlet]||0, sh=hcOf(tenure), out={};
+  ["enq","td","bk","rt","de"].forEach(m=>{ out[m]= (over[m]!==undefined&&over[m]!=="")? num(over[m]) : (uh>0? Math.round(ut[m]*sh/uh):0); });
+  return out;
+}
 
 /* ============================ CORE ENGINE ============================ */
-function computeCars(cars, kpi, snapshots, current){
+function computeCars(cars, kpi, snapshots, current, stock){
+  const vinMap={}; (stock||[]).forEach(s=>{ const v=String(s.VIN||"").trim(); if(v&&s.incentive!==""&&s.incentive!=null) vinMap[v]=Number(s.incentive); });
   const out = cars.map((c,i)=>({...c,_i:i}));
   // per-car base facts
   out.forEach(c=>{
     const S=settingsFor(c.MonthKey, snapshots, current); c._S=S;
     const ag=days(c.StockRecdDate,c.RetailDate); c.Aging=ag;
     c.Band = ag===null?null:(ag<=S.aging1?1:ag<=S.aging2?2:3);
-    const rate=S.rates[c.Model]; c.Base = (rate&&c.Band)? rate[c.Band-1] : (c.Model? "CHECK MODEL":null);
+    const rate=S.rates[c.Model]; const oldBase=(rate&&c.Band)? rate[c.Band-1] : (c.Model? "CHECK MODEL":null);
+    const vinInc=vinMap[String(c.VIN||"").trim()]; c.BaseSource=(vinInc!==undefined)?"VIN":"table"; c.Base=(vinInc!==undefined)? vinInc : oldBase;
+    if(typeof c.Base==="number" && ["fresher","trainee"].indexOf(String(c.Tenure).toLowerCase())>=0) c.Base=Math.round(c.Base*(S.traineeFactor!=null?S.traineeFactor:1));
+    if(typeof c.Base==="number" && yes(c.RefBrokerage)) c.Base=Math.round(c.Base*(S.refBrokerageFactor!=null?S.refBrokerageFactor:0.5));
     c.ProfitOK = (c.CostOnSalesPct===""||c.CostOnSalesPct==null)?1:(num(c.CostOnSalesPct)/100<=S.profitLimit?1:0);
     // TAT% (available stages)
     let tsum=0,tn=0;
@@ -407,14 +504,17 @@ function computeCars(cars, kpi, snapshots, current){
   out.forEach(c=>{
     const S=c._S;
     if(!c.Seq){c.BandPct=null;c.Penalty=null;c.CarSale=null;c.Upsell=null;c.CarMax=null;return;}
-    const floor = (String(c.Tenure).toLowerCase()==="fresher")?S.floorFresher:S.floorConfirmed;
+    const baseFloor = (["fresher","trainee"].indexOf(String(c.Tenure).toLowerCase())>=0)?S.floorFresher:S.floorConfirmed;
+    const floor = (c.MonthCount>=S.floorWaiveAt)?0:baseFloor;
     c.BandPct = c.Seq<=floor?0 : c.Seq<=S.target?1 : c.Seq===S.target+1?S.up1 : S.up2;
     // penalty (waived above N)
     let pen=0;
-    if(c.MonthCount<=S.waiveAbove){
+    // CSI penalty: ALWAYS applies, regardless of volume
+    if(c.CSIScore!=="" && c.CSIScore!=null && num(c.CSIScore)<100) pen+=S.csiPen;
+    // speed penalties: waived for high performers (>= waiveAbove retails)
+    if(c.MonthCount < S.waiveAbove){
       const br=days(c.BookingDate,c.RetailDate), rd=days(c.RetailDate,c.DeliveryDate);
       if(br!==null && br>S.brDays) pen+=S.brPen;
-      if(c.CSIScore!=="" && c.CSIScore!=null && num(c.CSIScore)<100) pen+=S.csiPen;
       if(rd!==null && rd>S.rdDays) pen+=S.rdPen;
     }
     c.Penalty=Math.min(1,pen);
@@ -431,7 +531,7 @@ function computeCars(cars, kpi, snapshots, current){
   out.forEach(c=>{ if(!c.MonthKey||!c.SalesConsultant) return;
     const k=c.MonthKey+"|"+c.SalesConsultant;
     const r=sc[k]||(sc[k]={month:c.MonthKey,sc:c.SalesConsultant,outlet:c.Outlet,tenure:c.Tenure,S:c._S,
-      retailed:0,delivered:0,payable:0,scMax:0,csiN:0,csiS:0,tatN:0,tatS:0,upN:0,upS:0,profQ:0});
+      retailed:0,delivered:0,payable:0,scMax:0,csiN:0,csiS:0,tatN:0,tatS:0,upN:0,upS:0,profQ:0,insY:0,finY:0,excY:0});
     if(c.RetailDate && !yes(c.Cancelled)){ r.retailed++; r.scMax+=(c.CarMax||0);
       if(c.DeliveryDate) r.delivered++;
       if(c.PayableFlag) r.payable++;
@@ -439,40 +539,59 @@ function computeCars(cars, kpi, snapshots, current){
       if(c.TATpct!==null){r.tatN++;r.tatS+=c.TATpct;}
       if(c.Upsellpct!==null){r.upN++;r.upS+=c.Upsellpct;}
       if(c.ProfitOK===1) r.profQ++;
+      if(yes(c.IHInsurance))r.insY++; if(yes(c.IHFinance))r.finY++; if(yes(c.Exchange))r.excY++;
     }
   });
   Object.values(sc).forEach(r=>{
     const S=r.S; const K=(kpi&&kpi[r.month+"|"+r.sc])||{};
     r.CSI = r.csiN? r.csiS/r.csiN : 0;
     r.TAT = r.tatN? r.tatS/r.tatN : 0;
-    r.UP  = r.upN? r.upS/r.upN : 0;
     r.PROF= r.retailed? r.profQ/r.retailed : 0;
     r.ATT = (K.wd>0)? Math.min(1,num(K.dp)/num(K.wd)) : 0;
-    // ETBRD funnel
+    // funnel conversion (ETBRD)
     const enq=num(K.enq),td=num(K.td),bk=num(K.bk),rt=r.retailed,de=r.delivered,pay=r.payable;
     const w=S.ebW, sw=w[0]+w[1]+w[2]+w[3]+w[4];
     const wn=(a,b)=>b>0?Math.min(1,a/b):0;
     r.ETB = sw? (wn(td,enq)*w[0]+wn(bk,td)*w[1]+wn(rt,bk)*w[2]+wn(de,rt)*w[3]+wn(pay,de)*w[4])/sw : 0;
-    const hasKPI = (K.enq||K.td||K.bk||K.wd||K.dp||r.csiN);
+    // penetration vs target (upsell KPI)
+    const pt=S.penTargets||{}; const penOne=(y,t)=> (t>0)? ((r.retailed>0)? Math.min(1,(y/r.retailed)/t) : 1) : 1;
+    let ups=[]; if((pt.insurance||0)>0)ups.push(penOne(r.insY,pt.insurance)); if((pt.finance||0)>0)ups.push(penOne(r.finY,pt.finance)); if((pt.exchange||0)>0)ups.push(penOne(r.excY,pt.exchange));
+    r.UP = ups.length? ups.reduce((a,b)=>a+b,0)/ups.length : 0;
+    r.penActual={insurance:r.retailed?r.insY/r.retailed:0,finance:r.retailed?r.finY/r.retailed:0,exchange:r.retailed?r.excY/r.retailed:0};
+    // target achievement (volume vs cascaded target)
+    const tgt=scTargetFor(r.sc,r.outlet,r.tenure,r.month,S);
+    r.targets=tgt; r.actuals={enq:enq,td:td,bk:bk,rt:rt,de:de};
+    if(tgt){ const vw=S.targetVolWeights, vs=vw.enq+vw.td+vw.bk+vw.rt+vw.de;
+      const a=k=>(tgt[k]>0)?Math.min(1,r.actuals[k]/tgt[k]):1;
+      r.ach={enq:a('enq'),td:a('td'),bk:a('bk'),rt:a('rt'),de:a('de')};
+      r.TGT=(r.ach.enq*vw.enq+r.ach.td*vw.td+r.ach.bk*vw.bk+r.ach.rt*vw.rt+r.ach.de*vw.de)/vs;
+    } else { r.TGT=null; r.ach=null; }
+    // TSR (target bucket joins only when targets are set)
+    let tn=r.CSI*S.wCSI+r.TAT*S.wTAT+r.ETB*S.wETB+r.ATT*S.wATT+r.UP*S.wUP+r.PROF*S.wPROF;
+    let tden=S.wCSI+S.wTAT+S.wETB+S.wATT+S.wUP+S.wPROF;
+    if(r.TGT!==null){ tn+=r.TGT*S.wTGT; tden+=S.wTGT; }
+    r.autoTSR = tden? tn/tden : 0;
+    const hasKPI = (K.enq||K.td||K.bk||K.wd||K.dp||r.TGT!==null); // CSI alone is NOT a complete TSR -> stays unset/held
     if(K.tsr!==undefined && K.tsr!=="" && K.tsr!==null){ r.TSR=num(K.tsr)/100; r.tsrSource="manual"; }
-    else if(hasKPI){ r.TSR=(r.CSI*S.wCSI+r.TAT*S.wTAT+r.ETB*S.wETB+r.ATT*S.wATT+r.UP*S.wUP+r.PROF*S.wPROF)/(S.wCSI+S.wTAT+S.wETB+S.wATT+S.wUP+S.wPROF); r.tsrSource="auto"; }
+    else if(hasKPI){ r.TSR=r.autoTSR; r.tsrSource="auto"; }
     else { r.TSR=null; r.tsrSource="unset"; }
-    const eff = (r.TSR===null)? S.defaultGate : r.TSR;
-    r.Gate = (r.TSR===null)? S.defaultGate : (eff>S.tsrFull?1:eff>=S.tsrMin?eff:0);
-    r.Earned = r.Gate*r.scMax;
+    r.Gate = (r.TSR===null)? null : (r.TSR>S.tsrFull?1:r.TSR>=S.tsrMin?r.TSR:0);
+    r.held = (r.TSR===null);
+    r.Earned = (r.Gate||0)*r.scMax;
   });
   // outlet rollup
   const ou={};
   Object.values(sc).forEach(r=>{ const k=r.month+"|"+r.outlet; const o=ou[k]||(ou[k]={month:r.month,outlet:r.outlet,cars:0,target:0,S:r.S});
-    o.cars+=r.retailed; o.target += (String(r.tenure).toLowerCase()==="fresher"?r.S.fresherTarget:r.S.target); });
-  Object.values(ou).forEach(o=>{ o.ratio=o.target?o.cars/o.target:0; o.qualified = o.ratio>=o.S.boosterThreshold?1:0; });
+    o.cars+=r.retailed; o.target += ((["fresher","trainee"].indexOf(String(r.tenure).toLowerCase())>=0)?r.S.fresherTarget:r.S.target); });
+  Object.values(ou).forEach(o=>{ const ut=unitTargetFor(o.outlet,o.month,o.S); o.targetRt=(ut&&ut.rt>0)?ut.rt:o.target; o.unitTarget=ut; o.ratio=o.targetRt?o.cars/o.targetRt:0; o.qualified = o.ratio>=o.S.boosterThreshold?1:0; });
   // per-car booster, gate, payable amount
   out.forEach(c=>{
     if(!c.Seq){c.Booster=0;c.Gate=null;c.PayAmt=0;return;}
     const o=ou[c.MonthKey+"|"+c.Outlet]; const r=sc[c.MonthKey+"|"+c.SalesConsultant];
     c.Booster = (o&&o.qualified&&!yes(c.Cancelled))? c._S.boosterPerCar : 0;
-    c.Gate = r? r.Gate : c._S.defaultGate;
-    c.PayAmt = c.PayableFlag? (c.CarMax*c.Gate + c.Booster) : 0;
+    c.Gate = r? r.Gate : null;
+    c.PayAmt = (c.PayableFlag && c.Gate!==null)? (c.CarMax*c.Gate + c.Booster) : 0;
+    c.Held = (c.Gate===null && c.PayableFlag);
   });
   return {cars:out, sc:Object.values(sc), outlets:Object.values(ou), scMap:sc, ouMap:ou};
 }
@@ -492,14 +611,14 @@ function disburse(model, from, to, m3, S){
   const perMonth={};
   model.sc.forEach(r=>{ perMonth[r.sc]=perMonth[r.sc]||{}; perMonth[r.sc][r.month]=r.retailed; });
   Object.keys(S.leads||{}).forEach(o=>{ const nm=S.leads[o]; if(nm && !rows[nm]) rows[nm]={sc:nm,outlet:o,realised:0}; });
+  const clawMap={}; (S.clawbacks||[]).forEach(cb=>{ const cd=parseDate(cb.date); if(cd && (!F||cd>=F)&&(!T||cd<=T)){ clawMap[cb.sc]=(clawMap[cb.sc]||0)+num(cb.amount); if(!rows[cb.sc])rows[cb.sc]={sc:cb.sc,outlet:cb.outlet||'',realised:0}; } });
   const out=Object.values(rows).map(r=>{
     let ts=0; m3.forEach(mk=>{ if((perMonth[r.sc]||{})[mk]>=S.topThr) ts+=S.topAmt; });
-    const dream = (retQ[r.sc]||0)>=S.dreamThr ? S.dreamAmt : 0;
     // manager override for leads
     let ovr=0; const leadOutlet=Object.keys(S.leads||{}).find(o=>S.leads[o]===r.sc);
     if(leadOutlet){ m3.forEach(mk=>{ const o=model.ouMap[mk+"|"+leadOutlet]; if(o&&o.qualified) ovr+=S.mgrPerCar*o.cars; }); }
-    r.top=ts; r.dream=dream; r.mgr=ovr; r.total=r.realised+ts+dream+ovr; return r;
-  }).filter(r=>r.total>0 || r.realised>0);
+    r.top=ts; r.mgr=ovr; r.claw=clawMap[r.sc]||0; r.total=r.realised+ts+ovr-r.claw; return r;
+  }).filter(r=>r.total!==0 || r.realised>0 || r.claw>0);
   // back office pool = boPct * realised car-sale base (gated), in window
   let boBase=0;
   model.cars.forEach(c=>{ const pd=parseDate(c.FinalPaymentRecdDate); if(c.PayableFlag && pd && (!F||pd>=F)&&(!T||pd<=T)) boBase += (c.CarSale||0)*(c.Gate||0); });
@@ -516,7 +635,24 @@ function store(){ try{return window.localStorage;}catch(e){ if(!mem)mem={};retur
 let state = load() || { settings:defaultSettings(), snapshots:[], cars:[], kpi:{}, pass:hash("rdb-admin"), backendUrl:"", unlocked:false };
 if(state.backendUrl===undefined)state.backendUrl="";
 if(state.accessKey===undefined)state.accessKey="";
-function load(){ try{const s=store().getItem(LS); if(!s)return null; const o=JSON.parse(s); o.unlocked=false; return o;}catch(e){return null;} }
+if(!state.specs)state.specs=[];
+if(!state.stock)state.stock=[];
+if(state.isAdmin===undefined)state.isAdmin=false;
+function normSettings(saved){ saved=saved||{};
+  if(saved.wTGT===undefined){ saved.wCSI=15;saved.wTAT=25;saved.wETB=15;saved.wTGT=20;saved.wATT=5;saved.wUP=5;saved.wPROF=15; }
+  const s=Object.assign(defaultSettings(),saved);
+  if(s.tsrWeightVersion!==3){ s.wCSI=15; s.wTAT=25; s.wETB=15; s.wTGT=35; s.wATT=5; s.wUP=5; s.wPROF=0; s.discountBuffer=0; s.tsrWeightVersion=3; }
+  if(!s.targetVolWeights)s.targetVolWeights={enq:10,td:15,bk:20,rt:30,de:25};
+  if(!s.penTargets)s.penTargets={insurance:0.70,finance:0.50,exchange:0.30};
+  if(!s.targetsByMonth)s.targetsByMonth={};
+  if(!s.consultants)s.consultants=[];
+  if(s.floorPolicy!==4){ s.floorConfirmed=1; s.floorFresher=1; s.floorWaiveAt=8; s.target=6; s.topThr=8; s.waiveAbove=8; s.floorPolicy=4; }
+  if(s.floorWaiveAt==null)s.floorWaiveAt=8; if(s.discountBuffer==null)s.discountBuffer=0;
+  if(!s.modelPct)s.modelPct={"NIOS": 0.113, "PRIME HB": 0.231, "AURA": 0.113, "PRIME SD": 0.181, "EXTER PE": 0.091, "ALL NEW I20": 0.07, "I20 N LINE": 0.064, "VERNA PE": 0.064, "VENUE": 0.05, "VENUE N LINE": 0.064, "CRETA": 0.069, "CRETA N LINE": 0.075, "ALCAZAR": 0.094, "CRETA EV": 0.11, "IONIQ 5": 0.1};
+  if(s.globalPct==null)s.globalPct=0.10; if(s.incentiveFloor==null)s.incentiveFloor=4000; if(s.incentiveCeiling==null)s.incentiveCeiling=20000; if(!s.ageFlags)s.ageFlags=[90,150,180]; if(s.vinMode==null)s.vinMode=true;
+  return s;
+}
+function load(){ try{const s=store().getItem(LS); if(!s)return null; const o=JSON.parse(s); o.unlocked=false; if(o.settings)o.settings=normSettings(o.settings); return o;}catch(e){return null;} }
 function persist(){ try{store().setItem(LS, JSON.stringify(state));}catch(e){} }
 function hash(s){ let h=5381; for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0; return "h"+h; }
 
@@ -532,13 +668,15 @@ function show(v){
   if(v==="dashboard")renderDashboard();
   if(v==="cars")renderCars();
   if(v==="payouts")renderPayouts();
+  if(v==="scoring")renderScoring();
+  if(v==="targets")renderTargets();
+  if(v==="stock")renderStock();
   if(v==="slabs")renderSlabs();
-  if(v==="history")renderHistory();
   if(v==="upload")renderColRef();
 }
 
 /* ============================ COMPUTE ============================ */
-function model(){ return computeCars(state.cars, state.kpi, state.snapshots, state.settings); }
+function model(){ return computeCars(state.cars, state.kpi, state.snapshots, state.settings, state.stock); }
 
 /* ============================ DASHBOARD ============================ */
 function currentEff(){ if(!state.snapshots.length) return "Base (unsaved)"; const s=[...state.snapshots].sort((a,b)=>monthNum(b.effMonth)-monthNum(a.effMonth))[0]; return s.effMonth; }
@@ -558,9 +696,38 @@ function renderDashboard(){
   document.getElementById("statRow").innerHTML=stats.map(s=>`<div class="stat ${s.accent?'accent':''}"><div class="k">${s.k}</div><div class="v">${s.v}</div><div class="foot">${s.foot}</div></div>`).join("");
   const rm=document.getElementById("refModel"); const models=Object.keys(state.settings.rates);
   if(rm.options.length!==models.length){ rm.innerHTML=models.map(x=>`<option>${x}</option>`).join(""); rm.value="VENUE"; }
+  renderTargetHeadline(); renderMonitor();
   renderCurve();
   const tb=document.querySelector("#outletTable tbody");
   tb.innerHTML = m.outlets.length? m.outlets.sort((a,b)=>a.month<b.month?1:-1).map(o=>`<tr><td>${o.month}</td><td>${o.outlet}</td><td class="num">${o.cars}</td><td class="num">${o.target}</td><td class="num">${(o.ratio*100).toFixed(0)}%</td><td>${o.qualified?'<span class="tag yes">Unlocked</span>':'<span class="tag no">—</span>'}</td></tr>`).join("") : `<tr><td colspan="6" class="empty">No cars yet. Add cars or load the sample.</td></tr>`;
+}
+function renderMonitor(){ const box=document.getElementById('monitorBox'); if(!box)return; if(!state.isAdmin){ box.innerHTML=''; return; }
+  const month=allMonths()[0]; const specMargin={}; (state.specs||[]).forEach(s=>{ if(s.margin!=null)specMargin[s.specCode]=Number(s.margin); });
+  const vinSpec={}; (state.stock||[]).forEach(s=>{ const v=String(s.VIN||'').trim(); if(v)vinSpec[v]=s.specCode; });
+  if(!month || !Object.keys(specMargin).length){ box.innerHTML=''; return; }
+  const m=model(); const per={}; let covered=0, total=0;
+  m.cars.forEach(c=>{ if(c.MonthKey!==month || yes(c.Cancelled) || !c.RetailDate) return; total++;
+    const sc=vinSpec[String(c.VIN||'').trim()]; const marg=sc!=null?specMargin[sc]:undefined; if(marg==null) return; covered++;
+    const o=per[c.Outlet]||(per[c.Outlet]={margin:0,inc:0}); const g=(c.Gate||0);
+    o.margin+=marg; o.inc += (c.CarMax||0)*g + (c.Booster||0) + (state.settings.boPct||0)*((c.CarSale||0)*g);
+  });
+  const outlets=Object.keys(per); if(!outlets.length){ box.innerHTML=''; return; }
+  let cM=0,cI=0; outlets.forEach(o=>{cM+=per[o].margin;cI+=per[o].inc;});
+  const band=r=> r<0.15?'var(--green)':r<0.18?'var(--amber)':'var(--red)';
+  const cell=(label,inc,marg)=>{ const r=marg>0?inc/marg:0; return `<div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">${label}</div><div class="mono" style="font-size:20px;font-weight:750;margin:3px 0;color:${band(r)}">${(r*100).toFixed(1)}%</div><div style="font-size:11px;color:var(--muted)">${inr(inc)} / ${inr(marg)}</div></div>`; };
+  box.innerHTML=`<div class="card pad" style="margin-top:16px"><div class="section-title" style="margin:0 0 4px"><h2>Incentive load \u2014 ${month} <span class="tag blue">management only</span></h2></div>
+    <p class="hint">Incentive paid \u00f7 gross dealer margin. Watch the dial: under 15% comfortable, 15\u201318% keep an eye, over 18% tighten a lever.</p>
+    <div class="grid" style="grid-template-columns:repeat(${outlets.length+1},1fr);gap:14px">${cell('Company',cI,cM)}${outlets.map(o=>cell(o,per[o].inc,per[o].margin)).join('')}</div>
+    ${covered<total?`<div style="font-size:11px;color:var(--muted);margin-top:8px">Based on ${covered} of ${total} retailed cars that have a VIN in the stock ledger.</div>`:''}</div>`;
+}
+function renderTargetHeadline(){ const box=document.getElementById('tgtHeadline'); if(!box)return; const S=state.settings;
+  const month=allMonths()[0]; const T=month&&S.targetsByMonth&&S.targetsByMonth[month]&&S.targetsByMonth[month].company;
+  if(!month||!T){ box.innerHTML=''; return; }
+  const m=model(); let rt=0,de=0,enq=0,td=0,bk=0;
+  m.cars.forEach(c=>{ if(c.MonthKey===month && !yes(c.Cancelled) && c.RetailDate){ rt++; if(c.DeliveryDate)de++; } });
+  Object.keys(state.kpi).forEach(k=>{ if(k.split('|')[0]===month){ const K=state.kpi[k]; enq+=num(K.enq);td+=num(K.td);bk+=num(K.bk); } });
+  const items=[['Enquiries',enq,num(T.enq)],['Test drives',td,num(T.td)],['Bookings',bk,num(T.bk)],['Retails',rt,num(T.rt)],['Deliveries',de,num(T.de)]];
+  box.innerHTML=`<div class="card pad" style="margin-top:16px"><div class="section-title" style="margin:0 0 10px"><h2>Company vs target — ${month}</h2></div><div class="grid" style="grid-template-columns:repeat(5,1fr);gap:14px">`+items.map(([l,a,t])=>{ const pc=t>0?Math.min(100,Math.round(a/t*100)):0; const col=t>0&&a>=t?'var(--green)':'var(--blue)'; return `<div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">${l}</div><div class="mono" style="font-size:18px;font-weight:750;margin:3px 0">${a}<span style="color:var(--muted);font-size:13px"> / ${t||'—'}</span></div><div style="height:6px;background:#EEF2F7;border-radius:4px;overflow:hidden"><div style="height:100%;width:${pc}%;background:${col}"></div></div></div>`; }).join('')+`</div></div>`;
 }
 function renderCurve(){
   const S=state.settings; const model=document.getElementById("refModel").value||"VENUE";
@@ -584,15 +751,16 @@ const CAR_FIELDS=[
  ["VIN","VIN",""],["RegNo","Reg no",""],["Cancelled","Cancelled?","No"],["PaymentRealised","Payment realised?","Yes"],
  ["ComplaintOpen","Complaint open?","No"],["CSIScore","CSI (0-100)","100"],["DuesOnDelivery","Dues ₹","0"],
  ["EWAvailed","EW?","No"],["AccessoriesValue","Accessories ₹","0"],["IHInsurance","IH insurance?","No"],
- ["IHFinance","IH finance?","No"],["Exchange","Exchange?","No"],["SOT","SOT?","No"],
+ ["IHFinance","IH finance?","No"],["Exchange","Exchange?","No"],["RefBrokerage","Referral / Brokerage?","No"],["SOT","SOT?","No"],
  ["CostOnSalesPct","Cost-on-sales %","3"],["CreditShare","Credit share","1"]
 ];
-const YN=["Cancelled","PaymentRealised","ComplaintOpen","EWAvailed","IHInsurance","IHFinance","Exchange","SOT"];
+const YN=["Cancelled","PaymentRealised","ComplaintOpen","EWAvailed","IHInsurance","IHFinance","Exchange","SOT","RefBrokerage"];
 function openCarForm(car){
   const w=document.getElementById("carFormWrap"); const c=car||{};
   w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h2>${car?'Edit car':'Add car'}</h2><div class="formgrid" id="cf">
   ${CAR_FIELDS.map(([f,l,ph])=>{
-    if(f==="Tenure") return field(f,l,c[f]||"Confirmed",["Confirmed","Fresher"]);
+    if(f==="Tenure") return field(f,l,c[f]||"Consultant",["Consultant","Trainee"]);
+    if(f==="SalesConsultant"){ const names=(state.settings.consultants||[]).map(x=>x.name); if(names.length){ return `<div class="field"><label>${l}</label><select data-f="SalesConsultant" onchange="onPickConsultant(this)"><option value=""></option>`+names.map(n=>`<option ${c[f]===n?'selected':''}>${n}</option>`).join("")+`</select></div>`; } }
     if(f==="Outlet") return field(f,l,c[f]||"Tamluk",["Haldia","Tamluk","Contai"]);
     if(f==="Model") return field(f,l,c[f]||"VENUE",Object.keys(state.settings.rates));
     if(YN.includes(f)) return field(f,l,c[f]|| (f==="PaymentRealised"?"Yes":"No"),["No","Yes"]);
@@ -605,8 +773,17 @@ function openCarForm(car){
 function field(f,l,val,opts){ return `<div class="field"><label>${l}</label><select data-f="${f}">${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join("")}</select></div>`; }
 function saveCar(idx){
   const obj={}; document.querySelectorAll("#cf [data-f]").forEach(el=>obj[el.dataset.f]=el.value.trim());
+  const vin=String(obj.VIN||"").trim();
+  if(vin){ const paidElse=state.cars.some((c,i)=>i!==idx && String(c.VIN||"").trim()===vin && yes(c.PaymentRealised) && !yes(c.Cancelled));
+    if(paidElse && !confirm("\u26A0 This VIN is already marked paid on another car entry. Logging it again could double-pay the incentive. Continue anyway?")) return; }
   if(idx>=0){ obj.id=state.cars[idx].id||uid(); state.cars[idx]=obj; } else { obj.id=uid(); state.cars.push(obj); }
-  persist(); syncCar(obj); document.getElementById("carFormWrap").innerHTML=""; renderCars(); toast(idx>=0?"Car updated":"Car added");
+  persist(); syncCar(obj); document.getElementById("carFormWrap").innerHTML=""; renderCars();
+  let warn="";
+  if(vin){ const srow=state.stock.find(s=>String(s.VIN||"").trim()===vin);
+    if(!srow) warn="\u26A0 VIN not in the stock ledger — add it under Stock & VIN";
+    else if(srow.taggedTo && obj.SalesConsultant && srow.taggedTo!==obj.SalesConsultant) warn="\u26A0 This VIN is tagged to "+srow.taggedTo+" in stock";
+    else if(stockStatus(srow)==="Paid") warn="\u26A0 This VIN is already marked Paid in stock"; }
+  toast(warn || (idx>=0?"Car updated":"Car added"));
 }
 const CARCOLS=[["MonthKey","Month"],["Outlet","Outlet"],["SalesConsultant","Consultant"],["Tenure","Ten."],["Model","Model"],["Seq","Car#","num"],["Aging","Aging","num"],["Base","Base","num","inr"],["BandPct","Band","num","pctd"],["Penalty","Pen.","num","pctd"],["CarSale","Sale","num","inr"],["Upsell","Upsell","num","inr"],["CarMax","Max","num","inr"],["Gate","Gate","num","pctd"],["PayableFlag","Pay?","","yn"],["Booster","Boost","num","inr"],["PayAmt","Payable","num","inr"]];
 function renderCars(){
@@ -615,6 +792,8 @@ function renderCars(){
   rows=m.cars.map(c=>({c, idx:c._i}));
   const fm=document.getElementById("fMonth"), months=[...new Set(state.cars.map(c=>c.MonthKey).filter(Boolean))];
   fm.innerHTML='<option value="">All</option>'+months.map(x=>`<option ${fm.value===x?'selected':''}>${x}</option>`).join("");
+  const missing=state.cars.filter(c=>String(c.VIN||"").trim() && !state.stock.some(s=>String(s.VIN||"").trim()===String(c.VIN||"").trim())).length;
+  const cw=document.getElementById("carWarn"); if(cw) cw.innerHTML = missing? `<div class="note">\u26A0 ${missing} car${missing>1?"s have":" has"} a VIN that isn\'t in the stock ledger — those fall back to the old rate table. Add the VINs under <b>Stock & VIN</b>.</div>`:"";
   const fM=document.getElementById("fMonth").value,fO=document.getElementById("fOutlet").value,fS=document.getElementById("fSC").value.toLowerCase();
   const flt=rows.filter(({c})=>(!fM||c.MonthKey===fM)&&(!fO||c.Outlet===fO)&&(!fS||(c.SalesConsultant||"").toLowerCase().includes(fS)));
   const thead=document.querySelector("#carsTable thead"); thead.innerHTML="<tr>"+CARCOLS.map(([,l,cls])=>`<th class="${cls||''}">${l}</th>`).join("")+"<th></th></tr>";
@@ -696,14 +875,14 @@ function renderPayouts(){
   const th=document.querySelector("#tsrTable thead");
   th.innerHTML=`<tr><th>Month</th><th>Consultant</th><th class="num">Ret.</th>
     <th class="num">Enq</th><th class="num">TD</th><th class="num">Book</th><th class="num">Work</th><th class="num">Pres.</th>
-    <th class="num">CSI</th><th class="num">TAT</th><th class="num">ETBRD</th><th class="num">Att</th><th class="num">Upsell</th><th class="num">Profit</th>
+    <th class="num">CSI</th><th class="num">TAT</th><th class="num">ETBRD</th><th class="num">Att</th><th class="num">Upsell</th><th class="num">Profit (off)</th>
     <th class="num">TSR auto</th><th class="num">Override&nbsp;%</th><th class="num">Gate</th><th>Source</th></tr>`;
   const tb=document.querySelector("#tsrTable tbody");
   tb.innerHTML=scs.length?scs.map(r=>{ const key=r.month+"|"+r.sc; const K=state.kpi[key]||{};
     const inp=(f,v,w)=>`<input data-key="${key}" data-f="${f}" value="${v??''}" style="width:${w||50}px;padding:5px 6px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px">`;
     const sub=x=>x==null?'—':(x*100).toFixed(0)+'%';
-    const autoT=(r.CSI*S0.wCSI+r.TAT*S0.wTAT+r.ETB*S0.wETB+r.ATT*S0.wATT+r.UP*S0.wUP+r.PROF*S0.wPROF)/sw;
-    const src=r.tsrSource==="manual"?'<span class="tag blue">manual</span>':r.tsrSource==="auto"?'<span class="tag yes">auto</span>':'<span class="tag warn">unset → '+pct(S0.defaultGate)+'</span>';
+    const autoT=(r.autoTSR!=null?r.autoTSR:0);
+    const src=r.tsrSource==="manual"?'<span class="tag blue">manual</span>':r.tsrSource==="auto"?'<span class="tag yes">auto</span>':'<span class="tag warn">unset · HELD (not paid)</span>';
     return `<tr><td>${r.month}</td><td>${r.sc}</td><td class="num">${r.retailed}</td>
       <td class="num">${inp('enq',K.enq)}</td><td class="num">${inp('td',K.td)}</td><td class="num">${inp('bk',K.bk)}</td><td class="num">${inp('wd',K.wd)}</td><td class="num">${inp('dp',K.dp)}</td>
       <td class="num" style="color:var(--muted)">${sub(r.CSI)}</td><td class="num" style="color:var(--muted)">${sub(r.TAT)}</td><td class="num" style="color:var(--muted)">${sub(r.ETB)}</td><td class="num" style="color:var(--muted)">${sub(r.ATT)}</td><td class="num" style="color:var(--muted)">${sub(r.UP)}</td><td class="num" style="color:var(--muted)">${sub(r.PROF)}</td>
@@ -715,11 +894,18 @@ function renderPayouts(){
   const m3=[document.getElementById("qM1").value.trim().toUpperCase(),document.getElementById("qM2").value.trim().toUpperCase(),document.getElementById("qM3").value.trim().toUpperCase()].filter(Boolean);
   const S=state.settings;
   const d=disburse(m,from,to,m3,S);
-  const ph=document.querySelector("#payTable thead"); ph.innerHTML="<tr><th>Consultant</th><th>Outlet</th><th class='num'>Realised incentive</th><th class='num'>Top-seller</th><th class='num'>Dream-It</th><th class='num'>Manager override</th><th class='num'>Total payable</th></tr>";
+  const ph=document.querySelector("#payTable thead"); ph.innerHTML="<tr><th>Consultant</th><th>Outlet</th><th class='num'>Realised incentive</th><th class='num'>Top-seller</th><th class='num'>Manager override</th><th class='num'>Clawback</th><th class='num'>Total payable</th></tr>";
   const pb=document.querySelector("#payTable tbody");
   const leadNames=Object.values(S.leads||{});
-  pb.innerHTML=d.rows.length?d.rows.sort((a,b)=>b.total-a.total).map(r=>`<tr><td>${r.sc}${leadNames.includes(r.sc)?' <span class="tag blue">manager</span>':''}</td><td>${r.outlet}</td><td class="num rupee">${inr(r.realised)}</td><td class="num rupee">${r.top?inr(r.top):'—'}</td><td class="num rupee">${r.dream?inr(r.dream):'—'}</td><td class="num rupee">${r.mgr?inr(r.mgr):'—'}</td><td class="num rupee"><b>${inr(r.total)}</b></td></tr>`).join(""):`<tr><td colspan="7" class="empty">Set the quarter window and click <b>Calculate quarter</b>.</td></tr>`;
-  document.getElementById("payFoot").innerHTML=`<div class="grid g2" style="margin-top:14px"><div class="card pad"><div class="kv"><span class="k">Back Office pool (25% of realised car-sale base)</span><span class="v">${inr(d.bo)}</span><span class="k"><b>Grand total (consultants + managers + BO)</b></span><span class="v"><b>${inr(d.grand)}</b></span></div></div><div class="note" style="margin:0">Manager override pays the team leads named in settings (${Object.values(S.leads).join(", ")}). Team leads draw the manager override only (₹300 × outlet cars) — no selling incentive.</div></div>`;
+  pb.innerHTML=d.rows.length?d.rows.sort((a,b)=>b.total-a.total).map(r=>`<tr><td>${r.sc}${leadNames.includes(r.sc)?' <span class="tag blue">manager</span>':''}</td><td>${r.outlet}</td><td class="num rupee">${inr(r.realised)}</td><td class="num rupee">${r.top?inr(r.top):'—'}</td><td class="num rupee">${r.mgr?inr(r.mgr):'—'}</td><td class="num rupee" style="color:var(--red)">${r.claw?('-'+inr(r.claw)):'—'}</td><td class="num rupee"><b>${inr(r.total)}</b></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Set the quarter window and click <b>Calculate quarter</b>.</td></tr>`;
+  const monthsNoTarget=m3.filter(mk=> !(S.targetsByMonth&&S.targetsByMonth[mk]&&S.targetsByMonth[mk].company&&["enq","td","bk","rt","de"].some(k=>num(S.targetsByMonth[mk].company[k])>0)));
+  const heldNow=m.sc.filter(r=>r.held && m3.includes(r.month)).map(r=>r.month+" · "+r.sc);
+  const readyOK=(m3.length>0)&&monthsNoTarget.length===0&&heldNow.length===0;
+  const readyPanel = m3.length? `<div class="card pad" style="margin:0 0 14px;border-left:4px solid ${readyOK?'var(--green)':'var(--amber)'}"><div class="section-title" style="margin:0 0 6px"><h2>${readyOK?'✅ Ready to disburse':'⚠ Check before disbursing'}</h2></div><div style="font-size:13px;line-height:1.8"><div>Targets set: ${m3.map(mk=>`${mk} ${monthsNoTarget.includes(mk)?'<span class="tag warn">missing</span>':'<span class="tag yes">✓</span>'}`).join(' &nbsp; ')}</div><div>Held (TSR unset — not paid): ${heldNow.length?('<span class="tag warn">'+heldNow.length+'</span> '+heldNow.join(', ')):'<span class="tag yes">none</span>'}</div></div></div>`:'';
+  const rosterOpts=(S.consultants||[]).map(c=>`<option>${c.name}</option>`).join('');
+  const clawUI = state.unlocked? `<div class="card pad" style="margin-top:14px"><div class="section-title" style="margin:0 0 8px"><h2>Clawbacks (admin)</h2><span style="font-size:12px;color:var(--muted)">reverse a car paid in an earlier quarter that later cancelled — deducts in the quarter containing the date</span></div><div class="bar" style="margin:0 0 8px;align-items:end;flex-wrap:wrap"><div class="field"><label>Consultant</label><select id="cbSC">${rosterOpts||'<option></option>'}</select></div><div class="field"><label>Amount ₹</label><input id="cbAmt" type="number" style="width:100px"></div><div class="field"><label>Deduct-in date</label><input id="cbDate" type="date"></div><div class="field" style="flex:1;min-width:140px"><label>Note</label><input id="cbNote" placeholder="e.g. finance reversed"></div><button class="btn" onclick="addClawback()">Add</button></div>${(S.clawbacks||[]).length?`<div class="tablewrap"><table><thead><tr><th>Consultant</th><th class="num">Amount</th><th>Date</th><th>Note</th><th></th></tr></thead><tbody>${S.clawbacks.map((cb,i)=>`<tr><td>${cb.sc}</td><td class="num rupee">${inr(cb.amount)}</td><td>${cb.date}</td><td>${cb.note||''}</td><td><button class="linkbtn" style="color:var(--red)" onclick="delClawback(${i})">Del</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="hint">No clawbacks recorded.</div>'}</div>`:'';
+  const heldList=m.sc.filter(r=>r.held).map(r=>r.sc); const heldNote=heldList.length?`<div class="note" style="margin:0 0 12px">\u26A0 ${heldList.length} consultant${heldList.length>1?'s are':' is'} <b>held</b> (TSR not set): ${heldList.join(', ')}. No pay until their funnel/attendance is keyed or a TSR is typed on the panel above.</div>`:'';
+  document.getElementById("payFoot").innerHTML=readyPanel+heldNote+`<div class="grid g2" style="margin-top:14px"><div class="card pad"><div class="kv"><span class="k">Back Office pool (25% of realised car-sale base)</span><span class="v">${inr(d.bo)}</span><span class="k"><b>Grand total (consultants + managers + BO)</b></span><span class="v"><b>${inr(d.grand)}</b></span></div></div><div class="note" style="margin:0">Manager override pays the team leads named in settings (${Object.values(S.leads).join(", ")}). Team leads draw the manager override only (₹300 × outlet cars) — no selling incentive.</div></div>`+clawUI;
 }
 
 /* ============================ SLABS (locked) ============================ */
@@ -732,10 +918,228 @@ function renderSlabs(){
   const S=state.settings;
   const tb=document.querySelector("#rateTable tbody");
   tb.innerHTML=Object.entries(S.rates).map(([mdl,v])=>`<tr><td><input value="${mdl}" data-model="${mdl}" onchange="renameModel(this)" style="width:200px;text-align:left"></td>${v.map((x,j)=>`<td class="num"><input type="number" value="${x}" onchange="setRate('${mdl.replace(/'/g,"\\'")}',${j},this.value)"></td>`).join("")}<td><button class="linkbtn" style="color:var(--red)" onclick="delModel('${mdl.replace(/'/g,"\\'")}')">✕</button></td></tr>`).join("");
+  renderRoster(); renderPricing();
   const pg=document.getElementById("paramGrid");
   pg.innerHTML=PARAM_DEFS.map(([f,l])=>`<div class="param"><label>${l}</label><input type="number" step="any" value="${S[f]}" onchange="setParam('${f}',this.value)"></div>`).join("");
 }
 function setRate(m,j,v){ state.settings.rates[m][j]=num(v); persist(); syncConfig(); }
+function onPickConsultant(sel){ const r=(state.settings.consultants||[]).find(x=>x.name===sel.value); if(!r)return; const o=document.querySelector('#cf [data-f="Outlet"]'); const t=document.querySelector('#cf [data-f="Tenure"]'); if(o&&r.outlet)o.value=r.outlet; if(t&&r.tenure)t.value=r.tenure; }
+
+/* ---- consultant roster (admin) ---- */
+function renderRoster(){ const tb=document.querySelector('#rosterTable tbody'); if(!tb)return; const list=state.settings.consultants||[];
+  tb.innerHTML = list.length? list.map((c,i)=>`<tr>
+    <td><input value="${(c.name||'').replace(/"/g,'&quot;')}" onchange="setConsultant(${i},'name',this.value)" style="width:200px;text-align:left"></td>
+    <td><select onchange="setConsultant(${i},'outlet',this.value)">${['Haldia','Tamluk','Contai'].map(o=>`<option ${c.outlet===o?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td><select onchange="setConsultant(${i},'tenure',this.value)">${['Consultant','Trainee'].map(t=>`<option ${(c.tenure||'Consultant')===t?'selected':''}>${t}</option>`).join('')}</select></td>
+    <td><button class="linkbtn" style="color:var(--red)" onclick="delConsultant(${i})">✕</button></td></tr>`).join('')
+    : `<tr><td colspan="4" class="empty">No consultants yet. Click “+ Add consultant”.</td></tr>`;
+}
+function addConsultant(){ state.settings.consultants=state.settings.consultants||[]; state.settings.consultants.push({name:'New consultant',outlet:'Haldia',tenure:'Consultant'}); persist(); syncConfig(); renderRoster(); }
+function setConsultant(i,f,v){ state.settings.consultants[i][f]=v; persist(); syncConfig(); }
+function delConsultant(i){ const c=state.settings.consultants[i]; if(confirm('Remove '+(c&&c.name?c.name:'this consultant')+'?')){ state.settings.consultants.splice(i,1); persist(); syncConfig(); renderRoster(); } }
+
+/* ---- scoring view ---- */
+function scoringRoster(){ if(state.settings.consultants&&state.settings.consultants.length) return state.settings.consultants.slice();
+  const seen={},out=[]; state.cars.forEach(c=>{ if(c.SalesConsultant&&!seen[c.SalesConsultant]){ seen[c.SalesConsultant]=1; out.push({name:c.SalesConsultant,outlet:c.Outlet,tenure:c.Tenure}); } }); return out; }
+function allMonths(){ return [...new Set([...state.cars.map(c=>c.MonthKey),...Object.keys(state.kpi).map(k=>k.split('|')[0]),...Object.keys(state.settings.targetsByMonth||{})].filter(Boolean))].sort((a,b)=>monthNum(b)-monthNum(a)); }
+function currentMonthLabel(){ const d=new Date(); return MONTHS[d.getMonth()]+'-'+d.getFullYear(); }
+function scoreRows(month){ const S=state.settings; const w=S.ebW, swc=w[0]+w[1]+w[2]+w[3]; const vw=S.targetVolWeights, vs=vw.enq+vw.td+vw.bk+vw.rt+vw.de;
+  return scoringRoster().map(cons=>{ const key=month+"|"+cons.name; const K=state.kpi[key]||{};
+    const enq=num(K.enq),td=num(K.td),bk=num(K.bk); let rt=0,de=0;
+    state.cars.forEach(c=>{ if(c.MonthKey===month && c.SalesConsultant===cons.name && !yes(c.Cancelled) && c.RetailDate){ rt++; if(c.DeliveryDate)de++; } });
+    const c1=enq?Math.min(1,td/enq):0,c2=td?Math.min(1,bk/td):0,c3=bk?Math.min(1,rt/bk):0,c4=rt?Math.min(1,de/rt):0;
+    const funnel=swc?(c1*w[0]+c2*w[1]+c3*w[2]+c4*w[3])/swc:0;
+    const tgt=scTargetFor(cons.name,cons.outlet,cons.tenure,month,S); let tscore=null,ach=null;
+    if(tgt){ const A={enq,td,bk,rt,de}; const a=k=>(tgt[k]>0)?Math.min(1,A[k]/tgt[k]):1; ach={enq:a('enq'),td:a('td'),bk:a('bk'),rt:a('rt'),de:a('de')}; tscore=(ach.enq*vw.enq+ach.td*vw.td+ach.bk*vw.bk+ach.rt*vw.rt+ach.de*vw.de)/vs; }
+    return {name:cons.name,outlet:cons.outlet,tenure:cons.tenure,key,enq:K.enq,td:K.td,bk:K.bk,rt,de,tgt,ach,funnel,tscore,actual:{enq,td,bk,rt,de}};
+  }).sort((a,b)=>((b.tscore!=null?b.tscore:b.funnel)-(a.tscore!=null?a.tscore:a.funnel)));
+}
+function renderScoring(){ const sel=document.getElementById('scMonth'); const months=allMonths(); const cur=sel.value||(months[0]||"");
+  sel.innerHTML=months.length?months.map(m=>`<option ${m===cur?'selected':''}>${m}</option>`).join(''):'<option value="">\u2014</option>';
+  const month=sel.value||cur; const rows=month?scoreRows(month):[]; const S=state.settings;
+  const th=document.querySelector('#scoreTable thead');
+  th.innerHTML=`<tr><th class="num">#</th><th>Consultant</th><th>Outlet</th><th>Type</th><th class="num">Enq / tgt</th><th class="num">Drives / tgt</th><th class="num">Book / tgt</th><th class="num">Retail / tgt</th><th class="num">Deliv / tgt</th><th class="num">Target score</th><th class="num">Funnel score</th></tr>`;
+  const tb=document.querySelector('#scoreTable tbody');
+  const inp=(key,f,v,t)=>`<input data-key="${key}" data-f="${f}" value="${v??''}" style="width:44px;padding:4px 5px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px"><span style="color:var(--muted)"> / ${t!=null?t:'\u2014'}</span>`;
+  const at=(a,t)=>`<span style="color:${t!=null&&a>=t?'var(--green)':'inherit'};font-weight:600">${a}</span><span style="color:var(--muted)"> / ${t!=null?t:'\u2014'}</span>`;
+  const byOutlet={}; rows.forEach(r=>{(byOutlet[r.outlet]=byOutlet[r.outlet]||[]).push(r);});
+  let html='',rank=1;
+  rows.forEach(r=>{ const t=r.tgt||{};
+    html+=`<tr><td class="num">${rank++}</td><td>${r.name}</td><td>${r.outlet||''}</td><td>${r.tenure||''}</td>`
+      +`<td class="num">${inp(r.key,'enq',r.enq,t.enq)}</td><td class="num">${inp(r.key,'td',r.td,t.td)}</td><td class="num">${inp(r.key,'bk',r.bk,t.bk)}</td>`
+      +`<td class="num">${at(r.rt,t.rt!=null?t.rt:null)}</td><td class="num">${at(r.de,t.de!=null?t.de:null)}</td>`
+      +`<td class="num"><b>${r.tscore!=null?(r.tscore*100).toFixed(0)+'%':'\u2014'}</b></td><td class="num" style="color:var(--muted)">${(r.funnel*100).toFixed(0)}%</td></tr>`;
+  });
+  const vw=S.targetVolWeights, vs=vw.enq+vw.td+vw.bk+vw.rt+vw.de;
+  const scoreOf=(A,T)=>{ if(!T)return null; const a=k=>num(T[k])>0?Math.min(1,A[k]/num(T[k])):1; return (a('enq')*vw.enq+a('td')*vw.td+a('bk')*vw.bk+a('rt')*vw.rt+a('de')*vw.de)/vs; };
+  Object.keys(byOutlet).forEach(o=>{ const g=byOutlet[o]; const sum=k=>g.reduce((a,r)=>a+num(r.actual[k]),0); const A={enq:sum('enq'),td:sum('td'),bk:sum('bk'),rt:sum('rt'),de:sum('de')};
+    const ut=unitTargetFor(o,month,S); const ts=scoreOf(A,ut);
+    const cell=(k)=>`<td class="num">${A[k]}${ut?' / '+ut[k]:''}</td>`;
+    html+=`<tr style="background:#EEF4FB;font-weight:700"><td></td><td colspan="3">${o} \u2014 unit</td>${cell('enq')}${cell('td')}${cell('bk')}${cell('rt')}${cell('de')}<td class="num">${ts!=null?(ts*100).toFixed(0)+'%':'\u2014'}</td><td></td></tr>`;
+  });
+  const csum=k=>rows.reduce((a,r)=>a+num(r.actual[k]),0); const CA={enq:csum('enq'),td:csum('td'),bk:csum('bk'),rt:csum('rt'),de:csum('de')};
+  const CT=(S.targetsByMonth&&S.targetsByMonth[month]&&S.targetsByMonth[month].company)||null; const cts=scoreOf(CA,CT);
+  const ccell=(k)=>`<td class="num">${CA[k]}${CT?' / '+num(CT[k]):''}</td>`;
+  html+=`<tr style="background:var(--deep);color:#fff;font-weight:800"><td></td><td colspan="3">COMPANY</td>${ccell('enq')}${ccell('td')}${ccell('bk')}${ccell('rt')}${ccell('de')}<td class="num">${cts!=null?(cts*100).toFixed(0)+'%':'\u2014'}</td><td></td></tr>`;
+  tb.innerHTML = rows.length? html : `<tr><td colspan="11" class="empty">No consultants for ${month||'this month'}. Add people under Slabs & settings; set targets under Targets.</td></tr>`;
+  tb.querySelectorAll('input').forEach(el=>el.onchange=()=>{ const k=el.dataset.key,f=el.dataset.f; state.kpi[k]=state.kpi[k]||{}; state.kpi[k][f]=el.value.trim()===''?'':el.value.trim(); persist(); syncKpi(k); renderScoring(); });
+}
+function exportScoring(){ const month=document.getElementById('scMonth').value; const rows=scoreRows(month);
+  const lines=['Rank,Consultant,Outlet,Type,Enq,EnqTgt,TD,TDTgt,Book,BookTgt,Retail,RetailTgt,Deliv,DelivTgt,TargetScore,FunnelScore'];
+  rows.forEach((r,i)=>{ const t=r.tgt||{}; lines.push([i+1,r.name,r.outlet||'',r.tenure||'',num(r.enq),(t.enq!=null?t.enq:''),num(r.td),(t.td!=null?t.td:''),num(r.bk),(t.bk!=null?t.bk:''),r.rt,(t.rt!=null?t.rt:''),r.de,(t.de!=null?t.de:''),r.tscore!=null?(r.tscore*100).toFixed(0)+'%':'',(r.funnel*100).toFixed(0)+'%'].map(csvCell).join(',')); });
+  download('RDB_scoring_'+(month||'month')+'.csv',lines.join('\n'));
+}
+/* ---- targets admin view ---- */
+function renderTargets(){
+  document.getElementById('tgtLock').style.display=state.unlocked?'none':'block';
+  document.getElementById('tgtBody').style.display=state.unlocked?'block':'none';
+  if(!state.unlocked)return;
+  const mi=document.getElementById('tgtMonth'); if(!mi.value){ mi.value=allMonths()[0]||currentMonthLabel(); }
+  const month=mi.value.trim().toUpperCase(); const S=state.settings; S.targetsByMonth=S.targetsByMonth||{};
+  const T=S.targetsByMonth[month]=S.targetsByMonth[month]||{company:{enq:'',td:'',bk:'',rt:'',de:''},overUnit:{},overSC:{}};
+  const METR=[['enq','Enquiries'],['td','Test drives'],['bk','Bookings'],['rt','Retails'],['de','Deliveries']];
+  document.getElementById('companyTargets').innerHTML=METR.map(([k,l])=>`<div class="field"><label>${l}</label><input type="number" value="${T.company[k]??''}" onchange="setCompanyTarget('${month}','${k}',this.value)"></div>`).join('');
+  const PEN=[['insurance','Insurance %'],['finance','Finance %'],['exchange','Exchange %']];
+  document.getElementById('penTargetsBox').innerHTML=PEN.map(([k,l])=>`<div class="field"><label>${l}</label><input type="number" value="${Math.round((S.penTargets[k]||0)*100)}" onchange="setPenTarget('${k}',this.value)"></div>`).join('');
+  const roster=S.consultants||[]; const th=document.querySelector('#cascadeTable thead');
+  th.innerHTML='<tr><th>Level</th>'+METR.map(([,l])=>`<th class="num">${l}</th>`).join('')+'</tr>';
+  const tb=document.querySelector('#cascadeTable tbody'); let html='';
+  ['Haldia','Tamluk','Contai'].forEach(o=>{ const ut=unitTargetFor(o,month,S)||{}; const over=(T.overUnit[o]||{});
+    html+=`<tr style="background:#EEF4FB;font-weight:700"><td>${o} \u2014 unit</td>`+METR.map(([k])=>`<td class="num"><input value="${over[k]??''}" placeholder="${ut[k]!=null?ut[k]:0}" onchange="setUnitOverride('${month}','${o}','${k}',this.value)" style="width:60px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px"></td>`).join('')+'</tr>';
+    roster.filter(c=>c.outlet===o).forEach(c=>{ const st=scTargetFor(c.name,o,c.tenure,month,S)||{}; const so=(T.overSC[c.name]||{});
+      html+=`<tr><td style="padding-left:22px">${c.name} <span style="color:var(--muted);font-size:10px">${c.tenure||''}</span></td>`+METR.map(([k])=>`<td class="num"><input value="${so[k]??''}" placeholder="${st[k]!=null?st[k]:0}" onchange="setSCOverride('${month}',this.getAttribute('data-nm'),'${k}',this.value)" data-nm="${(c.name||'').replace(/"/g,'&quot;')}" style="width:60px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px"></td>`).join('')+'</tr>';
+    });
+  });
+  tb.innerHTML=html||'<tr><td colspan="6" class="empty">Add consultants under Slabs & settings to see the cascade.</td></tr>';
+}
+function setCompanyTarget(m,k,v){ const T=state.settings.targetsByMonth[m]; T.company[k]=v.trim()===''?'':num(v); persist(); syncConfig(); renderTargets(); }
+function setPenTarget(k,v){ state.settings.penTargets[k]=(num(v)||0)/100; persist(); syncConfig(); }
+function setUnitOverride(m,o,k,v){ const T=state.settings.targetsByMonth[m]; T.overUnit[o]=T.overUnit[o]||{}; if(v.trim()==='')delete T.overUnit[o][k]; else T.overUnit[o][k]=num(v); persist(); syncConfig(); renderTargets(); }
+function setSCOverride(m,n,k,v){ const T=state.settings.targetsByMonth[m]; T.overSC[n]=T.overSC[n]||{}; if(v.trim()==='')delete T.overSC[n][k]; else T.overSC[n][k]=num(v); persist(); syncConfig(); renderTargets(); }
+function copyLastTargets(){ const m=(document.getElementById('tgtMonth').value||'').trim().toUpperCase(); if(!m){toast('Set a month first');return;} const earlier=Object.keys(state.settings.targetsByMonth||{}).filter(x=>monthNum(x)<monthNum(m)).sort((a,b)=>monthNum(b)-monthNum(a)); if(!earlier.length){toast('No earlier month to copy');return;} state.settings.targetsByMonth[m]=JSON.parse(JSON.stringify(state.settings.targetsByMonth[earlier[0]])); persist(); syncConfig(); renderTargets(); toast('Copied '+earlier[0]); }
+
+/* ============================ VIN STOCK LEDGER ============================ */
+function specDefault(specCode){ const s=(state.specs||[]).find(x=>x.specCode===specCode); return s?Number(s.defaultIncentive||0):0; }
+function specModels(){ return [...new Set((state.specs||[]).map(s=>s.model))].sort(); }
+function variantsFor(model){ return (state.specs||[]).filter(s=>s.model===model); }
+function daysInStock(d){ const D=parseDate(d); if(!D)return null; return Math.round((new Date()-D)/86400000); }
+function vinSold(vin){ vin=String(vin||'').trim(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim()===vin && yes(c.PaymentRealised) && !yes(c.Cancelled)); }
+function vinBooked(vin){ vin=String(vin||'').trim(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim()===vin && !yes(c.Cancelled) && (c.BookingDate||c.RetailDate)); }
+function stockStatus(row){ if(vinSold(row.VIN)||row.status==='Paid') return 'Paid'; if(row.taggedTo||vinBooked(row.VIN)||row.status==='Booked') return 'Booked'; return 'Free'; }
+function isBoosted(row){ const d=specDefault(row.specCode); return d>0 && Number(row.incentive||0)>d; }
+function ageTier(row){ const st=stockStatus(row); if(st!=='Free')return 0; const dd=daysInStock(row.stockInDate); const f=state.settings.ageFlags||[90,150,180]; if(dd==null)return 0; if(dd>=f[2])return 3; if(dd>=f[1])return 2; if(dd>=f[0])return 1; return 0; }
+
+function openStockForm(row){ const w=document.getElementById('stockFormWrap'); const r=row||{};
+  const models=specModels();
+  if(!models.length){ w.innerHTML=`<div class="note">Load the Hyundai catalogue first (button top-right), then add VINs.</div>`; return; }
+  const today=new Date().toISOString().slice(0,10);
+  w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h2>${row?'Edit VIN':'Add VIN'}</h2>
+    <div class="formgrid">
+      <div class="field"><label>Model</label><select id="sfModel" onchange="stockVariants()">${models.map(m=>`<option ${r.model===m?'selected':''}>${m}</option>`).join('')}</select></div>
+      <div class="field"><label>Variant</label><select id="sfVariant" onchange="stockSpecFill()"></select></div>
+      <div class="field"><label>Spec code</label><input id="sfSpec" readonly style="background:#F4F6F9"></div>
+      <div class="field"><label>VIN</label><input id="sfVIN" value="${(r.VIN||'').replace(/"/g,'&quot;')}" placeholder="full VIN"></div>
+      <div class="field"><label>Colour</label><input id="sfColour" value="${(r.colour||'').replace(/"/g,'&quot;')}"></div>
+      <div class="field"><label>Stock-in date${state.unlocked?"":" \u00b7 locked"}</label><input id="sfDate" type="date" value="${r.stockInDate||today}" ${state.unlocked?"":"readonly"} style="${state.unlocked?"":"background:#F4F6F9;color:#5B6B7E"}"></div>
+      <div class="field"><label>Incentive \u20B9 (default shown; edit to override)</label><input id="sfInc" type="number" value="${r.incentive??''}"></div>
+      <div class="field"><label>Tag to consultant (optional)</label><select id="sfTag"><option value="">\u2014 free stock \u2014</option>${(state.settings.consultants||[]).map(c=>`<option ${r.taggedTo===c.name?'selected':''}>${c.name}</option>`).join('')}</select></div>
+      <div class="field"><label>Stock ID</label><input id="sfStockId" value="${r.stockId||('RDB'+Date.now().toString().slice(-6))}"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" onclick="saveStock('${row?r.id:''}')">${row?'Save':'Add VIN'}</button><button class="btn" onclick="document.getElementById('stockFormWrap').innerHTML=''">Cancel</button></div></div>`;
+  stockVariants(r.variant, r.specCode, r.incentive!=null);
+}
+function stockVariants(selVar, selSpec, keepInc){ const m=document.getElementById('sfModel').value; const vs=variantsFor(m);
+  const vsel=document.getElementById('sfVariant'); vsel.innerHTML=vs.map(s=>`<option data-spec="${s.specCode}" ${selVar===s.variant?'selected':''}>${s.variant}${s.fuel?' \u00b7 '+s.fuel:''}</option>`).join('');
+  stockSpecFill(keepInc); }
+function stockSpecFill(keepInc){ const vsel=document.getElementById('sfVariant'); const opt=vsel.options[vsel.selectedIndex]; const spec=opt?opt.getAttribute('data-spec'):''; document.getElementById('sfSpec').value=spec;
+  if(!keepInc){ const inc=document.getElementById('sfInc'); if(inc && (inc.value===''||inc.dataset.auto!=='0')){ inc.value=specDefault(spec); inc.dataset.auto='1'; } } }
+function saveStock(id){ const g=x=>document.getElementById(x).value.trim();
+  const vsel=document.getElementById('sfVariant'); const opt=vsel.options[vsel.selectedIndex];
+  const row={ id:id||uid(), stockId:g('sfStockId'), VIN:g('sfVIN'), model:g('sfModel'), fuel:(opt?(opt.textContent.split(' \u00b7 ')[1]||''):''), variant:(opt?opt.textContent.split(' \u00b7 ')[0]:''), specCode:g('sfSpec'), colour:g('sfColour'), stockInDate:g('sfDate'), incentive:num(document.getElementById('sfInc').value), taggedTo:g('sfTag'), status:'', note:'' };
+  if(!row.VIN){ toast('VIN is required'); return; }
+  const i=state.stock.findIndex(s=>s.id===row.id); if(i>=0)state.stock[i]=row; else state.stock.push(row);
+  persist(); if(cloudActive())cloud('upsertStock',{row}); document.getElementById('stockFormWrap').innerHTML=''; renderStock(); toast(id?'VIN updated':'VIN added');
+}
+function editStock(id){ const r=state.stock.find(s=>s.id===id); if(r)openStockForm(r); }
+function delStock(id){ if(confirm('Remove this VIN?')){ state.stock=state.stock.filter(s=>s.id!==id); persist(); if(cloudActive())cloud('deleteStock',{id}); renderStock(); } }
+function tagStock(id){ const r=state.stock.find(s=>s.id===id); if(!r)return; const names=(state.settings.consultants||[]).map(c=>c.name);
+  const nm=prompt('Tag VIN '+r.VIN+' to which consultant? (blank to free)\n'+names.join(', '), r.taggedTo||''); if(nm===null)return; r.taggedTo=nm.trim(); persist(); if(cloudActive())cloud('upsertStock',{row:r}); renderStock(); }
+
+function stockSegments(){ const S=state.stock.map(r=>({r, st:stockStatus(r), tier:ageTier(r), boost:isBoosted(r), dd:daysInStock(r.stockInDate)}));
+  const fresh=[],prio=[],free=[],booked=[],paid=[];
+  S.forEach(x=>{ if(x.st==='Paid')paid.push(x); else if(x.st==='Booked')booked.push(x); else if(x.boost||x.tier>0)prio.push(x); else if(x.dd!=null&&x.dd<=7)fresh.push(x); else free.push(x); });
+  const bydays=(a,b)=>(b.dd||0)-(a.dd||0);
+  prio.sort(bydays); free.sort(bydays); booked.sort(bydays);
+  return {fresh,prio,free,booked,paid};
+}
+function renderStock(){ const box=document.getElementById('stockSegments');
+  if(!state.stock.length){ box.innerHTML=`<div class="empty">No VINs yet. ${specModels().length?'':'Load the Hyundai catalogue, then '}click \u201c+ Add VIN\u201d.</div>`; return; }
+  const seg=stockSegments();
+  const badge=t=>t>=3?'<span class="tag warn">180d+</span>':t>=2?'<span class="tag warn">150d+</span>':t>=1?'<span class="tag warn">90d+</span>':'';
+  const rowHtml=(x,editable=true)=>{ const r=x.r; return `<tr>
+    <td>${r.stockId||''}</td><td>${r.model}</td><td>${r.variant||''}</td><td>${r.colour||''}</td>
+    <td class="mono" style="font-size:11px">${r.VIN}</td><td class="num">${x.dd!=null?x.dd:'\u2014'} ${badge(x.tier)}</td>
+    <td class="num rupee">${inr(r.incentive)}${x.boost?' <span class="tag warn">boost</span>':''}</td>
+    <td>${x.st==='Free'?'<span class="tag yes">Free</span>':x.st==='Booked'?'<span class="tag blue">Booked'+(r.taggedTo?' \u00b7 '+r.taggedTo:'')+'</span>':'<span class="tag no">Paid</span>'}</td>
+    <td class="rowact"><button class="linkbtn" onclick="editStock('${r.id}')">Edit</button> <button class="linkbtn" onclick="tagStock('${r.id}')">Tag</button> <button class="linkbtn" style="color:var(--red)" onclick="delStock('${r.id}')">Del</button></td></tr>`; };
+  const table=(title,list,color)=> list.length?`<div class="section-title" style="margin:18px 0 8px"><h2>${title} <span style="color:var(--muted);font-weight:400">(${list.length})</span></h2></div>
+    <div class="tablewrap" style="border-left:4px solid ${color}"><table><thead><tr><th>Stock ID</th><th>Model</th><th>Variant</th><th>Colour</th><th>VIN</th><th class="num">Days</th><th class="num">Incentive</th><th>Status</th><th></th></tr></thead><tbody>${list.map(x=>rowHtml(x)).join('')}</tbody></table></div>`:'';
+  box.innerHTML =
+    table('\uD83D\uDD34 Priority \u2014 clear-out (boosted / aged free stock)',seg.prio,'#B45309')
+    + table('\uD83D\uDFE2 Just arrived (last 7 days)',seg.fresh,'#0E9F6E')
+    + table('Free stock',seg.free,'#CBD5E1')
+    + table('Booked',seg.booked,'#9AA7B4')
+    + table('Paid \u00b7 consumed',seg.paid,'#E3E8EF');
+}
+async function seedCatalogue(){ if(!state.unlocked){ toast('Unlock admin (Slabs & settings) to load the catalogue'); return; }
+  if(!cloudActive()){ toast('Connect the Sheet first'); return; }
+  toast('Loading catalogue\u2026'); const r=await cloud('seedSpecs',{}); if(r&&r.ok){ const g=await cloud('getAll',{}); if(g&&g.ok){ state.specs=g.specs||[]; state.stock=g.stock||[]; persist(); renderStock(); toast('Catalogue loaded ('+(state.specs.length)+' specs)'); } } else { toast('Catalogue: '+((r&&r.error)||'failed')); } }
+
+function downloadStockPDF(){ const seg=stockSegments(); const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const sec=(title,list,color)=> !list.length?'':`<h2 style="background:${color};color:#fff;padding:6px 10px;border-radius:6px;margin:16px 0 6px;font-size:13px">${title} (${list.length})</h2>
+    <table><thead><tr><th>Model</th><th>Variant</th><th>Colour / Spec</th><th>Stock ID</th><th style="text-align:right">Days</th><th style="text-align:right">Incentive</th></tr></thead><tbody>
+    ${list.map(x=>{const r=x.r;return `<tr><td>${r.model}</td><td>${r.variant||''}</td><td>${r.colour||''} ${r.specCode?'<span style=\"color:#888;font-size:10px\">'+r.specCode+'</span>':''}</td><td>${r.stockId||''}</td><td style="text-align:right">${x.dd!=null?x.dd:''}</td><td style="text-align:right;font-weight:700">${inr(r.incentive)}</td></tr>`}).join('')}
+    </tbody></table>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>RDB Hyundai stock &amp; incentives</title>
+  <style>body{font-family:Arial,Helvetica,sans-serif;color:#0B1F33;margin:18px;font-size:12px}
+  h1{font-size:18px;margin:0 0 2px}.sub{color:#5B6B7E;font-size:11px;margin:0 0 4px}
+  table{border-collapse:collapse;width:100%;margin-bottom:4px}th{background:#F3F7FC;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:#5B6B7E;padding:5px 8px;border-bottom:1px solid #E3E8EF}
+  td{padding:5px 8px;border-bottom:1px solid #EEF2F7}
+  .legend{font-size:10px;color:#5B6B7E;margin:6px 0 2px}@media print{@page{margin:12mm}}</style></head>
+  <body><h1>RDB Hyundai \u2014 Stock &amp; Incentives</h1><div class="sub">Company-wide \u00b7 ${today} \u00b7 focus on Free &amp; Priority stock</div>
+  <div class="legend">Priority = clear these first \u00b7 Just arrived = new metal \u00b7 Booked = already taken. Incentive shown is what you earn on that VIN.</div>
+  ${sec('PRIORITY — CLEAR-OUT',seg.prio,'#B45309')}
+  ${sec('JUST ARRIVED',seg.fresh,'#0E9F6E')}
+  ${sec('FREE STOCK',seg.free,'#334155')}
+  ${sec('BOOKED',seg.booked.map(x=>({r:{model:x.r.model,variant:x.r.variant,colour:x.r.colour,specCode:x.r.specCode,stockId:x.r.stockId,incentive:x.r.incentive},dd:x.dd})),'#9AA7B4')}
+  <div style="margin-top:14px;color:#9AA7B4;font-size:10px">RDB Hyundai \u00b7 GOING TOGETHER, GROWING TOGETHER</div>
+  <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script></body></html>`;
+  const w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to download the PDF'); return; } w.document.write(html); w.document.close();
+}
+
+/* ---- pricing editor (admin) ---- */
+function renderPricing(){ const S=state.settings; const g=document.getElementById('pcGlobal'); if(!g)return;
+  g.value=(S.globalPct!=null?S.globalPct:0.10); document.getElementById('pcFloor').value=S.incentiveFloor; document.getElementById('pcCeil').value=S.incentiveCeiling; { const b=document.getElementById('pcBuf'); if(b)b.value=Math.round((S.discountBuffer!=null?S.discountBuffer:0.10)*100); }
+  const models=specModels().length?specModels():Object.keys(S.modelPct||{});
+  const tb=document.querySelector('#pricingTable tbody');
+  tb.innerHTML=models.map(m=>{ const key=m.toUpperCase().replace(/\s+/g,' ').trim(); const v=(S.modelPct&&S.modelPct[key]!=null)?S.modelPct[key]:''; return `<tr><td>${m}</td><td class="num"><input type="number" step="any" value="${v}" onchange="setModelPct('${key.replace(/'/g,"\\'")}',this.value)" style="width:80px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px"></td></tr>`; }).join('')
+    || '<tr><td colspan="2" class="empty">Load the Hyundai catalogue (Stock tab) to list models.</td></tr>';
+}
+function setPricing(f,v,isPct){ state.settings[f]=isPct?(num(v)):num(v); persist(); syncConfig(); }
+function setModelPct(key,v){ state.settings.modelPct=state.settings.modelPct||{}; if(v.trim()==='')delete state.settings.modelPct[key]; else state.settings.modelPct[key]=num(v); persist(); syncConfig(); }
+async function applyPricing(){ const msg=document.getElementById('pricingMsg'); if(!cloudActive()){ if(msg)msg.textContent='Connect the Sheet to recompute.'; return; }
+  if(msg)msg.textContent='Recomputing defaults from margin\u2026'; await cloud('saveConfig',{settings:state.settings,snapshots:state.snapshots,pass:state.pass});
+  const r=await cloud('recomputeDefaults',{}); if(r&&r.ok){ const g=await cloud('getAll',{}); if(g&&g.ok){ state.specs=g.specs||[]; persist(); } if(msg)msg.textContent='Defaults updated. New VINs will use the new numbers (existing stock keeps its locked incentive).'; toast('Defaults recomputed'); }
+  else if(msg)msg.textContent='Recompute needs an admin password.';
+}
+
+function addClawback(){ const g=x=>{const e=document.getElementById(x);return e?e.value.trim():'';};
+  const sc=g('cbSC'), amt=num(g('cbAmt')), date=g('cbDate'), note=g('cbNote');
+  if(!sc||!amt||!date){ toast('Consultant, amount and date are required'); return; }
+  const o=((state.settings.consultants||[]).find(c=>c.name===sc)||{}).outlet||'';
+  state.settings.clawbacks=state.settings.clawbacks||[]; state.settings.clawbacks.push({sc,outlet:o,amount:amt,date,note});
+  persist(); syncConfig(); renderPayouts(); toast('Clawback added'); }
+function delClawback(i){ if(!confirm('Remove this clawback?'))return; state.settings.clawbacks.splice(i,1); persist(); syncConfig(); renderPayouts(); }
 function setParam(f,v){ state.settings[f]=num(v); persist(); syncConfig(); toast("Saved"); }
 function renameModel(el){ const oldK=el.dataset.model,newK=el.value.trim(); if(!newK||newK===oldK)return; const r=state.settings.rates; const nr={}; Object.keys(r).forEach(k=>nr[k===oldK?newK:k]=r[k]); state.settings.rates=nr; persist(); syncConfig(); renderSlabs(); }
 function addRateRow(){ let n="NEW MODEL"; let i=1; while(state.settings.rates[n]){n="NEW MODEL "+(++i);} state.settings.rates[n]=[0,0,0]; persist(); syncConfig(); renderSlabs(); }
@@ -775,8 +1179,8 @@ function exportPayouts(){
   const m=model(),from=document.getElementById("qFrom").value,to=document.getElementById("qTo").value;
   const m3=[document.getElementById("qM1").value,document.getElementById("qM2").value,document.getElementById("qM3").value].map(x=>x.trim().toUpperCase()).filter(Boolean);
   const d=disburse(m,from,to,m3,state.settings);
-  const lines=["Consultant,Outlet,RealisedIncentive,TopSeller,DreamIt,ManagerOverride,TotalPayable"];
-  d.rows.forEach(r=>lines.push([r.sc,r.outlet,Math.round(r.realised),r.top,r.dream,r.mgr,Math.round(r.total)].join(",")));
+  const lines=["Consultant,Outlet,RealisedIncentive,TopSeller,ManagerOverride,TotalPayable"];
+  d.rows.forEach(r=>lines.push([r.sc,r.outlet,Math.round(r.realised),r.top,r.mgr,Math.round(r.total)].join(",")));
   lines.push("");lines.push("BackOfficePool,,"+Math.round(d.bo));lines.push("GrandTotal,,"+Math.round(d.grand));
   download("RDB_disbursement.csv",lines.join("\n"));
 }
@@ -808,8 +1212,8 @@ function normCar(c){ c=Object.assign({},c); if(!c.id)c.id=uid();
   for(const k in c){ if(c[k]===null||c[k]===undefined)c[k]=""; else if(typeof c[k]!=="string") c[k]=String(c[k]); } return c; }
 async function cloudLoad(){ if(!cloudActive()){setCloudStatus('local');renderDashboard();return;}
   setCloudStatus('syncing'); const r=await cloud('getAll',{});
-  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{};
-    if(r.config){ if(r.config.settings)state.settings=Object.assign(defaultSettings(),r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
+  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.specs=r.specs||[]; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
+    if(r.config){ if(r.config.settings)state.settings=normSettings(r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
     persist(); setCloudStatus('connected'); refreshAll(); }
   else if(r&&/not authorized/.test(r.error||'')){ setCloudStatus('offline'); showKeyGate(); }
   else { setCloudStatus('offline'); renderDashboard(); if(r&&r.error)toast('Cloud: '+r.error); } }
@@ -833,8 +1237,8 @@ function showKeyGate(){ const g=document.getElementById('keyGate'); if(g){ g.sty
 function hideKeyGate(){ const g=document.getElementById('keyGate'); if(g)g.style.display='none'; }
 async function submitKey(){ const v=document.getElementById('keyInput').value.trim(); state.accessKey=v; persist();
   document.getElementById('keyErr').textContent='Checking…'; const r=await cloud('getAll',{});
-  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{};
-    if(r.config){ if(r.config.settings)state.settings=Object.assign(defaultSettings(),r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
+  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.specs=r.specs||[]; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
+    if(r.config){ if(r.config.settings)state.settings=normSettings(r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
     persist(); hideKeyGate(); setCloudStatus('connected'); refreshAll(); toast('Access granted'); }
   else { document.getElementById('keyErr').textContent = (r&&/not authorized/.test(r.error||''))?'That password is not recognised. Ask the administrator.':'Could not reach the Sheet — check the connection.'; } }
 
@@ -842,7 +1246,7 @@ async function submitKey(){ const v=document.getElementById('keyInput').value.tr
 function applyLogos(){ const r=document.getElementById('brandRDB'); if(r)r.src=LOGO_RDB;
   const h=document.getElementById('brandHY'); if(h)h.src=LOGO_HY; const l=document.getElementById('lockLogo'); if(l)l.src=LOGO_RDB; const g=document.getElementById('gateLogo'); if(g)g.src=LOGO_RDB; }
 function migrateIds(){ let ch=false; state.cars.forEach(c=>{ if(!c.id){c.id=uid();ch=true;} }); if(ch)persist(); }
-applyLogos(); migrateIds();
+applyLogos(); migrateIds(); state.settings=normSettings(state.settings);
 const beEl=document.getElementById('beUrl'); if(beEl) beEl.value=state.backendUrl||'';
 const kEl=document.getElementById('keyField'); if(kEl) kEl.value=state.accessKey||'';
 if(cloudActive()) cloudLoad(); else { setCloudStatus('local'); renderDashboard(); }

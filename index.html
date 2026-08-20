@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b10</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b11</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -319,9 +319,11 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
           <div class="ring">🔒</div>
           <h2 style="font-size:16px">Admin access</h2>
           <p class="hint">Slabs and settings are locked so consultants can't change payout maths.</p>
-          <div class="field"><input type="password" id="pw" placeholder="Password" onkeydown="if(event.key==='Enter')tryUnlock()"></div>
+          <div class="field" style="position:relative"><input type="password" id="pw" placeholder="Password" onkeydown="if(event.key==='Enter')tryUnlock()" style="padding-right:56px"><button type="button" onclick="togglePw()" id="pwEye" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-weight:600">Show</button></div>
           <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="tryUnlock()">Unlock</button>
           <div class="err" id="pwErr"></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:10px">Default password is <b>rdb-admin</b> (unless you changed it).</div>
+          <div id="pwAdminReset" style="display:none;margin-top:6px"><button class="btn sm" onclick="resetUnlockPass()">Forgot it? Reset to default (admin)</button></div>
         </div>
       </div>
       <div id="slabBody" style="display:none">
@@ -384,7 +386,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b10 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b11 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -910,9 +912,11 @@ function renderPayouts(){
 }
 
 /* ============================ SLABS (locked) ============================ */
+function togglePw(){ const i=document.getElementById("pw"), e=document.getElementById("pwEye"); if(!i)return; if(i.type==="password"){ i.type="text"; e.textContent="Hide"; } else { i.type="password"; e.textContent="Show"; } }
+function resetUnlockPass(){ if(!state.isAdmin){ toast("Only the admin login can reset this"); return; } if(!confirm("Reset the Slabs unlock password back to \'rdb-admin\'?"))return; state.pass=hash("rdb-admin"); persist(); syncConfig(); state.unlocked=true; renderSlabs(); toast("Password reset to rdb-admin and unlocked"); }
 function tryUnlock(){ const v=document.getElementById("pw").value; if(hash(v)===state.pass){ state.unlocked=true; renderSlabs(); toast("Unlocked"); } else { document.getElementById("pwErr").textContent="Wrong password. Try again."; } }
 function lockAgain(){ state.unlocked=false; renderSlabs(); }
-function renderSlabs(){
+function renderSlabs(){ { const ar=document.getElementById('pwAdminReset'); if(ar)ar.style.display=state.isAdmin?'block':'none'; }
   document.getElementById("slabLock").style.display=state.unlocked?"none":"block";
   document.getElementById("slabBody").style.display=state.unlocked?"block":"none";
   if(!state.unlocked)return;

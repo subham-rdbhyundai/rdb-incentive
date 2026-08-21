@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b20</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b21</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -418,7 +418,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b20 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b21 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -994,7 +994,7 @@ function delConsultant(i){ const c=state.settings.consultants[i]; if(confirm('Re
 /* ---- scoring view ---- */
 function scoringRoster(){ if(state.settings.consultants&&state.settings.consultants.length) return state.settings.consultants.slice();
   const seen={},out=[]; state.cars.forEach(c=>{ if(c.SalesConsultant&&!seen[c.SalesConsultant]){ seen[c.SalesConsultant]=1; out.push({name:c.SalesConsultant,outlet:c.Outlet,tenure:c.Tenure}); } }); return out; }
-function allMonths(){ return [...new Set([...state.cars.map(c=>c.MonthKey),...Object.keys(state.kpi).map(k=>k.split('|')[0]),...Object.keys(state.settings.targetsByMonth||{})].filter(Boolean))].sort((a,b)=>monthNum(b)-monthNum(a)); }
+function allMonths(){ const MK=/^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)-\d{4}$/; return [...new Set([...state.cars.map(c=>c.MonthKey),...Object.keys(state.kpi).map(k=>k.split('|')[0]),...Object.keys(state.settings.targetsByMonth||{})].filter(m=>m&&MK.test(String(m).toUpperCase())))].sort((a,b)=>monthNum(b)-monthNum(a)); }
 function currentMonthLabel(){ const d=new Date(); return MONTHS[d.getMonth()]+'-'+d.getFullYear(); }
 function scoreRows(month){ const S=state.settings; const w=S.ebW, swc=w[0]+w[1]+w[2]+w[3]; const vw=S.targetVolWeights, vs=vw.enq+vw.td+vw.bk+vw.rt+vw.de;
   return scoringRoster().map(cons=>{ const key=month+"|"+cons.name; const K=state.kpi[key]||{};

@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b26</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b27</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -255,7 +255,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
           <button class="btn" onclick="exportPayouts()">Export CSV</button>
         </div>
       </div>
-      <div class="section-title"><h2>Per-consultant TSR gate</h2><span style="font-size:12px;color:var(--muted)">Enquiries / TD / Home / Book are greyed \u2014 they come from <b>Daily entry</b>. Enter <b>Work</b> &amp; <b>Pres.</b> (attendance) here, or set a manual TSR.</span></div>
+      <div class="section-title"><h2>Per-consultant TSR gate</h2><span style="font-size:12px;color:var(--muted)">Enquiries / TD / Home / Book are greyed — they come from <b>Daily entry</b>. Enter <b>Work</b> &amp; <b>Pres.</b> (attendance) here, or set a manual TSR.</span></div>
       <div class="tablewrap"><table id="tsrTable"><thead></thead><tbody></tbody></table></div>
       <div class="section-title"><h2>Disbursement</h2></div>
       <div class="tablewrap"><table id="payTable"><thead></thead><tbody></tbody></table></div>
@@ -348,7 +348,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <!-- DAILY -->
     <section class="view" id="view-daily">
       <h1>Daily entry</h1>
-      <p class="sub">Enter each consultant\u2019s numbers for the day. Daily entries add up to the month\u2019s funnel total (attendance stays monthly). Retails &amp; deliveries come from cars automatically.</p>
+      <p class="sub">Enter each consultant’s numbers for the day. Daily entries add up to the month’s funnel total (attendance stays monthly). Retails &amp; deliveries come from cars automatically.</p>
       <div class="bar" style="align-items:flex-end">
         <div class="field"><label>Date</label><input type="date" id="dyDate" onchange="renderDaily()"></div>
         <div class="field"><label>Mode</label><select id="dyMode" onchange="renderDaily()"><option value="daily">Daily add</option><option value="opening">Opening balance (seed)</option></select></div>
@@ -433,7 +433,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b26 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b27 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -503,7 +503,7 @@ function settingsFor(monthKey, snapshots, current){
 /* ---- target cascade (company -> unit -> consultant, by headcount; trainee = 0.5) ---- */
 function hcOf(t){ return (["trainee","fresher"].indexOf(String(t).toLowerCase())>=0)?0.5:1; }
 function cascadeCtx(month, S){
-  const T=(S.targetsByMonth&&(S.targetsByMonth[month]||S.targetsByMonth[String(month||'').toUpperCase()]))||null;
+  const T=(S.targetsByMonth&&S.targetsByMonth[String(month||'').toUpperCase()])||null;
   const roster=S.consultants||[]; let compHC=0, unitHC={};
   roster.forEach(c=>{ const h=hcOf(c.tenure); compHC+=h; unitHC[c.outlet]=(unitHC[c.outlet]||0)+h; });
   return {T:(T&&T.company)?T:null, roster, compHC, unitHC};
@@ -709,6 +709,7 @@ function normSettings(saved){ saved=saved||{};
   if(!s.targetRatios||typeof s.targetRatios!=="object") s.targetRatios={retailOfEnq:0.08,tdOfEnq:0.55,bkOfEnq:0.20,deOfRetail:1.0};
   ["retailOfEnq","tdOfEnq","bkOfEnq","deOfRetail"].forEach(function(k,i){ if(s.targetRatios[k]==null) s.targetRatios[k]=[0.08,0.55,0.20,1.0][i]; });
   if(!s.opening||typeof s.opening!=="object") s.opening={};
+  if(s.targetsByMonth&&typeof s.targetsByMonth==="object"){ var _tbm=s.targetsByMonth, _norm={}; Object.keys(_tbm).forEach(function(k){ if(k===String(k).toUpperCase()) _norm[k]=_tbm[k]; }); Object.keys(_tbm).forEach(function(k){ var uk=String(k).toUpperCase(); if(!(uk in _norm)) _norm[uk]=_tbm[k]; }); s.targetsByMonth=_norm; }
   if(s.floorWaiveAt==null)s.floorWaiveAt=8; if(s.discountBuffer==null)s.discountBuffer=0;
   if(!s.modelPct)s.modelPct={"NIOS": 0.113, "PRIME HB": 0.231, "AURA": 0.113, "PRIME SD": 0.181, "EXTER PE": 0.091, "ALL NEW I20": 0.07, "I20 N LINE": 0.064, "VERNA PE": 0.064, "VENUE": 0.05, "VENUE N LINE": 0.064, "CRETA": 0.069, "CRETA N LINE": 0.075, "ALCAZAR": 0.094, "CRETA EV": 0.11, "IONIQ 5": 0.1};
   if(s.globalPct==null)s.globalPct=0.10; if(s.incentiveFloor==null)s.incentiveFloor=4000; if(s.incentiveCeiling==null)s.incentiveCeiling=20000; if(!s.ageFlags)s.ageFlags=[90,150,180]; if(s.vinMode==null)s.vinMode=true;

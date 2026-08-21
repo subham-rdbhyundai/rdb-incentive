@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b12</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b13</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -266,8 +266,9 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <div id="arrearsBody">
         <h1>Arrears — pre-cutover payouts</h1>
         <p class="sub">What was owed before the system went live (agreed monthly figures, recorded not recomputed). Pay it down in instalments and track the balance. Separate from the live engine.</p>
+        <p class="hint" style="margin:-4px 0 12px">Tip: click <b>Breakdown / payments</b> on any row to open the detail for that person below. Owed can be typed directly, or filled month-by-month (it then totals automatically).</p>
         <div id="arrearsTotals" class="grid g4" style="margin-bottom:14px"></div>
-        <div class="bar"><button class="btn" onclick="printArrears('')">Print all statements</button><div class="spacer" style="flex:1"></div><div class="field"><label>Cutover (live from)</label><input id="arrCut" style="width:120px" onchange="setArrearsCutover(this.value)"></div></div>
+        <div class="bar"><button class="btn primary" onclick="addArrearsPerson()">+ Add person (left the team)</button><button class="btn" onclick="printArrears('')">Print all statements</button><div class="spacer" style="flex:1"></div><div class="field"><label>Cutover (live from)</label><input id="arrCut" style="width:120px" onchange="setArrearsCutover(this.value)"></div></div>
         <div class="tablewrap"><table id="arrearsTable"><thead><tr><th>Consultant</th><th class="num">Owed</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
         <div id="arrearsDetail"></div>
       </div>
@@ -400,7 +401,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b12 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b13 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1192,13 +1193,16 @@ function arrDetail(name){ const box=document.getElementById('arrearsDetail'); if
   const a=arrObj(name); const months=arrearsMonthList(); const bd=arrBreakdownSum(a);
   const monthRows=months.map(m=>`<td class="num"><input type="number" value="${(a.months&&a.months[m])??''}" onchange="setArrearsMonth('${name.replace(/'/g,"\\'")}','${m}',this.value)" placeholder="0" style="width:78px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px"></td>`).join('');
   const payRows=(a.payments||[]).map((p,i)=>`<tr><td>${p.date||''}</td><td class="num rupee">${inr(p.amount)}</td><td>${p.note||''}</td><td><button class="linkbtn" style="color:var(--red)" onclick="delArrearsPayment('${name.replace(/'/g,"\\'")}',${i})">Del</button></td></tr>`).join('');
-  box.innerHTML=`<div class="card pad" style="margin-top:14px"><div class="section-title" style="margin:0 0 8px"><h2>${name} \u2014 detail</h2><span style="font-size:12px;color:var(--muted)">${bd.has?'Owed = sum of the monthly breakdown ('+inr(bd.sum)+')':'Owed typed directly \u2014 fill months below to switch to a breakdown'}</span></div>
+  box.innerHTML=`<div class="card pad" style="margin-top:14px"><div class="section-title" style="margin:0 0 8px"><h2>${name} \u2014 detail</h2><button class="linkbtn" style="color:var(--red)" onclick="delArrearsPerson('${name.replace(/'/g,"\\'")}')">Remove this person</button><span style="font-size:12px;color:var(--muted)">${bd.has?'Owed = sum of the monthly breakdown ('+inr(bd.sum)+')':'Owed typed directly \u2014 fill months below to switch to a breakdown'}</span></div>
     <h3 style="font-size:13px;color:var(--blue);margin:6px 0">Monthly breakdown (optional)</h3>
     <div class="tablewrap"><table><thead><tr>${months.map(m=>`<th class="num">${m}</th>`).join('')}</tr></thead><tbody><tr>${monthRows}</tr></tbody></table></div>
     <h3 style="font-size:13px;color:var(--blue);margin:14px 0 6px">Payments</h3>
     <div class="bar" style="margin:0 0 8px;align-items:end;flex-wrap:wrap"><div class="field"><label>Date</label><input id="apDate" type="date"></div><div class="field"><label>Amount \u20B9</label><input id="apAmt" type="number" style="width:110px"></div><div class="field" style="flex:1;min-width:140px"><label>Note</label><input id="apNote" placeholder="e.g. instalment 1"></div><button class="btn" onclick="addArrearsPayment('${name.replace(/'/g,"\\'")}')">Add payment</button></div>
     ${payRows?`<div class="tablewrap"><table><thead><tr><th>Date</th><th class="num">Amount</th><th>Note</th><th></th></tr></thead><tbody>${payRows}</tbody></table></div>`:'<div class="hint">No payments yet.</div>'}</div>`;
+  box.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function addArrearsPerson(){ var nm=(prompt('Add a person to the arrears ledger (e.g. a consultant who has left the team):')||'').trim(); if(!nm)return; if((state.settings.arrears||{})[nm]){ toast(nm+' is already listed'); } arrObj(nm); persist(); syncConfig(); renderArrears(); toast('Added '+nm); }
+function delArrearsPerson(name){ if(!confirm('Remove '+name+' from the arrears ledger? Their record here will be deleted.'))return; if(state.settings.arrears)delete state.settings.arrears[name]; persist(); syncConfig(); var b=document.getElementById('arrearsDetail'); if(b){b.dataset.open='';b.innerHTML='';} renderArrears(); toast('Removed '+name); }
 function setArrearsOwed(name,v){ const a=arrObj(name); a.owed=v.trim()===''?'':num(v); persist(); syncConfig(); renderArrears(); }
 function setArrearsMonth(name,m,v){ const a=arrObj(name); a.months=a.months||{}; if(v.trim()==='')delete a.months[m]; else a.months[m]=num(v); persist(); syncConfig(); renderArrears(); arrDetail(name); arrDetail(name); }
 function addArrearsPayment(name){ const g=x=>{const e=document.getElementById(x);return e?e.value.trim():'';}; const date=g('apDate'),amt=num(g('apAmt')),note=g('apNote'); if(!date||!amt){ toast('Date and amount needed'); return; } const a=arrObj(name); a.payments=a.payments||[]; a.payments.push({date,amount:amt,note}); persist(); syncConfig(); renderArrears(); document.getElementById('arrearsDetail').dataset.open=''; arrDetail(name); toast('Payment recorded'); }

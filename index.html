@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b19</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b20</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -264,12 +264,12 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <!-- REPORT CARDS -->
     <section class="view" id="view-reportcards">
       <h1>Monthly report cards</h1>
-      <p class="sub">Har consultant ka live report card — scores, earnings, galtiyan, aur aage kaise behtar karein. Print karke haath mein do. (Margins kabhi nahi dikhte.)</p>
-      <div class="bar">
-        <div class="field"><label>Month</label><select id="rcMonth" onchange="renderReportCards()"></select></div>
+      <p class="sub">Each consultant's live report card — scores, earnings, watch-outs, and how to improve. Pick a month, then print and hand out. (Dealer margins are never shown.)</p>
+      <div class="bar" style="align-items:flex-end">
+        <div class="field"><label>Show month</label><select id="rcMonth" onchange="renderReportCards()"></select></div>
         <div class="spacer" style="flex:1"></div>
-        <button class="btn" onclick="printReportCards('')">Print all cards</button>
-        <button class="btn" onclick="printOutletSummary()">Print outlet summaries</button>
+        <button class="btn primary" onclick="printReportCards('')">🖨 Print all cards</button>
+        <button class="btn" onclick="printOutletSummary()">🖨 Print outlet summaries</button>
       </div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
         <div id="rcList" style="flex:0 0 240px;min-width:200px"></div>
@@ -418,7 +418,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b19 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b20 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>

@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b22</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b23</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -418,7 +418,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b22 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b23 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -440,7 +440,7 @@ function defaultSettings(){return{
   consultants:[], clawbacks:[], arrears:{}, arrearsCutover:"SEP-2026",
   targetVolWeights:{enq:10,td:15,bk:20,rt:30,de:25},
   penTargets:{insurance:0.70,finance:0.50,exchange:0.30},
-  targetsByMonth:{},
+  targetsByMonth:{}, targetRatios:{retailOfEnq:0.08,tdOfEnq:0.55,bkOfEnq:0.20,deOfRetail:1.0},
   vinMode:true, globalPct:0.10, incentiveFloor:4000, incentiveCeiling:20000, ageFlags:[90,150,180],
   modelPct:{"NIOS": 0.113, "PRIME HB": 0.231, "AURA": 0.113, "PRIME SD": 0.181, "EXTER PE": 0.091, "ALL NEW I20": 0.07, "I20 N LINE": 0.064, "VERNA PE": 0.064, "VENUE": 0.05, "VENUE N LINE": 0.064, "CRETA": 0.069, "CRETA N LINE": 0.075, "ALCAZAR": 0.094, "CRETA EV": 0.11, "IONIQ 5": 0.1},
   leads:{Haldia:"Om Prakash",Tamluk:"Sujan Maity",Contai:"Gopal Singha"},
@@ -584,10 +584,10 @@ function computeCars(cars, kpi, snapshots, current, stock){
     r.PROF= r.retailed? r.profQ/r.retailed : 0;
     r.ATT = (K.wd>0)? Math.min(1,num(K.dp)/num(K.wd)) : 0;
     // funnel conversion (ETBRD)
-    const enq=num(K.enq),td=num(K.td),bk=num(K.bk),rt=r.retailed,de=r.delivered,pay=r.payable;
+    const enq=num(K.enq),td=num(K.td),hv=num(K.hv),bk=num(K.bk),rt=r.retailed,de=r.delivered,pay=r.payable; const eng=td+hv;
     const w=S.ebW, sw=w[0]+w[1]+w[2]+w[3]+w[4];
     const wn=(a,b)=>b>0?Math.min(1,a/b):0;
-    r.ETB = sw? (wn(td,enq)*w[0]+wn(bk,td)*w[1]+wn(rt,bk)*w[2]+wn(de,rt)*w[3]+wn(pay,de)*w[4])/sw : 0;
+    r.ETB = sw? (wn(eng,enq)*w[0]+wn(bk,eng)*w[1]+wn(rt,bk)*w[2]+wn(de,rt)*w[3]+wn(pay,de)*w[4])/sw : 0;
     // penetration vs target (upsell KPI)
     const pt=S.penTargets||{}; const penOne=(y,t)=> (t>0)? ((r.retailed>0)? Math.min(1,(y/r.retailed)/t) : 1) : 1;
     let ups=[]; if((pt.insurance||0)>0)ups.push(penOne(r.insY,pt.insurance)); if((pt.finance||0)>0)ups.push(penOne(r.finY,pt.finance)); if((pt.exchange||0)>0)ups.push(penOne(r.excY,pt.exchange));
@@ -595,7 +595,7 @@ function computeCars(cars, kpi, snapshots, current, stock){
     r.penActual={insurance:r.retailed?r.insY/r.retailed:0,finance:r.retailed?r.finY/r.retailed:0,exchange:r.retailed?r.excY/r.retailed:0};
     // target achievement (volume vs cascaded target)
     const tgt=scTargetFor(r.sc,r.outlet,r.tenure,r.month,S);
-    r.targets=tgt; r.actuals={enq:enq,td:td,bk:bk,rt:rt,de:de};
+    r.targets=tgt; r.actuals={enq:enq,td:eng,bk:bk,rt:rt,de:de}; r.hv=hv; r.tdOnly=td;
     if(tgt){ const vw=S.targetVolWeights, vs=vw.enq+vw.td+vw.bk+vw.rt+vw.de;
       const a=k=>(tgt[k]>0)?Math.min(1,r.actuals[k]/tgt[k]):1;
       r.ach={enq:a('enq'),td:a('td'),bk:a('bk'),rt:a('rt'),de:a('de')};
@@ -606,7 +606,7 @@ function computeCars(cars, kpi, snapshots, current, stock){
     let tden=S.wCSI+S.wTAT+S.wETB+S.wATT+S.wUP+S.wPROF;
     if(r.TGT!==null){ tn+=r.TGT*S.wTGT; tden+=S.wTGT; }
     r.autoTSR = tden? tn/tden : 0;
-    const hasKPI = (K.enq||K.td||K.bk||K.wd||K.dp||r.TGT!==null); // CSI alone is NOT a complete TSR -> stays unset/held
+    const hasKPI = (K.enq||K.td||K.hv||K.bk||K.wd||K.dp||r.TGT!==null); // CSI alone is NOT a complete TSR -> stays unset/held
     if(K.tsr!==undefined && K.tsr!=="" && K.tsr!==null){ r.TSR=num(K.tsr)/100; r.tsrSource="manual"; }
     else if(hasKPI){ r.TSR=r.autoTSR; r.tsrSource="auto"; }
     else { r.TSR=null; r.tsrSource="unset"; }
@@ -691,6 +691,8 @@ function normSettings(saved){ saved=saved||{};
   if(!s.consultants)s.consultants=[];
   if(s.floorPolicy!==4){ s.floorConfirmed=1; s.floorFresher=1; s.floorWaiveAt=8; s.target=6; s.topThr=8; s.waiveAbove=8; s.floorPolicy=4; }
   if(s.topAmt1===undefined){ s.topAmt1=s.topAmt||5000; s.topAmt2=4000; s.topAmt3=3000; }
+  if(!s.targetRatios||typeof s.targetRatios!=="object") s.targetRatios={retailOfEnq:0.08,tdOfEnq:0.55,bkOfEnq:0.20,deOfRetail:1.0};
+  ["retailOfEnq","tdOfEnq","bkOfEnq","deOfRetail"].forEach(function(k,i){ if(s.targetRatios[k]==null) s.targetRatios[k]=[0.08,0.55,0.20,1.0][i]; });
   if(s.floorWaiveAt==null)s.floorWaiveAt=8; if(s.discountBuffer==null)s.discountBuffer=0;
   if(!s.modelPct)s.modelPct={"NIOS": 0.113, "PRIME HB": 0.231, "AURA": 0.113, "PRIME SD": 0.181, "EXTER PE": 0.091, "ALL NEW I20": 0.07, "I20 N LINE": 0.064, "VERNA PE": 0.064, "VENUE": 0.05, "VENUE N LINE": 0.064, "CRETA": 0.069, "CRETA N LINE": 0.075, "ALCAZAR": 0.094, "CRETA EV": 0.11, "IONIQ 5": 0.1};
   if(s.globalPct==null)s.globalPct=0.10; if(s.incentiveFloor==null)s.incentiveFloor=4000; if(s.incentiveCeiling==null)s.incentiveCeiling=20000; if(!s.ageFlags)s.ageFlags=[90,150,180]; if(s.vinMode==null)s.vinMode=true;
@@ -925,7 +927,7 @@ function renderPayouts(){
   const S0=state.settings, sw=S0.wCSI+S0.wTAT+S0.wETB+S0.wATT+S0.wUP+S0.wPROF;
   const th=document.querySelector("#tsrTable thead");
   th.innerHTML=`<tr><th>Month</th><th>Consultant</th><th class="num">Ret.</th>
-    <th class="num">Enq</th><th class="num">TD</th><th class="num">Book</th><th class="num">Work</th><th class="num">Pres.</th>
+    <th class="num">Enq</th><th class="num">TD</th><th class="num">Home</th><th class="num">Book</th><th class="num">Work</th><th class="num">Pres.</th>
     <th class="num">CSI</th><th class="num">TAT</th><th class="num">ETBRD</th><th class="num">Att</th><th class="num">Upsell</th><th class="num">Profit (off)</th>
     <th class="num">TSR auto</th><th class="num">Override&nbsp;%</th><th class="num">Gate</th><th>Source</th></tr>`;
   const tb=document.querySelector("#tsrTable tbody");
@@ -935,7 +937,7 @@ function renderPayouts(){
     const autoT=(r.autoTSR!=null?r.autoTSR:0);
     const src=r.tsrSource==="manual"?'<span class="tag blue">manual</span>':r.tsrSource==="auto"?'<span class="tag yes">auto</span>':'<span class="tag warn">unset · HELD (not paid)</span>';
     return `<tr><td>${r.month}</td><td>${r.sc}</td><td class="num">${r.retailed}</td>
-      <td class="num">${inp('enq',K.enq)}</td><td class="num">${inp('td',K.td)}</td><td class="num">${inp('bk',K.bk)}</td><td class="num">${inp('wd',K.wd)}</td><td class="num">${inp('dp',K.dp)}</td>
+      <td class="num">${inp('enq',K.enq)}</td><td class="num">${inp('td',K.td)}</td><td class="num">${inp('hv',K.hv)}</td><td class="num">${inp('bk',K.bk)}</td><td class="num">${inp('wd',K.wd)}</td><td class="num">${inp('dp',K.dp)}</td>
       <td class="num" style="color:var(--muted)">${sub(r.CSI)}</td><td class="num" style="color:var(--muted)">${sub(r.TAT)}</td><td class="num" style="color:var(--muted)">${sub(r.ETB)}</td><td class="num" style="color:var(--muted)">${sub(r.ATT)}</td><td class="num" style="color:var(--muted)">${sub(r.UP)}</td><td class="num" style="color:var(--muted)">${sub(r.PROF)}</td>
       <td class="num">${(autoT*100).toFixed(0)}%</td><td class="num">${inp('tsr',K.tsr,58)}</td><td class="num"><b>${r.Gate!=null?pct(r.Gate):'—'}</b></td><td>${src}</td></tr>`;
   }).join(""):`<tr><td colspan="18" class="empty">No consultants with cars yet.</td></tr>`;
@@ -998,20 +1000,20 @@ function allMonths(){ const MK=/^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DE
 function currentMonthLabel(){ const d=new Date(); return MONTHS[d.getMonth()]+'-'+d.getFullYear(); }
 function scoreRows(month){ const S=state.settings; const w=S.ebW, swc=w[0]+w[1]+w[2]+w[3]; const vw=S.targetVolWeights, vs=vw.enq+vw.td+vw.bk+vw.rt+vw.de;
   return scoringRoster().map(cons=>{ const key=month+"|"+cons.name; const K=state.kpi[key]||{};
-    const enq=num(K.enq),td=num(K.td),bk=num(K.bk); let rt=0,de=0;
+    const enq=num(K.enq),td=num(K.td),hv=num(K.hv),bk=num(K.bk); const eng=td+hv; let rt=0,de=0;
     state.cars.forEach(c=>{ if(c.MonthKey===month && c.SalesConsultant===cons.name && !yes(c.Cancelled) && c.RetailDate){ rt++; if(c.DeliveryDate)de++; } });
-    const c1=enq?Math.min(1,td/enq):0,c2=td?Math.min(1,bk/td):0,c3=bk?Math.min(1,rt/bk):0,c4=rt?Math.min(1,de/rt):0;
+    const c1=enq?Math.min(1,eng/enq):0,c2=eng?Math.min(1,bk/eng):0,c3=bk?Math.min(1,rt/bk):0,c4=rt?Math.min(1,de/rt):0;
     const funnel=swc?(c1*w[0]+c2*w[1]+c3*w[2]+c4*w[3])/swc:0;
     const tgt=scTargetFor(cons.name,cons.outlet,cons.tenure,month,S); let tscore=null,ach=null;
-    if(tgt){ const A={enq,td,bk,rt,de}; const a=k=>(tgt[k]>0)?Math.min(1,A[k]/tgt[k]):1; ach={enq:a('enq'),td:a('td'),bk:a('bk'),rt:a('rt'),de:a('de')}; tscore=(ach.enq*vw.enq+ach.td*vw.td+ach.bk*vw.bk+ach.rt*vw.rt+ach.de*vw.de)/vs; }
-    return {name:cons.name,outlet:cons.outlet,tenure:cons.tenure,key,enq:K.enq,td:K.td,bk:K.bk,rt,de,tgt,ach,funnel,tscore,actual:{enq,td,bk,rt,de}};
+    if(tgt){ const A={enq,td:eng,bk,rt,de}; const a=k=>(tgt[k]>0)?Math.min(1,A[k]/tgt[k]):1; ach={enq:a('enq'),td:a('td'),bk:a('bk'),rt:a('rt'),de:a('de')}; tscore=(ach.enq*vw.enq+ach.td*vw.td+ach.bk*vw.bk+ach.rt*vw.rt+ach.de*vw.de)/vs; }
+    return {name:cons.name,outlet:cons.outlet,tenure:cons.tenure,key,enq:K.enq,td:K.td,hv:K.hv,bk:K.bk,rt,de,tgt,ach,funnel,tscore,actual:{enq,td:eng,bk,rt,de}};
   }).sort((a,b)=>((b.tscore!=null?b.tscore:b.funnel)-(a.tscore!=null?a.tscore:a.funnel)));
 }
 function renderScoring(){ const sel=document.getElementById('scMonth'); const months=allMonths(); const cur=sel.value||(months[0]||"");
   sel.innerHTML=months.length?months.map(m=>`<option ${m===cur?'selected':''}>${m}</option>`).join(''):'<option value="">\u2014</option>';
   const month=sel.value||cur; const rows=month?scoreRows(month):[]; const S=state.settings;
   const th=document.querySelector('#scoreTable thead');
-  th.innerHTML=`<tr><th class="num">#</th><th>Consultant</th><th>Outlet</th><th>Type</th><th class="num">Enq / tgt</th><th class="num">Drives / tgt</th><th class="num">Book / tgt</th><th class="num">Retail / tgt</th><th class="num">Deliv / tgt</th><th class="num">Target score</th><th class="num">Funnel score</th></tr>`;
+  th.innerHTML=`<tr><th class="num">#</th><th>Consultant</th><th>Outlet</th><th>Type</th><th class="num">Enq / tgt</th><th class="num">Drives / tgt</th><th class="num">Home / \u2014</th><th class="num">Book / tgt</th><th class="num">Retail / tgt</th><th class="num">Deliv / tgt</th><th class="num">Target score</th><th class="num">Funnel score</th></tr>`;
   const tb=document.querySelector('#scoreTable tbody');
   const inp=(key,f,v,t)=>`<input data-key="${key}" data-f="${f}" value="${v??''}" style="width:44px;padding:4px 5px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px"><span style="color:var(--muted)"> / ${t!=null?t:'\u2014'}</span>`;
   const at=(a,t)=>`<span style="color:${t!=null&&a>=t?'var(--green)':'inherit'};font-weight:600">${a}</span><span style="color:var(--muted)"> / ${t!=null?t:'\u2014'}</span>`;
@@ -1019,7 +1021,7 @@ function renderScoring(){ const sel=document.getElementById('scMonth'); const mo
   let html='',rank=1;
   rows.forEach(r=>{ const t=r.tgt||{};
     html+=`<tr><td class="num">${rank++}</td><td>${r.name}</td><td>${r.outlet||''}</td><td>${r.tenure||''}</td>`
-      +`<td class="num">${inp(r.key,'enq',r.enq,t.enq)}</td><td class="num">${inp(r.key,'td',r.td,t.td)}</td><td class="num">${inp(r.key,'bk',r.bk,t.bk)}</td>`
+      +`<td class="num">${inp(r.key,'enq',r.enq,t.enq)}</td><td class="num">${inp(r.key,'td',r.td,t.td)}</td><td class="num">${inp(r.key,'hv',r.hv,null)}</td><td class="num">${inp(r.key,'bk',r.bk,t.bk)}</td>`
       +`<td class="num">${at(r.rt,t.rt!=null?t.rt:null)}</td><td class="num">${at(r.de,t.de!=null?t.de:null)}</td>`
       +`<td class="num"><b>${r.tscore!=null?(r.tscore*100).toFixed(0)+'%':'\u2014'}</b></td><td class="num" style="color:var(--muted)">${(r.funnel*100).toFixed(0)}%</td></tr>`;
   });
@@ -1051,7 +1053,7 @@ function renderTargets(){
   const month=mi.value.trim().toUpperCase(); const S=state.settings; S.targetsByMonth=S.targetsByMonth||{};
   const T=S.targetsByMonth[month]=S.targetsByMonth[month]||{company:{enq:'',td:'',bk:'',rt:'',de:''},overUnit:{},overSC:{}};
   const METR=[['enq','Enquiries'],['td','Test drives'],['bk','Bookings'],['rt','Retails'],['de','Deliveries']];
-  document.getElementById('companyTargets').innerHTML=METR.map(([k,l])=>`<div class="field"><label>${l}</label><input type="number" value="${T.company[k]??''}" onchange="setCompanyTarget('${month}','${k}',this.value)"></div>`).join('');
+  document.getElementById('companyTargets').innerHTML=METR.map(([k,l])=>`<div class="field"><label>${l}</label><input type="number" value="${T.company[k]??''}" onchange="setCompanyTarget('${month}','${k}',this.value)"></div>`).join('') + companyRatioHTML(S);
   const PEN=[['insurance','Insurance %'],['finance','Finance %'],['exchange','Exchange %']];
   document.getElementById('penTargetsBox').innerHTML=PEN.map(([k,l])=>`<div class="field"><label>${l}</label><input type="number" value="${Math.round((S.penTargets[k]||0)*100)}" onchange="setPenTarget('${k}',this.value)"></div>`).join('');
   const roster=S.consultants||[]; const th=document.querySelector('#cascadeTable thead');
@@ -1065,7 +1067,10 @@ function renderTargets(){
   });
   tb.innerHTML=html||'<tr><td colspan="6" class="empty">Add consultants under Slabs & settings to see the cascade.</td></tr>';
 }
-function setCompanyTarget(m,k,v){ const T=state.settings.targetsByMonth[m]; T.company[k]=v.trim()===''?'':num(v); persist(); syncConfig(); renderTargets(); }
+function setCompanyTarget(m,k,v){ const T=state.settings.targetsByMonth[m]; T.company[k]=v.trim()===''?'':num(v); if(k==='rt') autoFillFromRetail(m); persist(); syncConfig(); renderTargets(); }
+function autoFillFromRetail(m){ const S=state.settings, T=S.targetsByMonth[m], R=S.targetRatios||{}; const rt=num(T.company.rt); if(rt>0){ const enq=Math.round(rt/(R.retailOfEnq||0.08)); T.company.enq=enq; T.company.td=Math.round(enq*(R.tdOfEnq||0.55)); T.company.bk=Math.round(enq*(R.bkOfEnq||0.20)); T.company.de=Math.round(rt*(R.deOfRetail||1.0)); } }
+function setTargetRatio(k,v){ const S=state.settings; S.targetRatios=S.targetRatios||{}; S.targetRatios[k]=(num(v)||0)/100; persist(); syncConfig(); renderTargets(); }
+function companyRatioHTML(S){ const R=S.targetRatios||{}; const RAT=[['retailOfEnq','Retail % of Enq'],['tdOfEnq','Drives % of Enq'],['bkOfEnq','Book % of Enq'],['deOfRetail','Deliv % of Retail']]; return '<div style="flex-basis:100%;margin:8px 0 2px"><span style="font-size:12px;color:var(--muted)">Enter <b>Retails</b> \u2014 Enq, Drives, Book and Deliv auto-fill from these ratios (every field stays editable):</span></div>'+RAT.map(function(p){ return '<div class="field"><label>'+p[1]+'</label><input type="number" value="'+Math.round((R[p[0]]||0)*100)+'" onchange="setTargetRatio(\''+p[0]+'\',this.value)" style="width:95px"></div>'; }).join(''); }
 function setPenTarget(k,v){ state.settings.penTargets[k]=(num(v)||0)/100; persist(); syncConfig(); }
 function setUnitOverride(m,o,k,v){ const T=state.settings.targetsByMonth[m]; T.overUnit[o]=T.overUnit[o]||{}; if(v.trim()==='')delete T.overUnit[o][k]; else T.overUnit[o][k]=num(v); persist(); syncConfig(); renderTargets(); }
 function setSCOverride(m,n,k,v){ const T=state.settings.targetsByMonth[m]; T.overSC[n]=T.overSC[n]||{}; if(v.trim()==='')delete T.overSC[n][k]; else T.overSC[n][k]=num(v); persist(); syncConfig(); renderTargets(); }
@@ -1341,7 +1346,7 @@ function rcCardHTML(d){ if(!d) return ""; var S=state.settings;
     +'<div class="rc-sec"><h3>Scorecard (TSR breakdown)</h3><table><tr><th>Part</th><th class="n">Weight</th><th class="n">Your score</th></tr>'+compRows
     +'<tr style="font-weight:800;background:#F5F8FC"><td>Total TSR</td><td class="n"></td><td class="n">'+(d.tsr==null?"\u2014":pct(d.tsr))+'</td></tr></table></div>'
     +'<div class="rc-sec"><h3>Targets vs achievement</h3><table><tr><th>Metric</th><th class="n">Target</th><th class="n">Achieved</th><th class="n">%</th></tr>'
-    +tR("enq","Enquiries")+tR("td","Test drives")+tR("bk","Bookings")+tR("rt","Retails")+tR("de","Deliveries")+'</table></div>'
+    +tR("enq","Enquiries")+tR("td","Drives + Home")+tR("bk","Bookings")+tR("rt","Retails")+tR("de","Deliveries")+'</table></div>'
     +'<div class="rc-sec"><h3>Earnings this month</h3><table><tr><td>Incentive (car ladder \u00d7 quality gate)</td><td class="n">'+inr(d.base)+'</td></tr>'
     +'<tr><td>Top-seller cheque (top-3, 8+ retails)</td><td class="n">'+inr(d.cheque)+'</td></tr>'
     +'<tr style="font-weight:800;background:#F5F8FC"><td>Total earned this month</td><td class="n">'+(d.held?"HELD":inr(d.total))+'</td></tr></table>'

@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b21</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b22</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -418,7 +418,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b21 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b22 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1197,7 +1197,7 @@ function delClawback(i){ if(!confirm('Remove this clawback?'))return; state.sett
 function arrearsMonthList(){ const cut=(state.settings.arrearsCutover||'SEP-2026').toUpperCase(); const s=monthNum('JUL-2025'), c=monthNum(cut); const out=[];
   for(let t=s;t<c;t++){ out.push(MONTHS[t%12]+'-'+Math.floor(t/12)); } return out; }
 function arrObj(name){ state.settings.arrears=state.settings.arrears||{}; return state.settings.arrears[name]||(state.settings.arrears[name]={owed:'',months:{},payments:[]}); }
-function arrBreakdownSum(a){ let s=0,has=false; Object.values(a.months||{}).forEach(v=>{ if(v!==''&&v!=null){s+=num(v);has=true;} }); return has?{sum:s,has:true}:{sum:0,has:false}; }
+function arrBreakdownSum(a){ let s=0,any=false; Object.values(a.months||{}).forEach(v=>{ if(v!==''&&v!=null){s+=num(v);any=true;} }); return {sum:s, has:(any && s>0)}; }  // a zero/blank-only breakdown does NOT lock the Owed box
 function arrOwed(name){ const a=(state.settings.arrears||{})[name]; if(!a)return 0; const b=arrBreakdownSum(a); return b.has? b.sum : num(a.owed); }
 function arrPaid(name){ const a=(state.settings.arrears||{})[name]; if(!a)return 0; return (a.payments||[]).reduce((x,p)=>x+num(p.amount),0); }
 function renderArrears(){

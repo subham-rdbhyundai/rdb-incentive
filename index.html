@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b15</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b19</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -169,6 +169,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <button data-view="cars"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M4 13l1.5-4.5A2 2 0 0 1 7.4 7h9.2a2 2 0 0 1 1.9 1.5L20 13H4Z"/></svg> Cars</button>
     <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg> Stock &amp; VIN</button>
     <button data-view="upload"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V4M8 8l4-4 4 4M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg> Upload data</button>
+    <button data-view="reportcards"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6a2 2 0 0 1 2 2v16l-5-3-5 3V4a2 2 0 0 1 2-2Z"/></svg> Report Cards</button>
     <button data-view="payouts"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v12H3zM3 10h18M7 15h4"/></svg> Payouts</button>
     <button data-view="scoring"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Scoring</button>
     <div class="navlabel">Configure</div>
@@ -258,6 +259,22 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <div class="section-title"><h2>Disbursement</h2></div>
       <div class="tablewrap"><table id="payTable"><thead></thead><tbody></tbody></table></div>
       <div id="payFoot"></div>
+    </section>
+
+    <!-- REPORT CARDS -->
+    <section class="view" id="view-reportcards">
+      <h1>Monthly report cards</h1>
+      <p class="sub">Har consultant ka live report card — scores, earnings, galtiyan, aur aage kaise behtar karein. Print karke haath mein do. (Margins kabhi nahi dikhte.)</p>
+      <div class="bar">
+        <div class="field"><label>Month</label><select id="rcMonth" onchange="renderReportCards()"></select></div>
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn" onclick="printReportCards('')">Print all cards</button>
+        <button class="btn" onclick="printOutletSummary()">Print outlet summaries</button>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+        <div id="rcList" style="flex:0 0 240px;min-width:200px"></div>
+        <div id="rcPreview" style="flex:1;min-width:300px"></div>
+      </div>
     </section>
 
     <!-- ARREARS -->
@@ -401,7 +418,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b15 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b19 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -418,7 +435,7 @@ function defaultSettings(){return{
   aging1:60, aging2:150, tsrFull:0.90, tsrMin:0.51,
   wCSI:15,wTAT:25,wETB:15,wTGT:35,wATT:5,wUP:5,wPROF:0, tsrVersion:2, tsrWeightVersion:3,
   tatEB:18,tatBR:15,tatBD:30,tatRD:15, ebW:[20,25,20,5,30],
-  topThr:8, topAmt:5000, fresherTarget:2, traineeFactor:0.85, refBrokerageFactor:0.5,
+  topThr:8, topAmt:5000, topAmt1:5000, topAmt2:4000, topAmt3:3000, fresherTarget:2, traineeFactor:0.85, refBrokerageFactor:0.5,
   defaultGate:1.0, discountBuffer:0,
   consultants:[], clawbacks:[], arrears:{}, arrearsCutover:"SEP-2026",
   targetVolWeights:{enq:10,td:15,bk:20,rt:30,de:25},
@@ -446,7 +463,7 @@ const PARAM_DEFS=[
  ["mgrPerCar","Manager override ₹/car"],["boosterThreshold","Outlet booster threshold"],["boPct","Back Office share"],
  ["aging1","Aging band 1 upper (days)"],["aging2","Aging band 2 upper (days)"],
  ["tsrFull","TSR: full pay above"],["tsrMin","TSR: minimum to earn"],
- ["topThr","Top-seller threshold (retails/mo)"],["topAmt","Top-seller cheque ₹"],
+ ["topThr","Top-seller threshold (retails/mo)"],["topAmt1","Top cheque · 1st place ₹"],["topAmt2","Top cheque · 2nd place ₹"],["topAmt3","Top cheque · 3rd place ₹"],
  
  ["fresherTarget","Fresher target (planning)"],["defaultGate","Default TSR gate when unset"]
 ];
@@ -614,6 +631,13 @@ function computeCars(cars, kpi, snapshots, current, stock){
   return {cars:out, sc:Object.values(sc), outlets:Object.values(ou), scMap:sc, ouMap:ou};
 }
 
+function topSellerAwards(model, month, S){
+  // company-wide podium for a given month: min 8 units, top 3 by cars, tie-break by TSR
+  var elig=model.sc.filter(function(r){ return r.month===month && r.retailed>=S.topThr && !r.held; });
+  elig.sort(function(a,b){ return (b.retailed-a.retailed) || ((b.TSR||0)-(a.TSR||0)); });
+  var amts=[(S.topAmt1!=null?S.topAmt1:(S.topAmt||5000)), (S.topAmt2!=null?S.topAmt2:4000), (S.topAmt3!=null?S.topAmt3:3000)];
+  var map={}; elig.slice(0,amts.length).forEach(function(r,i){ map[r.sc]=amts[i]; }); return map;
+}
 function disburse(model, from, to, m3, S){
   const F=parseDate(from),T=parseDate(to);
   const rows={};
@@ -631,7 +655,7 @@ function disburse(model, from, to, m3, S){
   Object.keys(S.leads||{}).forEach(o=>{ const nm=S.leads[o]; if(nm && !rows[nm]) rows[nm]={sc:nm,outlet:o,realised:0}; });
   const clawMap={}; (S.clawbacks||[]).forEach(cb=>{ const cd=parseDate(cb.date); if(cd && (!F||cd>=F)&&(!T||cd<=T)){ clawMap[cb.sc]=(clawMap[cb.sc]||0)+num(cb.amount); if(!rows[cb.sc])rows[cb.sc]={sc:cb.sc,outlet:cb.outlet||'',realised:0}; } });
   const out=Object.values(rows).map(r=>{
-    let ts=0; m3.forEach(mk=>{ if((perMonth[r.sc]||{})[mk]>=S.topThr) ts+=S.topAmt; });
+    let ts=0; m3.forEach(mk=>{ const aw=topSellerAwards(model,mk,S); ts += aw[r.sc]||0; });
     // manager override for leads
     let ovr=0; const leadOutlet=Object.keys(S.leads||{}).find(o=>S.leads[o]===r.sc);
     if(leadOutlet){ m3.forEach(mk=>{ const o=model.ouMap[mk+"|"+leadOutlet]; if(o&&o.qualified) ovr+=S.mgrPerCar*o.cars; }); }
@@ -666,6 +690,7 @@ function normSettings(saved){ saved=saved||{};
   if(!s.targetsByMonth)s.targetsByMonth={};
   if(!s.consultants)s.consultants=[];
   if(s.floorPolicy!==4){ s.floorConfirmed=1; s.floorFresher=1; s.floorWaiveAt=8; s.target=6; s.topThr=8; s.waiveAbove=8; s.floorPolicy=4; }
+  if(s.topAmt1===undefined){ s.topAmt1=s.topAmt||5000; s.topAmt2=4000; s.topAmt3=3000; }
   if(s.floorWaiveAt==null)s.floorWaiveAt=8; if(s.discountBuffer==null)s.discountBuffer=0;
   if(!s.modelPct)s.modelPct={"NIOS": 0.113, "PRIME HB": 0.231, "AURA": 0.113, "PRIME SD": 0.181, "EXTER PE": 0.091, "ALL NEW I20": 0.07, "I20 N LINE": 0.064, "VERNA PE": 0.064, "VENUE": 0.05, "VENUE N LINE": 0.064, "CRETA": 0.069, "CRETA N LINE": 0.075, "ALCAZAR": 0.094, "CRETA EV": 0.11, "IONIQ 5": 0.1};
   if(s.globalPct==null)s.globalPct=0.10; if(s.incentiveFloor==null)s.incentiveFloor=4000; if(s.incentiveCeiling==null)s.incentiveCeiling=20000; if(!s.ageFlags)s.ageFlags=[90,150,180]; if(s.vinMode==null)s.vinMode=true;
@@ -695,6 +720,7 @@ function show(v){
   if(v==="scoring")renderScoring();
   if(v==="targets")renderTargets();
   if(v==="stock")renderStock();
+  if(v==="reportcards")renderReportCards();
   if(v==="arrears")renderArrears();
   if(v==="slabs")renderSlabs();
   if(v==="upload")renderColRef();
@@ -1225,6 +1251,146 @@ function printArrears(name){ const roster=name?[name]:((state.settings.consultan
   }).join('');
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>RDB Hyundai \u2014 Arrears statement</title><style>body{font-family:Arial,sans-serif;color:#0B1F33;margin:20px;font-size:12px}h1{font-size:18px;margin:0 0 2px}.sub{color:#5B6B7E;font-size:11px;margin-bottom:14px}.stmt{page-break-after:always;border-top:2px solid #0B1F33;padding-top:10px;margin-top:14px}h2{font-size:15px;margin:6px 0}h3{font-size:12px;color:#1E5AA8;margin:12px 0 4px}table{border-collapse:collapse;width:100%;margin:6px 0;font-size:11px}th{background:#F3F7FC;text-align:left;padding:5px 8px;border-bottom:1px solid #E3E8EF;font-size:10px;text-transform:uppercase;color:#5B6B7E}td{padding:5px 8px;border-bottom:1px solid #EEF2F7}.tot{width:280px;margin-left:auto}.sign{margin:22px 0 6px;display:flex;justify-content:space-between}.ack{font-size:10px;color:#5B6B7E;font-style:italic}@media print{@page{margin:14mm}}</style></head><body><h1>RDB Hyundai \u2014 Incentive Arrears Statement</h1><div class="sub">Period: Jul 2025 \u2014 cutover ${state.settings.arrearsCutover||'SEP-2026'} \u00b7 generated ${today}</div>${sec}<script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script></body></html>`;
   const w=window.open('','_blank'); if(!w){toast('Allow pop-ups to print');return;} w.document.write(html); w.document.close();
+}
+/* ===================== MONTHLY REPORT CARDS ===================== */
+var rcCSS = ".rc{font-family:Arial,Segoe UI,sans-serif;color:#0B1F33;max-width:720px;border:1px solid #E3E8EF;border-radius:14px;overflow:hidden;margin:0 0 16px;background:#fff}"
++".rc-hd{background:linear-gradient(135deg,#0B1F33,#1E5AA8);color:#fff;padding:16px 20px}.rc-hd h2{margin:0;font-size:20px}.rc-hd .meta{opacity:.92;font-size:13px;margin-top:3px}"
++".rc-stats{display:flex;flex-wrap:wrap;gap:10px;padding:16px 20px}.rc-stat{flex:1;min-width:120px;background:#F5F8FC;border:1px solid #E3E8EF;border-radius:10px;padding:10px 12px}"
++".rc-stat .l{font-size:11px;color:#5B6B7E;text-transform:uppercase;letter-spacing:.4px;font-weight:700}.rc-stat .v{font-size:20px;font-weight:800;margin-top:2px}"
++".rc-sec{padding:2px 20px 12px}.rc-sec h3{font-size:12px;color:#1E5AA8;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}"
++".rc table{border-collapse:collapse;width:100%;font-size:13px}.rc th,.rc td{border:1px solid #E3E8EF;padding:6px 9px;text-align:left}.rc th{background:#EAF2FB;color:#1E5AA8;font-size:11px;text-transform:uppercase}"
++".rc td.n,.rc th.n{text-align:right;font-variant-numeric:tabular-nums}.rc-list{margin:4px 0 0;padding-left:18px}.rc-list li{margin:3px 0;font-size:13px}.rc-miss li{color:#B45309}.rc-tip li{color:#0E7C4A}"
++".rc-foot{background:#F5F8FC;border-top:1px solid #E3E8EF;padding:10px 20px;font-size:11px;color:#5B6B7E;display:flex;justify-content:space-between}"
++".rc-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700;margin-left:6px}"
++".rc-li{border:1px solid #E3E8EF;border-radius:9px;padding:8px 11px;margin:0 0 7px;cursor:pointer;background:#fff}.rc-li.sel{border-color:#1E5AA8;background:#EFF4FB}"+".rc-brand{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;background:#fff;border-bottom:2px solid #0B1F33}"+".rc-brand img{height:38px;width:auto}.rc-brand img.hy{height:30px}"+".rc-brand .ttl{text-align:center;font-size:12px;letter-spacing:1.5px;color:#0B1F33;font-weight:800;text-transform:uppercase;line-height:1.35}.rc-brand .ttl span{color:#1E5AA8;font-size:13px;letter-spacing:.5px;font-weight:700}"+".rc-name-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.rc-headline{margin-top:8px;font-size:14px;opacity:.95}"+".rc-prog{margin:8px 0 12px}.rc-prog-l{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#0B1F33;margin-bottom:4px}"+".rc-bar{height:11px;background:#E3E8EF;border-radius:6px;overflow:hidden}.rc-bar>i{display:block;height:100%;border-radius:6px}.rc-prog-note{font-size:11px;color:#5B6B7E;margin-top:3px}";
+var rcPrintCSS = "@media print{@page{margin:12mm}body{margin:0}.rc{border:none;max-width:none;margin:0}}";
+var RC_MONTHS={JAN:"January",FEB:"February",MAR:"March",APR:"April",MAY:"May",JUN:"June",JUL:"July",AUG:"August",SEP:"September",OCT:"October",NOV:"November",DEC:"December"};
+function rcMonthLong(mk){ var p=(mk||"").split("-"); return (RC_MONTHS[(p[0]||"").toUpperCase()]||p[0]||"")+" "+(p[1]||""); }
+
+function rcDays(a,b){ var A=parseDate(a),B=parseDate(b); if(!A||!B)return null; return Math.round((B-A)/86400000); }
+function rcModel(month){ var cars=state.cars.filter(function(c){return c.MonthKey===month;}); return computeCars(cars, state.kpi, state.snapshots, state.settings, state.stock); }
+function rcData(month,name){ var S=state.settings; var m=rcModel(month); var r=m.sc.find(function(x){return x.sc===name;}); if(!r) return null;
+  var mine=m.cars.filter(function(c){return c.SalesConsultant===name;});
+  var retCars=mine.filter(function(c){return !yes(c.Cancelled)&&c.RetailDate;});
+  var base=mine.reduce(function(a,c){return a+(c.PayAmt||0);},0);
+  var awards=topSellerAwards(m,month,S); var cheque=awards[name]||0; var total=base+cheque;
+  var sr=(scoreRows(month).find(function(x){return x.name===name;}))||{};
+  var K=state.kpi[month+"|"+name]||{}; var hi=r.retailed>=S.waiveAbove;
+  var mates=m.sc.filter(function(x){return x.outlet===r.outlet;}); var awardsAll=topSellerAwards(m,month,S);
+  var stand=mates.map(function(x){ var t=m.cars.filter(function(c){return c.SalesConsultant===x.sc;}).reduce(function(a,c){return a+(c.PayAmt||0);},0)+(awardsAll[x.sc]||0); return {sc:x.sc,key:x.held?-1:t}; });
+  stand.sort(function(a,b){return b.key-a.key;});
+  var rank=stand.findIndex(function(x){return x.sc===name;})+1;
+  var outOf=scoringRoster().filter(function(c){return (c.outlet||"")===r.outlet;}).length||mates.length;
+  var miss=[];
+  var csiC=retCars.filter(function(c){var v=num(c.CSIScore); return v>0&&v<100;}).length;
+  if(csiC) miss.push("CSI below 100 on "+csiC+" car"+(csiC>1?"s":"")+" \u2014 each lost "+Math.round(S.csiPen*100)+"%.");
+  var br=retCars.filter(function(c){var d=rcDays(c.BookingDate,c.RetailDate); return d!=null&&d>S.brDays;}).length;
+  if(br&&!hi) miss.push(br+" car"+(br>1?"s":"")+" took over "+S.brDays+" days from booking to retail \u2014 "+Math.round(S.brPen*100)+"% cut (waived once you cross 8 retails).");
+  var rd=retCars.filter(function(c){var d=rcDays(c.RetailDate,c.DeliveryDate); return d!=null&&d>S.rdDays;}).length;
+  if(rd&&!hi) miss.push(rd+" car"+(rd>1?"s":"")+" took over "+S.rdDays+" days from retail to delivery \u2014 "+Math.round(S.rdPen*100)+"% cut.");
+  if(r.retailed>0&&r.retailed<S.topThr) miss.push("Only "+r.retailed+" cars this month \u2014 car 1 stays unpaid and you are out of the top-seller cheque (needs 8+). Reaching 8 puts you in the running.");
+  if(r.held) miss.push("Your monthly numbers aren\u2019t entered \u2014 payout is held at \u20B90 until HR updates them.");
+  if(K.wd&&K.dp&&num(K.dp)<num(K.wd)) miss.push("Attendance: "+num(K.dp)+" of "+num(K.wd)+" days.");
+  var tips=[];
+  if(r.retailed<S.topThr) tips.push("Push to 8 retails \u2014 the biggest jump (unlocks car 1, the top rate, and puts you in line for the top-seller cheque up to \u20B9"+(S.topAmt1||5000)+").");
+  if(csiC) tips.push("Keep CSI at 100 \u2014 it cut every affected car by "+Math.round(S.csiPen*100)+"% this month.");
+  if(r.ETB!=null&&r.ETB<0.7) tips.push("Convert more test drives into bookings \u2014 your funnel is at "+pct(r.ETB)+".");
+  if(r.TGT!=null&&r.TGT<0.9) tips.push("Hit your monthly target \u2014 it is the largest part of your score ("+S.wTGT+"%).");
+  if((br||rd)&&!hi) tips.push("Close paperwork faster (retail & delivery on time) to avoid time penalties.");
+  if(r.ATT!=null&&r.ATT<1) tips.push("Full attendance lifts your score.");
+  if(!tips.length) tips.push("Excellent month \u2014 stay consistent and keep aiming for 8+.");
+  var first=(name||"").split(" ")[0];
+  var badge,badgeCol;
+  if(r.held){badge="\u23F8 Held";badgeCol="#5B6B7E";}
+  else if(r.retailed>=S.topThr&&r.Gate>=1){badge="\u2B50 Top Performer";badgeCol="#B8860B";}
+  else if(r.Gate>=1){badge="\u2705 On Track";badgeCol="#0E9F6E";}
+  else if(r.Gate>=0.7){badge="\uD83D\uDCC8 Building";badgeCol="#1E5AA8";}
+  else {badge="\u26A0\uFE0F Needs Push";badgeCol="#B45309";}
+  var headline;
+  var left=S.topThr-r.retailed;
+  if(r.held) headline="Your numbers aren\u2019t in yet \u2014 once HR updates them, your score and payout unlock.";
+  else if(r.retailed>=S.topThr) headline="Outstanding month, "+first+" \u2014 you reached the summit. Keep it going!";
+  else if(r.retailed>=5) headline="Strong month, "+first+" \u2014 just "+left+" more car"+(left>1?"s":"")+" unlocks the top rate and puts you in the top-seller race.";
+  else headline="Good work, "+first+" \u2014 push for "+left+" more to reach the jackpot at 8.";
+  return {name:name,first:first,outlet:r.outlet,tenure:r.tenure,month:month,retailed:r.retailed,delivered:r.delivered,tsr:r.TSR,gate:r.Gate,held:r.held,
+    rank:rank,outOf:outOf,badge:badge,badgeCol:badgeCol,headline:headline,
+    comps:{tgt:r.TGT,tat:r.TAT,csi:r.CSI,etb:r.ETB,att:r.ATT,up:r.UP}, tgt:sr.tgt,actual:sr.actual, base:base,cheque:cheque,total:total, miss:miss,tips:tips};
+}
+function rcCardHTML(d){ if(!d) return ""; var S=state.settings;
+  var tsrPct=d.tsr==null?0:Math.round(d.tsr*100);
+  var tsrCol=d.held?"#5B6B7E":(d.gate>=1?"#0E9F6E":(d.gate>=0.51?"#B45309":"#C2350B"));
+  var carsPct=Math.min(100,Math.round((d.retailed/S.topThr)*100));
+  var gateTxt=d.held?"HELD":(d.gate>=1?"100% (full)":pct(d.gate));
+  var comp=[["Target achievement",d.comps.tgt,S.wTGT],["Process speed (TAT)",d.comps.tat,S.wTAT],["Customer CSI",d.comps.csi,S.wCSI],["Funnel conversion",d.comps.etb,S.wETB],["Attendance",d.comps.att,S.wATT],["Upsell",d.comps.up,S.wUP]];
+  var compRows=comp.filter(function(c){return c[2]>0;}).map(function(c){return '<tr><td>'+c[0]+'</td><td class="n">'+c[2]+'%</td><td class="n">'+(c[1]==null?"\u2014":pct(c[1]))+'</td></tr>';}).join("");
+  var tR=function(k,l){ var t=d.tgt?d.tgt[k]:null,a=(d.actual?d.actual[k]:0)||0; var p=(t>0)?Math.round((a/t)*100):null; var ok=(t!=null&&a>=t); return '<tr><td>'+l+'</td><td class="n">'+(t!=null?t:"\u2014")+'</td><td class="n">'+a+'</td><td class="n" style="color:'+(ok?"#0E9F6E":"inherit")+';font-weight:'+(ok?700:400)+'">'+(p!=null?p+"%":"\u2014")+'</td></tr>'; };
+  var miss=d.miss.length? '<ul class="rc-list rc-miss">'+d.miss.map(function(x){return "<li>"+x+"</li>";}).join("")+'</ul>' : '<p style="color:#0E7C4A;font-size:13px;margin:4px 0">No penalties this month \u2014 well done. \u2705</p>';
+  var tips='<ul class="rc-list rc-tip">'+d.tips.map(function(x){return "<li>"+x+"</li>";}).join("")+'</ul>';
+  return '<div class="rc">'
+    +'<div class="rc-brand"><img src="'+LOGO_RDB+'" alt="RDB Hyundai"><div class="ttl">Performance Report<br><span>'+rcMonthLong(d.month)+'</span></div><img class="hy" src="'+LOGO_HY+'" alt="Hyundai"></div>'
+    +'<div class="rc-hd"><div class="rc-name-row"><h2>'+d.name+'</h2><span class="rc-badge" style="background:'+d.badgeCol+';color:#fff">'+d.badge+'</span></div>'
+    +'<div class="meta">'+(d.outlet||"")+' \u00b7 '+(d.tenure||"Consultant")+' \u00b7 Rank #'+d.rank+' of '+d.outOf+' at '+(d.outlet||"outlet")+'</div>'
+    +'<div class="rc-headline">'+d.headline+'</div></div>'
+    +'<div class="rc-stats">'
+    +'<div class="rc-stat"><div class="l">Cars retailed</div><div class="v">'+d.retailed+'</div></div>'
+    +'<div class="rc-stat"><div class="l">Delivered</div><div class="v">'+d.delivered+'</div></div>'
+    +'<div class="rc-stat"><div class="l">TSR score</div><div class="v">'+(d.tsr==null?"\u2014":pct(d.tsr))+'</div></div>'
+    +'<div class="rc-stat"><div class="l">Earned this month</div><div class="v" style="color:#0E9F6E">'+(d.held?"\u2014":inr(d.total))+'</div></div></div>'
+    +'<div class="rc-sec"><div class="rc-prog"><div class="rc-prog-l"><span>Quality score (TSR)</span><span>'+(d.tsr==null?"not set":tsrPct+"%")+'</span></div><div class="rc-bar"><i style="width:'+tsrPct+'%;background:'+tsrCol+'"></i></div><div class="rc-prog-note">Pay gate: '+gateTxt+' \u00b7 full above 90%, scaled 51\u201390%, nil below 51%.</div></div>'
+    +'<div class="rc-prog"><div class="rc-prog-l"><span>Cars to the summit</span><span>'+d.retailed+' of '+S.topThr+'</span></div><div class="rc-bar"><i style="width:'+carsPct+'%;background:#1E5AA8"></i></div><div class="rc-prog-note">'+(d.retailed>=S.topThr?"Summit reached \u2014 car 1 unlocked; in the top-seller race.":"Reach "+S.topThr+" to unlock car 1, the top rate, and the top-seller cheque.")+'</div></div></div>'
+    +'<div class="rc-sec"><h3>Scorecard (TSR breakdown)</h3><table><tr><th>Part</th><th class="n">Weight</th><th class="n">Your score</th></tr>'+compRows
+    +'<tr style="font-weight:800;background:#F5F8FC"><td>Total TSR</td><td class="n"></td><td class="n">'+(d.tsr==null?"\u2014":pct(d.tsr))+'</td></tr></table></div>'
+    +'<div class="rc-sec"><h3>Targets vs achievement</h3><table><tr><th>Metric</th><th class="n">Target</th><th class="n">Achieved</th><th class="n">%</th></tr>'
+    +tR("enq","Enquiries")+tR("td","Test drives")+tR("bk","Bookings")+tR("rt","Retails")+tR("de","Deliveries")+'</table></div>'
+    +'<div class="rc-sec"><h3>Earnings this month</h3><table><tr><td>Incentive (car ladder \u00d7 quality gate)</td><td class="n">'+inr(d.base)+'</td></tr>'
+    +'<tr><td>Top-seller cheque (top-3, 8+ retails)</td><td class="n">'+inr(d.cheque)+'</td></tr>'
+    +'<tr style="font-weight:800;background:#F5F8FC"><td>Total earned this month</td><td class="n">'+(d.held?"HELD":inr(d.total))+'</td></tr></table>'
+    +'<p style="font-size:11px;color:#5B6B7E;margin:6px 0 0">Paid at quarter-end, after full payment is realised.</p></div>'
+    +'<div class="rc-sec"><h3>Watch-outs this month</h3>'+miss+'</div>'
+    +'<div class="rc-sec"><h3>How to earn more next month</h3>'+tips+'</div>'
+    +'<div class="rc-foot"><span>RDB Hyundai \u00b7 Haldia \u00b7 Tamluk \u00b7 Contai</span><span>Approved: Managing Director ____________</span></div></div>';
+}
+function renderReportCards(){ var sel=document.getElementById("rcMonth"); var months=allMonths(); var cur=sel.value||(months[0]||"");
+  sel.innerHTML=months.length?months.map(function(m){return '<option '+(m===cur?"selected":"")+'>'+m+'</option>';}).join(""):'<option value="">—</option>';
+  var month=sel.value||cur; var roster=scoringRoster();
+  var list=document.getElementById("rcList"), prev=document.getElementById("rcPreview");
+  if(!month||!roster.length){ list.innerHTML='<div class="empty">Add consultants and this month\u2019s data first.</div>'; prev.innerHTML=""; return; }
+  var data=roster.map(function(c){return rcData(month,c.name);}).filter(Boolean).sort(function(a,b){return b.total-a.total;});
+  list.innerHTML=data.map(function(d,i){ return '<div class="rc-li'+(i===0?" sel":"")+'" data-n="'+d.name.replace(/"/g,"&quot;")+'" onclick="rcSelect(this.dataset.n)"><b>'+d.name+'</b><br><span style="font-size:12px;color:#5B6B7E">'+d.retailed+' cars · '+(d.held?"HELD":inr(d.total))+'</span></div>'; }).join("");
+  if(data.length) rcSelect(data[0].name);
+}
+function rcSelect(name){ var month=document.getElementById("rcMonth").value; var d=rcData(month,name);
+  document.querySelectorAll("#rcList .rc-li").forEach(function(e){ e.classList.toggle("sel", e.dataset.n===name); });
+  document.getElementById("rcPreview").innerHTML='<style>'+rcCSS+'</style>'+rcCardHTML(d)+'<div style="margin-top:10px"><button class="btn primary" data-n="'+name.replace(/"/g,"&quot;")+'" onclick="printReportCards(this.dataset.n)">Print this card</button></div>';
+}
+function rcOutletHTML(month,outlet){
+  var roster=scoringRoster().filter(function(c){return (c.outlet||"")===outlet;});
+  if(!roster.length) return "";
+  var data=roster.map(function(c){return rcData(month,c.name);}).filter(Boolean).sort(function(a,b){return (b.held?-1:b.total)-(a.held?-1:a.total);});
+  var cars=data.reduce(function(a,d){return a+d.retailed;},0);
+  var earn=data.reduce(function(a,d){return a+(d.held?0:d.total);},0);
+  var rows=data.map(function(d,i){ return '<tr><td class="n">'+(i+1)+'</td><td>'+d.name+'</td><td>'+(d.tenure||"")+'</td><td class="n">'+d.retailed+'</td><td class="n">'+(d.tsr==null?"—":pct(d.tsr))+'</td><td class="n">'+(d.held?"HELD":(d.gate>=1?"100%":pct(d.gate)))+'</td><td class="n">'+(d.held?"—":inr(d.total))+'</td></tr>'; }).join("");
+  return '<div class="rc" style="max-width:760px"><div class="rc-brand"><img src="'+LOGO_RDB+'" alt="RDB Hyundai"><div class="ttl">Team Performance Summary<br><span>'+rcMonthLong(month)+'</span></div><img class="hy" src="'+LOGO_HY+'" alt="Hyundai"></div><div class="rc-hd"><h2>'+outlet+' \u2014 Team Summary</h2><div class="meta">'+data.length+' consultants</div></div>'
+    +'<div class="rc-stats"><div class="rc-stat"><div class="l">Cars retailed</div><div class="v">'+cars+'</div></div>'
+    +'<div class="rc-stat"><div class="l">Team earned this month</div><div class="v" style="color:#0E9F6E">'+inr(earn)+'</div></div>'
+    +'<div class="rc-stat"><div class="l">Consultants</div><div class="v">'+data.length+'</div></div></div>'
+    +'<div class="rc-sec"><table><tr><th class="n">#</th><th>Consultant</th><th>Type</th><th class="n">Cars</th><th class="n">TSR</th><th class="n">Gate</th><th class="n">Earned</th></tr>'+rows+'</table>'
+    +'<p style="font-size:11px;color:#5B6B7E;margin:6px 0 0">Ranked by earnings. HELD = monthly numbers not entered yet. Paid at quarter-end after full payment.</p></div>'
+    +'<div class="rc-foot"><span>RDB Hyundai · '+outlet+'</span><span>Team Lead ____________ · MD ____________</span></div></div>';
+}
+function printOutletSummary(){ var month=document.getElementById("rcMonth").value;
+  var outlets=[]; scoringRoster().forEach(function(c){ if(c.outlet && outlets.indexOf(c.outlet)<0) outlets.push(c.outlet); });
+  var pages=outlets.map(function(o){return rcOutletHTML(month,o);}).filter(Boolean).join('<div style="page-break-after:always"></div>');
+  if(!pages){ toast("Add consultants with outlets first"); return; }
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>RDB Outlet Summary '+month+'</title><style>'+rcCSS+rcPrintCSS+'</style></head><body>'+pages+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},300);}</scr'+'ipt></body></html>';
+  var w=window.open("","_blank"); if(!w){ toast("Allow pop-ups to print"); return; } w.document.write(html); w.document.close();
+}
+function printReportCards(name){ var month=document.getElementById("rcMonth").value; var roster=scoringRoster();
+  var names=name?[name]:roster.map(function(c){return c.name;});
+  var cards=names.map(function(n){return rcData(month,n);}).filter(Boolean).map(rcCardHTML).join('<div style="page-break-after:always"></div>');
+  if(!cards){ toast("Nothing to print"); return; }
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>RDB Report Cards '+month+'</title><style>'+rcCSS+rcPrintCSS+'</style></head><body>'+cards+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},300);}</scr'+'ipt></body></html>';
+  var w=window.open("","_blank"); if(!w){ toast("Allow pop-ups to print"); return; } w.document.write(html); w.document.close();
 }
 function setParam(f,v){ state.settings[f]=num(v); persist(); syncConfig(); toast("Saved"); }
 function renameModel(el){ const oldK=el.dataset.model,newK=el.value.trim(); if(!newK||newK===oldK)return; const r=state.settings.rates; const nr={}; Object.keys(r).forEach(k=>nr[k===oldK?newK:k]=r[k]); state.settings.rates=nr; persist(); syncConfig(); renderSlabs(); }

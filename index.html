@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b13</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b15</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -172,7 +172,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <button data-view="payouts"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v12H3zM3 10h18M7 15h4"/></svg> Payouts</button>
     <button data-view="scoring"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Scoring</button>
     <div class="navlabel">Configure</div>
-    <button data-view="arrears" id="navArrears" style="display:none"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h12"/><circle cx="19" cy="18" r="2"/></svg> Arrears</button>
+    <button data-view="arrears" id="navArrears"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h12"/><circle cx="19" cy="18" r="2"/></svg> Arrears</button>
     <button data-view="targets"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg> Targets <span class="lock">🔒</span></button>
     <button data-view="slabs"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg> Slabs & settings <span class="lock">🔒</span></button>
     
@@ -262,7 +262,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 
     <!-- ARREARS -->
     <section class="view" id="view-arrears">
-      <div id="arrearsLock" class="card pad lockcard" style="display:none"><div class="ring">🔒</div><h2 style="font-size:16px">Admin only</h2><p class="hint">The arrears ledger is visible to the admin login only.</p></div>
+      <div id="arrearsLock" class="card pad lockcard" style="display:none"><div class="ring">🔒</div><h2 style="font-size:16px">Admin only</h2><p class="hint">Unlock under Slabs &amp; settings first (password <b>rdb-admin</b>), then open Arrears.</p><button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="show('slabs')">Go to Slabs &amp; settings</button></div>
       <div id="arrearsBody">
         <h1>Arrears — pre-cutover payouts</h1>
         <p class="sub">What was owed before the system went live (agreed monthly figures, recorded not recomputed). Pay it down in instalments and track the balance. Separate from the live engine.</p>
@@ -401,7 +401,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b13 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b15 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -656,6 +656,7 @@ if(state.accessKey===undefined)state.accessKey="";
 if(!state.specs)state.specs=[];
 if(!state.stock)state.stock=[];
 if(state.isAdmin===undefined)state.isAdmin=false;
+if(state.role===undefined)state.role='';
 function normSettings(saved){ saved=saved||{};
   if(saved.wTGT===undefined){ saved.wCSI=15;saved.wTAT=25;saved.wETB=15;saved.wTGT=20;saved.wATT=5;saved.wUP=5;saved.wPROF=15; }
   const s=Object.assign(defaultSettings(),saved);
@@ -680,7 +681,12 @@ function pct(n){ return (n===null||n===undefined||isNaN(n))?"—":(n*100).toFixe
 
 /* ============================ NAV ============================ */
 document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));
+function applyRoleNav(){ const bo=state.role==='backoffice'; const allow={stock:1,cars:1};
+  document.querySelectorAll('#nav button[data-view]').forEach(b=>{ b.style.display=(bo&&!allow[b.dataset.view])?'none':''; });
+  document.querySelectorAll('#nav .navlabel').forEach(l=>{ l.style.display=bo?'none':''; });
+}
 function show(v){
+  applyRoleNav(); if(state.role==='backoffice' && !({stock:1,cars:1}[v])) v='stock';
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
   document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));
   if(v==="dashboard")renderDashboard();
@@ -1169,9 +1175,9 @@ function arrBreakdownSum(a){ let s=0,has=false; Object.values(a.months||{}).forE
 function arrOwed(name){ const a=(state.settings.arrears||{})[name]; if(!a)return 0; const b=arrBreakdownSum(a); return b.has? b.sum : num(a.owed); }
 function arrPaid(name){ const a=(state.settings.arrears||{})[name]; if(!a)return 0; return (a.payments||[]).reduce((x,p)=>x+num(p.amount),0); }
 function renderArrears(){
-  document.getElementById('arrearsLock').style.display=state.isAdmin?'none':'block';
-  document.getElementById('arrearsBody').style.display=state.isAdmin?'block':'none';
-  if(!state.isAdmin)return;
+  document.getElementById('arrearsLock').style.display=state.unlocked?'none':'block';
+  document.getElementById('arrearsBody').style.display=state.unlocked?'block':'none';
+  if(!state.unlocked)return;
   const cutEl=document.getElementById('arrCut'); if(cutEl&&!cutEl.value)cutEl.value=state.settings.arrearsCutover||'SEP-2026';
   const roster=(state.settings.consultants||[]).map(c=>c.name);
   Object.keys(state.settings.arrears||{}).forEach(n=>{ if(roster.indexOf(n)<0)roster.push(n); });
@@ -1293,11 +1299,12 @@ function normCar(c){ c=Object.assign({},c); if(!c.id)c.id=uid();
 async function cloudLoad(){ if(!cloudActive()){setCloudStatus('local');renderDashboard();return;}
   setCloudStatus('syncing'); const r=await cloud('getAll',{});
   if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.specs=r.specs||[]; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
+    state.role=r.user?(r.user.role||(r.user.admin?'admin':'hr')):state.role;
     if(r.config){ if(r.config.settings)state.settings=normSettings(r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
     persist(); setCloudStatus('connected'); refreshAll(); }
   else if(r&&/not authorized/.test(r.error||'')){ setCloudStatus('offline'); showKeyGate(); }
   else { setCloudStatus('offline'); renderDashboard(); if(r&&r.error)toast('Cloud: '+r.error); } }
-function refreshAll(){ { const na=document.getElementById('navArrears'); if(na)na.style.display=state.isAdmin?'':'none'; } const a=document.querySelector('.view.active'); show(a?a.id.replace('view-',''):'dashboard'); }
+function refreshAll(){ const a=document.querySelector('.view.active'); show(a?a.id.replace('view-',''):'dashboard'); }
 let cfgT; function syncConfig(){ if(!cloudActive())return; setCloudStatus('syncing'); clearTimeout(cfgT);
   cfgT=setTimeout(()=>cloud('saveConfig',{settings:state.settings,snapshots:state.snapshots,pass:state.pass}).then(r=>setCloudStatus(r&&r.ok?'connected':'offline')),700); }
 function syncCar(car){ if(cloudActive()){ setCloudStatus('syncing'); cloud('upsertCar',{car}).then(r=>setCloudStatus(r&&r.ok?'connected':'offline')); } }
@@ -1318,6 +1325,7 @@ function hideKeyGate(){ const g=document.getElementById('keyGate'); if(g)g.style
 async function submitKey(){ const v=document.getElementById('keyInput').value.trim(); state.accessKey=v; persist();
   document.getElementById('keyErr').textContent='Checking…'; const r=await cloud('getAll',{});
   if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.specs=r.specs||[]; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
+    state.role=r.user?(r.user.role||(r.user.admin?'admin':'hr')):state.role;
     if(r.config){ if(r.config.settings)state.settings=normSettings(r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
     persist(); hideKeyGate(); setCloudStatus('connected'); refreshAll(); toast('Access granted'); }
   else { document.getElementById('keyErr').textContent = (r&&/not authorized/.test(r.error||''))?'That password is not recognised. Ask the administrator.':'Could not reach the Sheet — check the connection.'; } }

@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b11</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b12</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -172,6 +172,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <button data-view="payouts"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v12H3zM3 10h18M7 15h4"/></svg> Payouts</button>
     <button data-view="scoring"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Scoring</button>
     <div class="navlabel">Configure</div>
+    <button data-view="arrears" id="navArrears" style="display:none"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h12"/><circle cx="19" cy="18" r="2"/></svg> Arrears</button>
     <button data-view="targets"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg> Targets <span class="lock">🔒</span></button>
     <button data-view="slabs"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg> Slabs & settings <span class="lock">🔒</span></button>
     
@@ -257,6 +258,19 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <div class="section-title"><h2>Disbursement</h2></div>
       <div class="tablewrap"><table id="payTable"><thead></thead><tbody></tbody></table></div>
       <div id="payFoot"></div>
+    </section>
+
+    <!-- ARREARS -->
+    <section class="view" id="view-arrears">
+      <div id="arrearsLock" class="card pad lockcard" style="display:none"><div class="ring">🔒</div><h2 style="font-size:16px">Admin only</h2><p class="hint">The arrears ledger is visible to the admin login only.</p></div>
+      <div id="arrearsBody">
+        <h1>Arrears — pre-cutover payouts</h1>
+        <p class="sub">What was owed before the system went live (agreed monthly figures, recorded not recomputed). Pay it down in instalments and track the balance. Separate from the live engine.</p>
+        <div id="arrearsTotals" class="grid g4" style="margin-bottom:14px"></div>
+        <div class="bar"><button class="btn" onclick="printArrears('')">Print all statements</button><div class="spacer" style="flex:1"></div><div class="field"><label>Cutover (live from)</label><input id="arrCut" style="width:120px" onchange="setArrearsCutover(this.value)"></div></div>
+        <div class="tablewrap"><table id="arrearsTable"><thead><tr><th>Consultant</th><th class="num">Owed</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div id="arrearsDetail"></div>
+      </div>
     </section>
 
     <!-- STOCK -->
@@ -386,7 +400,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b11 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b12 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -405,7 +419,7 @@ function defaultSettings(){return{
   tatEB:18,tatBR:15,tatBD:30,tatRD:15, ebW:[20,25,20,5,30],
   topThr:8, topAmt:5000, fresherTarget:2, traineeFactor:0.85, refBrokerageFactor:0.5,
   defaultGate:1.0, discountBuffer:0,
-  consultants:[], clawbacks:[],
+  consultants:[], clawbacks:[], arrears:{}, arrearsCutover:"SEP-2026",
   targetVolWeights:{enq:10,td:15,bk:20,rt:30,de:25},
   penTargets:{insurance:0.70,finance:0.50,exchange:0.30},
   targetsByMonth:{},
@@ -674,6 +688,7 @@ function show(v){
   if(v==="scoring")renderScoring();
   if(v==="targets")renderTargets();
   if(v==="stock")renderStock();
+  if(v==="arrears")renderArrears();
   if(v==="slabs")renderSlabs();
   if(v==="upload")renderColRef();
 }
@@ -1145,6 +1160,62 @@ function addClawback(){ const g=x=>{const e=document.getElementById(x);return e?
   state.settings.clawbacks=state.settings.clawbacks||[]; state.settings.clawbacks.push({sc,outlet:o,amount:amt,date,note});
   persist(); syncConfig(); renderPayouts(); toast('Clawback added'); }
 function delClawback(i){ if(!confirm('Remove this clawback?'))return; state.settings.clawbacks.splice(i,1); persist(); syncConfig(); renderPayouts(); }
+/* ===================== ARREARS LEDGER (admin, record + track) ===================== */
+function arrearsMonthList(){ const cut=(state.settings.arrearsCutover||'SEP-2026').toUpperCase(); const s=monthNum('JUL-2025'), c=monthNum(cut); const out=[];
+  for(let t=s;t<c;t++){ out.push(MONTHS[t%12]+'-'+Math.floor(t/12)); } return out; }
+function arrObj(name){ state.settings.arrears=state.settings.arrears||{}; return state.settings.arrears[name]||(state.settings.arrears[name]={owed:'',months:{},payments:[]}); }
+function arrBreakdownSum(a){ let s=0,has=false; Object.values(a.months||{}).forEach(v=>{ if(v!==''&&v!=null){s+=num(v);has=true;} }); return has?{sum:s,has:true}:{sum:0,has:false}; }
+function arrOwed(name){ const a=(state.settings.arrears||{})[name]; if(!a)return 0; const b=arrBreakdownSum(a); return b.has? b.sum : num(a.owed); }
+function arrPaid(name){ const a=(state.settings.arrears||{})[name]; if(!a)return 0; return (a.payments||[]).reduce((x,p)=>x+num(p.amount),0); }
+function renderArrears(){
+  document.getElementById('arrearsLock').style.display=state.isAdmin?'none':'block';
+  document.getElementById('arrearsBody').style.display=state.isAdmin?'block':'none';
+  if(!state.isAdmin)return;
+  const cutEl=document.getElementById('arrCut'); if(cutEl&&!cutEl.value)cutEl.value=state.settings.arrearsCutover||'SEP-2026';
+  const roster=(state.settings.consultants||[]).map(c=>c.name);
+  Object.keys(state.settings.arrears||{}).forEach(n=>{ if(roster.indexOf(n)<0)roster.push(n); });
+  let tOwed=0,tPaid=0;
+  const rowsHtml=roster.map(n=>{ const owed=arrOwed(n), paid=arrPaid(n), bal=owed-paid; tOwed+=owed; tPaid+=paid;
+    const a=(state.settings.arrears||{})[n]||{}; const fromBreak=arrBreakdownSum(a).has;
+    const st = owed<=0? '<span class="tag" style="background:#EEF2F7;color:#9AA7B4">\u2014</span>' : bal<=0? '<span class="tag yes">Cleared</span>' : paid>0? '<span class="tag blue">Part-paid</span>' : '<span class="tag warn">Outstanding</span>';
+    return `<tr><td>${n}</td>
+      <td class="num">${fromBreak?('<span title="from monthly breakdown">'+inr(owed)+'</span>'):`<input type="number" value="${a.owed??''}" onchange="setArrearsOwed('${n.replace(/'/g,"\\'")}',this.value)" style="width:100px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px">`}</td>
+      <td class="num rupee">${inr(paid)}</td><td class="num rupee"><b>${inr(bal)}</b></td><td>${st}</td>
+      <td class="rowact"><button class="linkbtn" onclick="arrDetail('${n.replace(/'/g,"\\'")}')">Breakdown / payments</button> <button class="linkbtn" onclick="printArrears('${n.replace(/'/g,"\\'")}')">Statement</button></td></tr>`;
+  }).join('');
+  document.querySelector('#arrearsTable tbody').innerHTML = roster.length? rowsHtml : '<tr><td colspan="6" class="empty">Add consultants first (Slabs & settings).</td></tr>';
+  const tOut=tOwed-tPaid;
+  const card=(l,v,c)=>`<div class="card pad" style="border-left:4px solid ${c}"><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">${l}</div><div class="mono" style="font-size:20px;font-weight:750;margin-top:4px">${inr(v)}</div></div>`;
+  document.getElementById('arrearsTotals').innerHTML = card('Total owed',tOwed,'#1E5AA8')+card('Total paid',tPaid,'#0E9F6E')+card('Outstanding',tOut,tOut>0?'#B45309':'#0E9F6E')+card('Consultants',roster.filter(n=>arrOwed(n)>0).length,'#9AA7B4').replace('mono','').replace(inr(roster.filter(n=>arrOwed(n)>0).length),String(roster.filter(n=>arrOwed(n)>0).length));
+}
+function arrDetail(name){ const box=document.getElementById('arrearsDetail'); if(box.dataset.open===name){ box.innerHTML=''; box.dataset.open=''; return; } box.dataset.open=name;
+  const a=arrObj(name); const months=arrearsMonthList(); const bd=arrBreakdownSum(a);
+  const monthRows=months.map(m=>`<td class="num"><input type="number" value="${(a.months&&a.months[m])??''}" onchange="setArrearsMonth('${name.replace(/'/g,"\\'")}','${m}',this.value)" placeholder="0" style="width:78px;text-align:right;font-family:var(--mono);border:1px solid var(--line);border-radius:6px"></td>`).join('');
+  const payRows=(a.payments||[]).map((p,i)=>`<tr><td>${p.date||''}</td><td class="num rupee">${inr(p.amount)}</td><td>${p.note||''}</td><td><button class="linkbtn" style="color:var(--red)" onclick="delArrearsPayment('${name.replace(/'/g,"\\'")}',${i})">Del</button></td></tr>`).join('');
+  box.innerHTML=`<div class="card pad" style="margin-top:14px"><div class="section-title" style="margin:0 0 8px"><h2>${name} \u2014 detail</h2><span style="font-size:12px;color:var(--muted)">${bd.has?'Owed = sum of the monthly breakdown ('+inr(bd.sum)+')':'Owed typed directly \u2014 fill months below to switch to a breakdown'}</span></div>
+    <h3 style="font-size:13px;color:var(--blue);margin:6px 0">Monthly breakdown (optional)</h3>
+    <div class="tablewrap"><table><thead><tr>${months.map(m=>`<th class="num">${m}</th>`).join('')}</tr></thead><tbody><tr>${monthRows}</tr></tbody></table></div>
+    <h3 style="font-size:13px;color:var(--blue);margin:14px 0 6px">Payments</h3>
+    <div class="bar" style="margin:0 0 8px;align-items:end;flex-wrap:wrap"><div class="field"><label>Date</label><input id="apDate" type="date"></div><div class="field"><label>Amount \u20B9</label><input id="apAmt" type="number" style="width:110px"></div><div class="field" style="flex:1;min-width:140px"><label>Note</label><input id="apNote" placeholder="e.g. instalment 1"></div><button class="btn" onclick="addArrearsPayment('${name.replace(/'/g,"\\'")}')">Add payment</button></div>
+    ${payRows?`<div class="tablewrap"><table><thead><tr><th>Date</th><th class="num">Amount</th><th>Note</th><th></th></tr></thead><tbody>${payRows}</tbody></table></div>`:'<div class="hint">No payments yet.</div>'}</div>`;
+}
+function setArrearsOwed(name,v){ const a=arrObj(name); a.owed=v.trim()===''?'':num(v); persist(); syncConfig(); renderArrears(); }
+function setArrearsMonth(name,m,v){ const a=arrObj(name); a.months=a.months||{}; if(v.trim()==='')delete a.months[m]; else a.months[m]=num(v); persist(); syncConfig(); renderArrears(); arrDetail(name); arrDetail(name); }
+function addArrearsPayment(name){ const g=x=>{const e=document.getElementById(x);return e?e.value.trim():'';}; const date=g('apDate'),amt=num(g('apAmt')),note=g('apNote'); if(!date||!amt){ toast('Date and amount needed'); return; } const a=arrObj(name); a.payments=a.payments||[]; a.payments.push({date,amount:amt,note}); persist(); syncConfig(); renderArrears(); document.getElementById('arrearsDetail').dataset.open=''; arrDetail(name); toast('Payment recorded'); }
+function delArrearsPayment(name,i){ if(!confirm('Remove this payment?'))return; const a=arrObj(name); a.payments.splice(i,1); persist(); syncConfig(); renderArrears(); document.getElementById('arrearsDetail').dataset.open=''; arrDetail(name); }
+function setArrearsCutover(v){ state.settings.arrearsCutover=(v||'').trim().toUpperCase(); persist(); syncConfig(); const b=document.getElementById('arrearsDetail'); if(b){b.dataset.open='';b.innerHTML='';} renderArrears(); }
+function printArrears(name){ const roster=name?[name]:((state.settings.consultants||[]).map(c=>c.name).filter(n=>arrOwed(n)>0)); if(!roster.length){toast('Nothing to print');return;}
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); const months=arrearsMonthList();
+  const sec=roster.map(n=>{ const a=(state.settings.arrears||{})[n]||{}; const owed=arrOwed(n),paid=arrPaid(n),bal=owed-paid; const bd=arrBreakdownSum(a);
+    const mtable=bd.has?`<table><thead><tr><th>Month</th><th style="text-align:right">Amount</th></tr></thead><tbody>${months.filter(m=>a.months&&a.months[m]!=null&&a.months[m]!=='').map(m=>`<tr><td>${m}</td><td style="text-align:right">${inr(a.months[m])}</td></tr>`).join('')}<tr style="font-weight:700"><td>Total owed</td><td style="text-align:right">${inr(owed)}</td></tr></tbody></table>`:`<p>Total owed: <b>${inr(owed)}</b></p>`;
+    const ptable=(a.payments&&a.payments.length)?`<table><thead><tr><th>Date</th><th style="text-align:right">Paid</th><th>Note</th></tr></thead><tbody>${a.payments.map(p=>`<tr><td>${p.date||''}</td><td style="text-align:right">${inr(p.amount)}</td><td>${p.note||''}</td></tr>`).join('')}</tbody></table>`:'<p>No payments yet.</p>';
+    return `<div class="stmt"><h2>${n}</h2>${mtable}<h3>Payments</h3>${ptable}
+      <table class="tot"><tr><td>Owed</td><td style="text-align:right">${inr(owed)}</td></tr><tr><td>Paid</td><td style="text-align:right">${inr(paid)}</td></tr><tr style="font-weight:800"><td>Balance</td><td style="text-align:right">${inr(bal)}</td></tr></table>
+      <div class="sign"><div>Consultant signature: __________________</div><div>Date: __________</div></div><div class="ack">I confirm the above is the agreed incentive owed to me for the period up to the cutover, and acknowledge the payments received.</div></div>`;
+  }).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>RDB Hyundai \u2014 Arrears statement</title><style>body{font-family:Arial,sans-serif;color:#0B1F33;margin:20px;font-size:12px}h1{font-size:18px;margin:0 0 2px}.sub{color:#5B6B7E;font-size:11px;margin-bottom:14px}.stmt{page-break-after:always;border-top:2px solid #0B1F33;padding-top:10px;margin-top:14px}h2{font-size:15px;margin:6px 0}h3{font-size:12px;color:#1E5AA8;margin:12px 0 4px}table{border-collapse:collapse;width:100%;margin:6px 0;font-size:11px}th{background:#F3F7FC;text-align:left;padding:5px 8px;border-bottom:1px solid #E3E8EF;font-size:10px;text-transform:uppercase;color:#5B6B7E}td{padding:5px 8px;border-bottom:1px solid #EEF2F7}.tot{width:280px;margin-left:auto}.sign{margin:22px 0 6px;display:flex;justify-content:space-between}.ack{font-size:10px;color:#5B6B7E;font-style:italic}@media print{@page{margin:14mm}}</style></head><body><h1>RDB Hyundai \u2014 Incentive Arrears Statement</h1><div class="sub">Period: Jul 2025 \u2014 cutover ${state.settings.arrearsCutover||'SEP-2026'} \u00b7 generated ${today}</div>${sec}<script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script></body></html>`;
+  const w=window.open('','_blank'); if(!w){toast('Allow pop-ups to print');return;} w.document.write(html); w.document.close();
+}
 function setParam(f,v){ state.settings[f]=num(v); persist(); syncConfig(); toast("Saved"); }
 function renameModel(el){ const oldK=el.dataset.model,newK=el.value.trim(); if(!newK||newK===oldK)return; const r=state.settings.rates; const nr={}; Object.keys(r).forEach(k=>nr[k===oldK?newK:k]=r[k]); state.settings.rates=nr; persist(); syncConfig(); renderSlabs(); }
 function addRateRow(){ let n="NEW MODEL"; let i=1; while(state.settings.rates[n]){n="NEW MODEL "+(++i);} state.settings.rates[n]=[0,0,0]; persist(); syncConfig(); renderSlabs(); }
@@ -1222,7 +1293,7 @@ async function cloudLoad(){ if(!cloudActive()){setCloudStatus('local');renderDas
     persist(); setCloudStatus('connected'); refreshAll(); }
   else if(r&&/not authorized/.test(r.error||'')){ setCloudStatus('offline'); showKeyGate(); }
   else { setCloudStatus('offline'); renderDashboard(); if(r&&r.error)toast('Cloud: '+r.error); } }
-function refreshAll(){ const a=document.querySelector('.view.active'); show(a?a.id.replace('view-',''):'dashboard'); }
+function refreshAll(){ { const na=document.getElementById('navArrears'); if(na)na.style.display=state.isAdmin?'':'none'; } const a=document.querySelector('.view.active'); show(a?a.id.replace('view-',''):'dashboard'); }
 let cfgT; function syncConfig(){ if(!cloudActive())return; setCloudStatus('syncing'); clearTimeout(cfgT);
   cfgT=setTimeout(()=>cloud('saveConfig',{settings:state.settings,snapshots:state.snapshots,pass:state.pass}).then(r=>setCloudStatus(r&&r.ok?'connected':'offline')),700); }
 function syncCar(car){ if(cloudActive()){ setCloudStatus('syncing'); cloud('upsertCar',{car}).then(r=>setCloudStatus(r&&r.ok?'connected':'offline')); } }

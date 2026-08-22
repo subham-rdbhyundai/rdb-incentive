@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b27</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b28</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -298,6 +298,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <p class="sub">Every car in the yard, with the incentive it carries. Add a VIN at stock-in; it drops out when it\'s paid.</p>
       <div class="bar">
         <button class="btn primary" onclick="openStockForm()">+ Add VIN</button>
+        <button class="btn" onclick="openStockImport()">Upload / paste stock</button>
         <button class="btn" onclick="downloadStockPDF()">Download stock sheet (PDF)</button>
         <div class="spacer" style="flex:1"></div>
         <button class="btn" id="btnSeedCat" onclick="seedCatalogue()">Load Hyundai catalogue</button>
@@ -433,7 +434,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b27 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b28 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -834,6 +835,7 @@ function openCarForm(car){
     if(f==="SalesConsultant"){ const names=(state.settings.consultants||[]).map(x=>x.name); if(names.length){ return `<div class="field"><label>${l}</label><select data-f="SalesConsultant" onchange="onPickConsultant(this)"><option value=""></option>`+names.map(n=>`<option ${c[f]===n?'selected':''}>${n}</option>`).join("")+`</select></div>`; } }
     if(f==="Outlet") return field(f,l,c[f]||"Tamluk",["Haldia","Tamluk","Contai"]);
     if(f==="Model") return field(f,l,c[f]||"VENUE",Object.keys(state.settings.rates));
+    if(f==="VIN") return `<div class="field"><label>${l}</label><input data-f="VIN" type="text" value="${c[f]!=null?String(c[f]).replace(/"/g,'&quot;'):''}" placeholder="${ph}" onchange="vinAutoFill()"><div id="vinHint" style="font-size:11px;margin-top:3px;line-height:1.3"></div></div>`;
     if(YN.includes(f)) return field(f,l,c[f]|| (f==="PaymentRealised"?"Yes":"No"),["No","Yes"]);
     const type=f.includes("Date")?"date":(["WhatsApp","CSIScore","DuesOnDelivery","AccessoriesValue","CostOnSalesPct","CreditShare"].includes(f)?"text":"text");
     return `<div class="field"><label>${l}</label><input data-f="${f}" type="${type}" value="${c[f]!=null?String(c[f]).replace(/"/g,'&quot;'):''}" placeholder="${ph}"></div>`;
@@ -997,6 +999,60 @@ function renderSlabs(){ { const ar=document.getElementById('pwAdminReset'); if(a
 }
 function setRate(m,j,v){ state.settings.rates[m][j]=num(v); persist(); syncConfig(); }
 function onPickConsultant(sel){ const r=(state.settings.consultants||[]).find(x=>x.name===sel.value); if(!r)return; const o=document.querySelector('#cf [data-f="Outlet"]'); const t=document.querySelector('#cf [data-f="Tenure"]'); if(o&&r.outlet)o.value=r.outlet; if(t&&r.tenure)t.value=r.tenure; }
+function vinAutoFill(){
+  const cf=document.getElementById('cf'); if(!cf)return;
+  const q=f=>cf.querySelector('[data-f="'+f+'"]');
+  const vinEl=q('VIN'); if(!vinEl)return; const vin=String(vinEl.value||'').trim();
+  const hint=document.getElementById('vinHint'); if(!vin){ if(hint)hint.innerHTML=''; return; }
+  const s=state.stock.find(x=>String(x.VIN||'').trim().toLowerCase()===vin.toLowerCase());
+  if(!s){ if(hint)hint.innerHTML='<span style="color:#B45309">\u26A0 VIN not in stock ledger \u2014 check for a typo, or add it under Stock & VIN.</span>'; return; }
+  const setSel=(f,val)=>{ if(!val)return; const el=q(f); if(el&&el.tagName==='SELECT'){ const has=[...el.options].some(o=>o.value===val||o.textContent===val); if(has)el.value=val; } };
+  const setInp=(f,val)=>{ if(!val)return; const el=q(f); if(el&&el.tagName!=='SELECT'){ el.value=val; } };
+  setSel('Model', s.model); setInp('StockRecdDate', s.stockInDate);
+  const cons=s.taggedTo||''; const rc=(state.settings.consultants||[]).find(c=>c.name===cons); const consEl=q('SalesConsultant');
+  if(cons && consEl && !consEl.value){ setSel('SalesConsultant',cons); onPickConsultant(consEl); }
+  if(!consEl || !consEl.value){ setSel('Outlet', s.outlet||''); }
+  const st=stockStatus(s); const parts=[s.model+(s.variant?' '+s.variant:''), inr(s.incentive)+' incentive', st]; if(cons)parts.push('tagged: '+cons);
+  hint.innerHTML='<span style="color:#0E7C4A">\u2713 '+parts.join(' \u00b7 ')+'</span>'+(st==='Paid'?' <span style="color:#C2350B">\u26A0 already Paid</span>':'');
+}
+let _stockImport=[];
+function openStockImport(){ const w=document.getElementById('stockFormWrap');
+  w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h2>Upload / paste stock</h2>
+    <p class="sub" style="margin:2px 0 8px">Paste rows from your Hyundai stock report or a spreadsheet \u2014 one VIN per line. A header row is auto-detected. Columns: <b>VIN, Model, Variant, Fuel, Colour, Stock-in date, Outlet, Consultant, Incentive</b>. Only VIN, Model and Variant are required; incentive fills from the spec if left blank.</p>
+    <div style="margin-bottom:8px"><button class="btn" onclick="downloadStockTemplate()">Download template</button></div>
+    <textarea id="stkPaste" style="width:100%;height:150px;font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px" placeholder="VIN,Model,Variant,Fuel,Colour,2026-08-01,Haldia,,7500"></textarea>
+    <div style="margin-top:10px;display:flex;gap:8px"><button class="btn primary" onclick="parseStockPreview()">Preview</button><button class="btn" onclick="document.getElementById('stockFormWrap').innerHTML=''">Cancel</button></div>
+    <div id="stkPreview" style="margin-top:12px"></div></div>`;
+}
+function downloadStockTemplate(){ const csv='VIN,Model,Variant,Fuel,Colour,StockInDate,Outlet,Consultant,Incentive\nMALXXXXXXXXXXXXX,CRETA,SX (O),Petrol,Atlas White,2026-08-01,Haldia,,7500\n';
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='RDB_stock_template.csv'; document.body.appendChild(a); a.click(); a.remove(); }
+function _csvLine(line){ const out=[]; let cur='',q=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(ch==='"'){q=!q;} else if(ch===','&&!q){out.push(cur);cur='';} else cur+=ch; } out.push(cur); return out.map(s=>s.trim().replace(/^"|"$/g,'')); }
+function parseStockPreview(){ const txt=(document.getElementById('stkPaste').value||'').trim(); const pv=document.getElementById('stkPreview');
+  if(!txt){ pv.innerHTML='<span style="color:var(--muted)">Nothing pasted.</span>'; return; }
+  let lines=txt.split(/\r?\n/).filter(l=>l.trim());
+  if(/vin/i.test(lines[0]) && /model/i.test(lines[0])) lines=lines.slice(1);
+  const rows=[]; let bad=0;
+  lines.forEach(line=>{ const c=_csvLine(line); if(!c[0])return;
+    const vin=c[0], model=(c[1]||'').toUpperCase(), variant=c[2]||'', fuel=c[3]||'', colour=c[4]||'', date=c[5]||'', outlet=c[6]||'', cons=c[7]||'', incRaw=c[8]||'';
+    const cands=(state.specs||[]).filter(s=>String(s.model||'').toUpperCase()===model && String(s.variant||'').toLowerCase()===variant.toLowerCase());
+    const spec=cands.find(s=>!fuel||String(s.fuel||'').toLowerCase()===fuel.toLowerCase())||cands[0];
+    const specCode=spec?spec.specCode:''; const inc=incRaw!==''?num(incRaw):(spec?Number(spec.defaultIncentive||0):0); const ok=!!spec; if(!ok)bad++;
+    rows.push({vin,model,variant,fuel,colour,date,outlet,cons,inc,specCode,ok}); });
+  _stockImport=rows;
+  const dup=rows.filter(r=>state.stock.some(s=>String(s.VIN||'').trim().toLowerCase()===r.vin.toLowerCase())).length;
+  const good=rows.filter(r=>r.ok).length;
+  pv.innerHTML=`<div class="note ${bad?'':'blue'}" ${bad?'style="border-left-color:#B45309"':''}>Parsed <b>${rows.length}</b> rows \u00b7 <b>${good}</b> matched a spec${bad?` \u00b7 <b style="color:#B45309">${bad} unmatched</b> (fix Model / Variant / Fuel \u2014 these are skipped)`:''}${dup?` \u00b7 <b>${dup}</b> already in stock (will be updated)`:''}.</div>
+    <div class="tablewrap" style="max-height:260px;overflow:auto"><table><thead><tr><th>VIN</th><th>Model</th><th>Variant</th><th>Outlet</th><th>Consultant</th><th class="num">Incentive</th><th>Spec</th></tr></thead><tbody>${rows.slice(0,80).map(r=>`<tr ${r.ok?'':'style="background:#FDEEE8"'}><td class="mono" style="font-size:11px">${r.vin}</td><td>${r.model}</td><td>${r.variant}</td><td>${r.outlet||'\u2014'}</td><td>${r.cons||'\u2014'}</td><td class="num">${inr(r.inc)}</td><td>${r.ok?r.specCode:'<span style="color:#B45309">no match</span>'}</td></tr>`).join('')}</tbody></table></div>
+    <div style="margin-top:10px"><button class="btn primary" onclick="commitStockImport()">Import ${good} row${good===1?'':'s'}</button> <span style="color:var(--muted);font-size:12px">Unmatched rows are skipped.</span></div>`;
+}
+function commitStockImport(){ const rows=(_stockImport||[]).filter(r=>r.ok); if(!rows.length){ toast('Nothing to import'); return; }
+  const news=[], updates=[];
+  rows.forEach(r=>{ const ex=state.stock.find(s=>String(s.VIN||'').trim().toLowerCase()===r.vin.toLowerCase());
+    if(ex){ ex.model=r.model; ex.variant=r.variant; ex.fuel=r.fuel; ex.specCode=r.specCode; ex.colour=r.colour||ex.colour; ex.stockInDate=r.date||ex.stockInDate; ex.incentive=r.inc; if(r.cons)ex.taggedTo=r.cons; if(r.outlet)ex.outlet=r.outlet; updates.push(ex); }
+    else { const row={ id:uid(), stockId:'RDB'+Date.now().toString().slice(-6)+Math.floor(Math.random()*90+10), VIN:r.vin, model:r.model, fuel:r.fuel, variant:r.variant, specCode:r.specCode, colour:r.colour, stockInDate:r.date, incentive:r.inc, taggedTo:r.cons||'', outlet:r.outlet||'', status:'', note:'' }; state.stock.push(row); news.push(row); } });
+  persist(); if(cloudActive()){ if(news.length)cloud('bulkStock',{rows:news}); updates.forEach(row=>cloud('upsertStock',{row})); }
+  document.getElementById('stockFormWrap').innerHTML=''; renderStock(); toast('Imported '+rows.length+' VIN'+(rows.length===1?'':'s')+(updates.length?' ('+updates.length+' updated)':''));
+}
 
 /* ---- consultant roster (admin) ---- */
 function renderRoster(){ const tb=document.querySelector('#rosterTable tbody'); if(!tb)return; const list=state.settings.consultants||[];
@@ -1188,6 +1244,7 @@ function openStockForm(row){ const w=document.getElementById('stockFormWrap'); c
       <div class="field"><label>Stock-in date${state.unlocked?"":" \u00b7 locked"}</label><input id="sfDate" type="date" value="${r.stockInDate||today}" ${state.unlocked?"":"readonly"} style="${state.unlocked?"":"background:#F4F6F9;color:#5B6B7E"}"></div>
       <div class="field"><label>Incentive \u20B9 (default shown; edit to override)</label><input id="sfInc" type="number" value="${r.incentive??''}"></div>
       <div class="field"><label>Tag to consultant (optional)</label><select id="sfTag"><option value="">\u2014 free stock \u2014</option>${(state.settings.consultants||[]).map(c=>`<option ${r.taggedTo===c.name?'selected':''}>${c.name}</option>`).join('')}</select></div>
+      <div class="field"><label>Outlet (yard)</label><select id="sfOutlet"><option value="">\u2014 none \u2014</option>${['Haldia','Tamluk','Contai'].map(o=>`<option ${r.outlet===o?'selected':''}>${o}</option>`).join('')}</select></div>
       <div class="field"><label>Stock ID</label><input id="sfStockId" value="${r.stockId||('RDB'+Date.now().toString().slice(-6))}"></div>
     </div>
     <div style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" onclick="saveStock('${row?r.id:''}')">${row?'Save':'Add VIN'}</button><button class="btn" onclick="document.getElementById('stockFormWrap').innerHTML=''">Cancel</button></div></div>`;
@@ -1200,7 +1257,7 @@ function stockSpecFill(keepInc){ const vsel=document.getElementById('sfVariant')
   if(!keepInc){ const inc=document.getElementById('sfInc'); if(inc && (inc.value===''||inc.dataset.auto!=='0')){ inc.value=specDefault(spec); inc.dataset.auto='1'; } } }
 function saveStock(id){ const g=x=>document.getElementById(x).value.trim();
   const vsel=document.getElementById('sfVariant'); const opt=vsel.options[vsel.selectedIndex];
-  const row={ id:id||uid(), stockId:g('sfStockId'), VIN:g('sfVIN'), model:g('sfModel'), fuel:(opt?(opt.textContent.split(' \u00b7 ')[1]||''):''), variant:(opt?opt.textContent.split(' \u00b7 ')[0]:''), specCode:g('sfSpec'), colour:g('sfColour'), stockInDate:g('sfDate'), incentive:num(document.getElementById('sfInc').value), taggedTo:g('sfTag'), status:'', note:'' };
+  const row={ id:id||uid(), stockId:g('sfStockId'), VIN:g('sfVIN'), model:g('sfModel'), fuel:(opt?(opt.textContent.split(' \u00b7 ')[1]||''):''), variant:(opt?opt.textContent.split(' \u00b7 ')[0]:''), specCode:g('sfSpec'), colour:g('sfColour'), stockInDate:g('sfDate'), incentive:num(document.getElementById('sfInc').value), taggedTo:g('sfTag'), outlet:g('sfOutlet'), status:'', note:'' };
   if(!row.VIN){ toast('VIN is required'); return; }
   const i=state.stock.findIndex(s=>s.id===row.id); if(i>=0)state.stock[i]=row; else state.stock.push(row);
   persist(); if(cloudActive())cloud('upsertStock',{row}); document.getElementById('stockFormWrap').innerHTML=''; renderStock(); toast(id?'VIN updated':'VIN added');

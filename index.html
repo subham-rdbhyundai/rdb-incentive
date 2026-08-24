@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b28</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b30</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -319,7 +319,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <p class="sub">Type the company\'s five numbers. They cascade to units and consultants by headcount — a trainee counts as half. Override any cell.</p>
         <div class="card pad">
           <div class="bar" style="margin:0 0 6px;align-items:end">
-            <div class="field"><label>Month</label><input id="tgtMonth" placeholder="SEP-2026" style="width:130px" onchange="renderTargets()"></div>
+            <div class="field"><label>Month</label><select id="tgtMonth" style="width:150px" onchange="renderTargets()"></select></div>
             <button class="btn" onclick="copyLastTargets()">Copy last month</button>
           </div>
           <div class="section-title" style="margin:14px 0 8px"><h2>Company target</h2></div>
@@ -434,7 +434,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b28 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b30 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -816,11 +816,12 @@ function renderCurve(){
 
 /* ============================ CARS ============================ */
 const CAR_FIELDS=[
+ ["VIN","VIN",""],
  ["MonthKey","Month","APR-2025"],["Outlet","Outlet","Tamluk"],["SalesConsultant","Consultant","SATYAJIT BERA"],
- ["Tenure","Tenure","Confirmed"],["Customer","Customer",""],["WhatsApp","WhatsApp",""],["Model","Model","VENUE"],
- ["StockRecdDate","Stock recd","2025-01-05"],["EnquiryDate","Enquiry","2025-03-01"],["BookingDate","Booking","2025-04-01"],
+ ["Tenure","Tenure","Confirmed"],["Model","Model","VENUE"],["StockRecdDate","Stock recd","2025-01-05"],
+ ["Customer","Customer",""],["WhatsApp","WhatsApp",""],["EnquiryDate","Enquiry","2025-03-01"],["BookingDate","Booking","2025-04-01"],
  ["RetailDate","Retail","2025-04-05"],["DeliveryDate","Delivery","2025-04-10"],["FinalPaymentRecdDate","Final payment","2025-05-05"],
- ["VIN","VIN",""],["RegNo","Reg no",""],["Cancelled","Cancelled?","No"],["PaymentRealised","Payment realised?","Yes"],
+ ["RegNo","Reg no",""],["Cancelled","Cancelled?","No"],["PaymentRealised","Payment realised?","Yes"],
  ["ComplaintOpen","Complaint open?","No"],["CSIScore","CSI (0-100)","100"],["DuesOnDelivery","Dues ₹","0"],
  ["EWAvailed","EW?","No"],["AccessoriesValue","Accessories ₹","0"],["IHInsurance","IH insurance?","No"],
  ["IHFinance","IH finance?","No"],["Exchange","Exchange?","No"],["RefBrokerage","Referral / Brokerage?","No"],["SOT","SOT?","No"],
@@ -835,7 +836,7 @@ function openCarForm(car){
     if(f==="SalesConsultant"){ const names=(state.settings.consultants||[]).map(x=>x.name); if(names.length){ return `<div class="field"><label>${l}</label><select data-f="SalesConsultant" onchange="onPickConsultant(this)"><option value=""></option>`+names.map(n=>`<option ${c[f]===n?'selected':''}>${n}</option>`).join("")+`</select></div>`; } }
     if(f==="Outlet") return field(f,l,c[f]||"Tamluk",["Haldia","Tamluk","Contai"]);
     if(f==="Model") return field(f,l,c[f]||"VENUE",Object.keys(state.settings.rates));
-    if(f==="VIN") return `<div class="field"><label>${l}</label><input data-f="VIN" type="text" value="${c[f]!=null?String(c[f]).replace(/"/g,'&quot;'):''}" placeholder="${ph}" onchange="vinAutoFill()"><div id="vinHint" style="font-size:11px;margin-top:3px;line-height:1.3"></div></div>`;
+    if(f==="VIN") return `<div class="field"><label>${l} <span style="background:#1E5AA8;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:800;letter-spacing:.3px">ENTER FIRST \u2192 auto-fills</span></label><input data-f="VIN" type="text" value="${c[f]!=null?String(c[f]).replace(/"/g,'&quot;'):''}" placeholder="${ph}" onchange="vinAutoFill()"><div id="vinHint" style="font-size:11px;margin-top:3px;line-height:1.3"></div></div>`;
     if(YN.includes(f)) return field(f,l,c[f]|| (f==="PaymentRealised"?"Yes":"No"),["No","Yes"]);
     const type=f.includes("Date")?"date":(["WhatsApp","CSIScore","DuesOnDelivery","AccessoriesValue","CostOnSalesPct","CreditShare"].includes(f)?"text":"text");
     return `<div class="field"><label>${l}</label><input data-f="${f}" type="${type}" value="${c[f]!=null?String(c[f]).replace(/"/g,'&quot;'):''}" placeholder="${ph}"></div>`;
@@ -1191,11 +1192,11 @@ function renderTargets(){
   document.getElementById('tgtLock').style.display=state.unlocked?'none':'block';
   document.getElementById('tgtBody').style.display=state.unlocked?'block':'none';
   if(!state.unlocked)return;
-  const mi=document.getElementById('tgtMonth'); if(!mi.value){ mi.value=allMonths()[0]||currentMonthLabel(); }
-  const month=mi.value.trim().toUpperCase(); const S=state.settings; S.targetsByMonth=S.targetsByMonth||{};
+  const mi=document.getElementById('tgtMonth'); const want=((mi.value||allMonths()[0]||currentMonthLabel())+'').toUpperCase(); mi.innerHTML=monthPickOptions(want); mi.value=want;
+  const month=want; const S=state.settings; S.targetsByMonth=S.targetsByMonth||{};
   const T=S.targetsByMonth[month]=S.targetsByMonth[month]||{company:{enq:'',td:'',bk:'',rt:'',de:''},overUnit:{},overSC:{}};
-  const METR=[['enq','Enquiries'],['td','Test drives'],['bk','Bookings'],['rt','Retails'],['de','Deliveries']];
-  document.getElementById('companyTargets').innerHTML=METR.map(([k,l])=>`<div class="field"><label>${l}</label><input type="number" value="${T.company[k]??''}" onchange="setCompanyTarget('${month}','${k}',this.value)"></div>`).join('') + companyRatioHTML(S);
+  const METR=[['rt','Retails'],['enq','Enquiries'],['td','Test drives'],['bk','Bookings'],['de','Deliveries']];
+  document.getElementById('companyTargets').innerHTML=METR.map(([k,l])=>`<div class="field"><label>${l}${k==='rt'?' <span style=\"background:#0E9F6E;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:800;letter-spacing:.4px;vertical-align:middle\">ENTER THIS \u2192 rest auto-fill</span>':''}</label><input type="number" value="${T.company[k]??''}" onchange="setCompanyTarget('${month}','${k}',this.value)"${k==='rt'?' style=\"border:2px solid #0E9F6E;background:#F3FBF6;font-weight:700\"':''}></div>`).join('') + companyRatioHTML(S);
   const PEN=[['insurance','Insurance %'],['finance','Finance %'],['exchange','Exchange %']];
   document.getElementById('penTargetsBox').innerHTML=PEN.map(([k,l])=>`<div class="field"><label>${l}</label><input type="number" value="${Math.round((S.penTargets[k]||0)*100)}" onchange="setPenTarget('${k}',this.value)"></div>`).join('');
   const roster=S.consultants||[]; const th=document.querySelector('#cascadeTable thead');
@@ -1212,7 +1213,9 @@ function renderTargets(){
 function setCompanyTarget(m,k,v){ const T=state.settings.targetsByMonth[m]; T.company[k]=v.trim()===''?'':num(v); if(k==='rt') autoFillFromRetail(m); persist(); syncConfig(); renderTargets(); }
 function autoFillTargets(obj,S){ const R=S.targetRatios||{}; const rt=num(obj.rt); if(rt>0){ const enq=Math.round(rt/(R.retailOfEnq||0.08)); obj.enq=enq; obj.td=Math.round(enq*(R.tdOfEnq||0.55)); obj.bk=Math.round(enq*(R.bkOfEnq||0.20)); obj.de=Math.round(rt*(R.deOfRetail||1.0)); } }
 function autoFillFromRetail(m){ autoFillTargets(state.settings.targetsByMonth[m].company, state.settings); }
-function setTargetRatio(k,v){ const S=state.settings; S.targetRatios=S.targetRatios||{}; S.targetRatios[k]=(num(v)||0)/100; persist(); syncConfig(); renderTargets(); }
+function monthPickOptions(sel){ const set={}; allMonths().forEach(m=>set[String(m).toUpperCase()]=1); const d=new Date(); for(let i=-3;i<=12;i++){ const dd=new Date(d.getFullYear(),d.getMonth()+i,1); set[MONTHS[dd.getMonth()]+'-'+dd.getFullYear()]=1; } if(sel)set[String(sel).toUpperCase()]=1; const arr=Object.keys(set).sort((a,b)=>monthNum(b)-monthNum(a)); return arr.map(m=>`<option ${m===sel?'selected':''}>${m}</option>`).join(''); }
+function recalcTargets(month){ const S=state.settings; const T=S.targetsByMonth&&S.targetsByMonth[String(month||'').toUpperCase()]; if(!T)return; if(T.company&&num(T.company.rt)>0)autoFillTargets(T.company,S); Object.keys(T.overUnit||{}).forEach(o=>{ if(num(T.overUnit[o].rt)>0)autoFillTargets(T.overUnit[o],S); }); Object.keys(T.overSC||{}).forEach(n=>{ if(num(T.overSC[n].rt)>0)autoFillTargets(T.overSC[n],S); }); }
+function setTargetRatio(k,v){ const S=state.settings; S.targetRatios=S.targetRatios||{}; S.targetRatios[k]=(num(v)||0)/100; const mi=document.getElementById('tgtMonth'); if(mi&&mi.value)recalcTargets(mi.value); persist(); syncConfig(); renderTargets(); }
 function companyRatioHTML(S){ const R=S.targetRatios||{}; const RAT=[['retailOfEnq','Retail % of Enq'],['tdOfEnq','Drives % of Enq'],['bkOfEnq','Book % of Enq'],['deOfRetail','Deliv % of Retail']]; return '<div style="flex-basis:100%;margin:8px 0 2px"><span style="font-size:12px;color:var(--muted)">Enter <b>Retails</b> \u2014 Enq, Drives, Book and Deliv auto-fill from these ratios (every field stays editable):</span></div>'+RAT.map(function(p){ return '<div class="field"><label>'+p[1]+'</label><input type="number" value="'+Math.round((R[p[0]]||0)*100)+'" onchange="setTargetRatio(\''+p[0]+'\',this.value)" style="width:95px"></div>'; }).join(''); }
 function setPenTarget(k,v){ state.settings.penTargets[k]=(num(v)||0)/100; persist(); syncConfig(); }
 function setUnitOverride(m,o,k,v){ const T=state.settings.targetsByMonth[m]; T.overUnit[o]=T.overUnit[o]||{}; if(v.trim()==='')delete T.overUnit[o][k]; else T.overUnit[o][k]=num(v); if(k==='rt')autoFillTargets(T.overUnit[o],state.settings); persist(); syncConfig(); renderTargets(); }

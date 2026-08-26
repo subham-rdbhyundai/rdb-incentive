@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b35</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b36</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -433,7 +433,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b35 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b36 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -796,8 +796,8 @@ function renderDashboard(){
     {k:"Outlets ≥125%",v:qualOut,foot:"booster unlocked"}
   ];
   document.getElementById("statRow").innerHTML=stats.map(s=>`<div class="stat ${s.accent?'accent':''}"><div class="k">${s.k}</div><div class="v">${s.v}</div><div class="foot">${s.foot}</div></div>`).join("");
-  const rm=document.getElementById("refModel"); const models=Object.keys(state.settings.rates);
-  if(rm.options.length!==models.length){ rm.innerHTML=models.map(x=>`<option>${x}</option>`).join(""); rm.value="VENUE"; }
+  const rm=document.getElementById("refModel"); const models=curveModels(); const cur=rm.value;
+  if(rm.options.length!==models.length || (cur && !models.includes(cur))){ rm.innerHTML=models.map(x=>`<option>${x}</option>`).join(""); rm.value = (cur && models.includes(cur))?cur : (models.includes("CRETA")?"CRETA":(models[0]||"")); }
   renderTargetHeadline(); renderMonitor();
   renderCurve();
   const tb=document.querySelector("#outletTable tbody");
@@ -831,9 +831,25 @@ function renderTargetHeadline(){ const box=document.getElementById('tgtHeadline'
   const items=[['Enquiries',enq,num(T.enq)],['Test drives',td,num(T.td)],['Bookings',bk,num(T.bk)],['Retails',rt,num(T.rt)],['Deliveries',de,num(T.de)]];
   box.innerHTML=`<div class="card pad" style="margin-top:16px"><div class="section-title" style="margin:0 0 10px"><h2>Company vs target — ${month}</h2></div><div class="grid" style="grid-template-columns:repeat(5,1fr);gap:14px">`+items.map(([l,a,t])=>{ const pc=t>0?Math.min(100,Math.round(a/t*100)):0; const col=t>0&&a>=t?'var(--green)':'var(--blue)'; return `<div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">${l}</div><div class="mono" style="font-size:18px;font-weight:750;margin:3px 0">${a}<span style="color:var(--muted);font-size:13px"> / ${t||'—'}</span></div><div style="height:6px;background:#EEF2F7;border-radius:4px;overflow:hidden"><div style="height:100%;width:${pc}%;background:${col}"></div></div></div>`; }).join('')+`</div></div>`;
 }
+function curveModels(){
+  const sp=(state.specs||[]).filter(s=>s.model);
+  if(sp.length) return [...new Set(sp.map(s=>String(s.model).toUpperCase()))].sort();
+  const st=(state.stock||[]).filter(s=>s.model);
+  if(st.length) return [...new Set(st.map(s=>String(s.model).toUpperCase()))].sort();
+  return Object.keys(state.settings.rates||{});
+}
+function modelRefIncentive(model){
+  const M=String(model||'').toUpperCase();
+  const sp=(state.specs||[]).filter(s=>String(s.model).toUpperCase()===M && Number(s.defaultIncentive)>0);
+  if(sp.length) return Math.round(sp.reduce((a,s)=>a+Number(s.defaultIncentive||0),0)/sp.length);
+  const st=(state.stock||[]).filter(s=>String(s.model).toUpperCase()===M && Number(s.incentive)>0);
+  if(st.length) return Math.round(st.reduce((a,s)=>a+Number(s.incentive||0),0)/st.length);
+  const r=(state.settings.rates||{})[model]||(state.settings.rates||{})[M]; if(r) return r[1]||r[0]||0;
+  return 0;
+}
 function renderCurve(){
-  const S=state.settings; const model=document.getElementById("refModel").value||"VENUE";
-  const rate=S.rates[model]||[0,0,0]; const base=rate[1]||rate[0]||5800; // 60-150 band as reference
+  const S=state.settings; const sel=document.getElementById("refModel"); const model=(sel&&sel.value)||curveModels()[0]||"VENUE";
+  const base=modelRefIncentive(model)||5800; // representative incentive from real catalogue / stock
   const el=document.getElementById("curve"); const N=8; let html="";
   const mults=[]; for(let seq=1;seq<=N;seq++){ const f=S.floorConfirmed; const mlt = seq<=f?0:seq<=S.target?1:seq===S.target+1?S.up1:S.up2; mults.push(mlt); }
   const maxAmt=Math.max(...mults.map(m=>m*base),1);

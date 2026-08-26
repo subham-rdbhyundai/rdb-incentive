@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b37</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b38</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -433,7 +433,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b37 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b38 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -723,6 +723,7 @@ let state = load() || { settings:defaultSettings(), snapshots:[], cars:[], kpi:{
 if(state.backendUrl===undefined)state.backendUrl="";
 if(state.accessKey===undefined)state.accessKey="";
 if(!state.specs)state.specs=[];
+if(state.specsVer===undefined)state.specsVer='';
 if(!state.stock)state.stock=[];
 if(state.isAdmin===undefined)state.isAdmin=false;
 if(state.role===undefined)state.role='';
@@ -1396,7 +1397,7 @@ function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.st
 }
 async function seedCatalogue(){ if(!state.unlocked){ toast('Unlock admin (Slabs & settings) to load the catalogue'); return; }
   if(!cloudActive()){ toast('Connect the Sheet first'); return; }
-  toast('Loading catalogue\u2026'); const r=await cloud('seedSpecs',{}); if(r&&r.ok){ const g=await cloud('getAll',{}); if(g&&g.ok){ state.specs=g.specs||[]; state.stock=g.stock||[]; persist(); renderStock(); toast('Catalogue loaded ('+(state.specs.length)+' specs)'); } } else { toast('Catalogue: '+((r&&r.error)||'failed')); } }
+  toast('Loading catalogue\u2026'); const r=await cloud('seedSpecs',{}); if(r&&r.ok){ const g=await cloud('getAll',{specsVer:''}); if(g&&g.ok){ state.specs=g.specs||[]; if(g.specsVer)state.specsVer=g.specsVer; state.stock=g.stock||[]; persist(); renderStock(); toast('Catalogue loaded ('+(state.specs.length)+' specs)'); } } else { toast('Catalogue: '+((r&&r.error)||'failed')); } }
 
 function incentivePDF(mode){
   const isH=(mode==='hmil');
@@ -1481,7 +1482,7 @@ function setPricing(f,v,isPct){ state.settings[f]=isPct?(num(v)):num(v); persist
 function setModelPct(key,v){ state.settings.modelPct=state.settings.modelPct||{}; if(v.trim()==='')delete state.settings.modelPct[key]; else state.settings.modelPct[key]=num(v); persist(); syncConfig(); }
 async function applyPricing(){ const msg=document.getElementById('pricingMsg'); if(!cloudActive()){ if(msg)msg.textContent='Connect the Sheet to recompute.'; return; }
   if(msg)msg.textContent='Recomputing defaults from margin\u2026'; await cloud('saveConfig',{settings:state.settings,snapshots:state.snapshots,pass:state.pass});
-  const r=await cloud('recomputeDefaults',{}); if(r&&r.ok){ const g=await cloud('getAll',{}); if(g&&g.ok){ state.specs=g.specs||[]; persist(); } if(msg)msg.textContent='Defaults updated. New VINs will use the new numbers (existing stock keeps its locked incentive).'; toast('Defaults recomputed'); }
+  const r=await cloud('recomputeDefaults',{}); if(r&&r.ok){ const g=await cloud('getAll',{specsVer:''}); if(g&&g.ok){ state.specs=g.specs||[]; if(g.specsVer)state.specsVer=g.specsVer; persist(); } if(msg)msg.textContent='Defaults updated. New VINs will use the new numbers (existing stock keeps its locked incentive).'; toast('Defaults recomputed'); }
   else if(msg)msg.textContent='Recompute needs an admin password.';
 }
 
@@ -1762,8 +1763,8 @@ function normCar(c){ c=Object.assign({},c); if(!c.id)c.id=uid();
   for(const k in c){ if(c[k]===null||c[k]===undefined)c[k]=""; else if(typeof c[k]!=="string") c[k]=String(c[k]); } return c; }
 async function cloudLoad(){ if(!cloudActive()){setCloudStatus('local');renderDashboard();return;}
   try{rebuildAllMonthly();}catch(e){} try{refreshAll();}catch(e){}  /* paint cached data instantly, don't wait on the network */
-  setCloudStatus('syncing'); const r=await cloud('getAll',{});
-  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.daily=dailyArrToMap(r.daily); state.specs=r.specs||[]; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
+  setCloudStatus('syncing'); const r=await cloud('getAll',{specsVer:(state.specs&&state.specs.length?state.specsVer:'')||''});
+  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.daily=dailyArrToMap(r.daily); if(r.specs!=null)state.specs=r.specs; if(r.specsVer)state.specsVer=r.specsVer; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
     state.role=r.user?(r.user.role||(r.user.admin?'admin':'hr')):state.role;
     if(r.config){ if(r.config.settings)state.settings=normSettings(r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
     try{rebuildAllMonthly();}catch(e){} persist(); setCloudStatus('connected'); refreshAll(); }
@@ -1788,8 +1789,8 @@ async function pushAll(){ if(!cloudActive()){toast('Connect the Sheet first');re
 function showKeyGate(){ const g=document.getElementById('keyGate'); if(g){ g.style.display='grid'; const i=document.getElementById('keyInput'); if(i){ i.value=state.accessKey||''; i.focus(); } } }
 function hideKeyGate(){ const g=document.getElementById('keyGate'); if(g)g.style.display='none'; }
 async function submitKey(){ const v=document.getElementById('keyInput').value.trim(); state.accessKey=v; persist();
-  document.getElementById('keyErr').textContent='Checking…'; const r=await cloud('getAll',{});
-  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.daily=dailyArrToMap(r.daily); state.specs=r.specs||[]; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
+  document.getElementById('keyErr').textContent='Checking…'; const r=await cloud('getAll',{specsVer:(state.specs&&state.specs.length?state.specsVer:'')||''});
+  if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.daily=dailyArrToMap(r.daily); if(r.specs!=null)state.specs=r.specs; if(r.specsVer)state.specsVer=r.specsVer; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
     state.role=r.user?(r.user.role||(r.user.admin?'admin':'hr')):state.role;
     if(r.config){ if(r.config.settings)state.settings=normSettings(r.config.settings); state.snapshots=r.config.snapshots||[]; if(r.config.pass)state.pass=r.config.pass; }
     persist(); hideKeyGate(); setCloudStatus('connected'); refreshAll(); toast('Access granted'); }

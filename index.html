@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b36</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b37</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -433,7 +433,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b36 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b37 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -781,7 +781,7 @@ function show(v){
 function model(){ return computeCars(state.cars, state.kpi, state.snapshots, state.settings, state.stock); }
 
 /* ============================ DASHBOARD ============================ */
-function currentEff(){ if(!state.snapshots.length) return "Base (unsaved)"; const s=[...state.snapshots].sort((a,b)=>monthNum(b.effMonth)-monthNum(a.effMonth))[0]; return s.effMonth; }
+function currentEff(){ if(!state.snapshots.length) return "Base (live)"; const s=[...state.snapshots].sort((a,b)=>monthNum(b.effMonth)-monthNum(a.effMonth))[0]; return s.effMonth; }
 function renderDashboard(){
   document.getElementById("effPill").textContent=currentEff();
   const m=model();
@@ -1761,6 +1761,7 @@ async function cloud(action,payload){ const body=Object.assign({action, key:stat
 function normCar(c){ c=Object.assign({},c); if(!c.id)c.id=uid();
   for(const k in c){ if(c[k]===null||c[k]===undefined)c[k]=""; else if(typeof c[k]!=="string") c[k]=String(c[k]); } return c; }
 async function cloudLoad(){ if(!cloudActive()){setCloudStatus('local');renderDashboard();return;}
+  try{rebuildAllMonthly();}catch(e){} try{refreshAll();}catch(e){}  /* paint cached data instantly, don't wait on the network */
   setCloudStatus('syncing'); const r=await cloud('getAll',{});
   if(r&&r.ok){ state.cars=(r.cars||[]).map(normCar); state.kpi=r.kpi||{}; state.daily=dailyArrToMap(r.daily); state.specs=r.specs||[]; state.stock=r.stock||[]; state.isAdmin=r.user?!!r.user.admin:state.isAdmin;
     state.role=r.user?(r.user.role||(r.user.admin?'admin':'hr')):state.role;

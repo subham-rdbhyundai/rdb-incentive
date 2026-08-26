@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b33</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b34</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -198,7 +198,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <!-- CARS -->
     <section class="view" id="view-cars">
       <h1>Retail Car</h1>
-      <p class="sub">One row per retailed car. Paste a month at once with <b>Upload / paste retail cars</b> \u2014 VIN pulls in the model, consultant, outlet, tenure and stock date automatically. Every grey figure is calculated live.</p>
+      <p class="sub">One row per retailed car. Paste a month at once with <b>Upload / paste retail cars</b> — VIN pulls in the model, consultant, outlet, tenure and stock date automatically. Every grey figure is calculated live.</p>
       <div class="bar">
         <div class="field"><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
         <div class="field"><label>Outlet</label><select id="fOutlet"><option value="">All</option><option>Haldia</option><option>Tamluk</option><option>Contai</option></select></div>
@@ -297,8 +297,8 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <button class="btn primary" onclick="openStockForm()">+ Add VIN</button>
         <button class="btn" onclick="openStockImport()">Upload / paste stock</button>
         <button class="btn" onclick="downloadStockPDF()">Download stock sheet (PDF)</button>
-        <button class="btn" onclick="incentivePDF('sales')">Incentive PDF \u00b7 Salesperson</button>
-        <button class="btn" onclick="incentivePDF('hmil')">Incentive PDF \u00b7 HMIL</button>
+        <button class="btn" onclick="incentivePDF('sales')">Incentive PDF · Salesperson</button>
+        <button class="btn" onclick="incentivePDF('hmil')">Incentive PDF · HMIL</button>
         <div class="spacer" style="flex:1"></div>
         <button class="btn" id="btnSeedCat" onclick="seedCatalogue()">Load Hyundai catalogue</button>
       </div>
@@ -433,7 +433,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b33 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b34 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -752,7 +752,7 @@ function hash(s){ let h=5381; for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeA
 
 /* ============================ FORMAT ============================ */
 function inr(n){ if(n===null||n===undefined||n===""||isNaN(n)) return "—"; const s=Math.round(n).toString(); const neg=s[0]==="-"; let x=neg?s.slice(1):s; let last=x.slice(-3),rest=x.slice(0,-3); if(rest)last=","+last; rest=rest.replace(/\B(?=(\d{2})+(?!\d))/g,","); return "₹"+(neg?"-":"")+rest+last; }
-function pct(n){ return (n===null||n===undefined||isNaN(n))?"—":(n*100).toFixed(n*100%1?1:0)+"%"; }
+function pct(n){ if(n===null||n===undefined||isNaN(n))return "—"; const v=Math.round(n*1000)/10; return (Number.isInteger(v)?v:v.toFixed(1))+"%"; }
 
 /* ============================ NAV ============================ */
 document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));
@@ -839,7 +839,7 @@ function renderCurve(){
   const maxAmt=Math.max(...mults.map(m=>m*base),1);
   for(let i=0;i<N;i++){ const m=mults[i]; const amt=m*base; const h=6+(amt/maxAmt)*120;
     const cls=m===0?"zero":m>1?"up":""; 
-    html+=`<div class="col"><span class="pct">${m===0?"0":(m*100)+"%"}</span><div class="b ${cls}" style="height:${h}px"></div><span class="amt">${m?inr(amt):"—"}</span><span class="lbl">Car ${i+1}</span></div>`;
+    html+=`<div class="col"><span class="pct">${m===0?"0":(Math.round(m*1000)/10)+"%"}</span><div class="b ${cls}" style="height:${h}px"></div><span class="amt">${m?inr(amt):"—"}</span><span class="lbl">Car ${i+1}</span></div>`;
   }
   el.innerHTML=html;
 }

@@ -151,15 +151,18 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 .subhead{display:flex;align-items:center;gap:10px}
 .formmodal:not(:empty){position:fixed;inset:0;z-index:400;background:rgba(11,31,51,.45);display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow-y:auto;animation:fmFade .12s ease}
 @keyframes fmFade{from{opacity:0}to{opacity:1}}
-.formmodal:not(:empty)>*{width:100%;max-width:680px;margin:0 auto!important;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:fmSlide .16s ease}
+.formmodal:not(:empty)>*{width:100%;max-width:720px;margin:0 auto!important;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:fmSlide .16s ease}
 @keyframes fmSlide{from{transform:translateY(-14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.formmodal .formgrid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.formmodal .field{min-width:0}
+.formmodal .field input,.formmodal .field select,.formmodal .field textarea{width:100%;min-width:0;box-sizing:border-box}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b47</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b48</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -444,7 +447,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b47 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b48 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>

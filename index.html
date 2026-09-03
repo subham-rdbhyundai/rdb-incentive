@@ -155,13 +155,14 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b38</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b43</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
     <span class="pill"><span class="dot"></span> Effective slab: <b id="effPill" style="margin-left:2px">—</b></span>
     <span class="pill" id="cloudPill" title="Cloud sync"><span class="dot" style="background:#9AA7B4"></span> Local only</span>
     <div class="spacer"></div>
+    <button id="switchLoginBtn" onclick="switchLogin()" title="Sign in as a different user (HR / admin / back office)" style="cursor:pointer;font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:999px;background:none;color:var(--deep);padding:5px 14px">Switch login</button>
   </div>
   <nav id="nav">
     <div class="navlabel">Operate</div>
@@ -200,6 +201,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <h1>Retail Car</h1>
       <p class="sub">One row per retailed car. Paste a month at once with <b>Upload / paste retail cars</b> — VIN pulls in the model, consultant, outlet, tenure and stock date automatically. Every grey figure is calculated live.</p>
       <div class="bar">
+        <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
         <div class="field"><label>Month</label><select id="fMonth"><option value="">All</option></select></div>
         <div class="field"><label>Outlet</label><select id="fOutlet"><option value="">All</option><option>Haldia</option><option>Tamluk</option><option>Contai</option></select></div>
         <div class="field"><label>Consultant</label><input id="fSC" placeholder="Search name"></div>
@@ -246,6 +248,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <p class="sub">Quarterly disbursement. A car pays only when its payment is realised in the window and no complaint is open.</p>
       <div class="card pad">
         <div class="bar" style="margin:0">
+        <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
           <div class="field"><label>Month</label><select id="poMonth" onchange="renderPayouts()" style="width:150px"></select></div>
           <button class="btn primary" onclick="renderPayouts()">Calculate month</button>
           <button class="btn" onclick="exportPayouts()">Export CSV</button>
@@ -264,6 +267,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <h1>Monthly report cards</h1>
       <p class="sub">Each consultant's live report card — scores, earnings, watch-outs, and how to improve. Pick a month, then print and hand out. (Dealer margins are never shown.)</p>
       <div class="bar" style="align-items:flex-end">
+        <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
         <div class="field"><label>Show month</label><select id="rcMonth" onchange="renderReportCards()"></select></div>
         <div class="spacer" style="flex:1"></div>
         <button class="btn primary" onclick="printReportCards('')">🖨 Print all cards</button>
@@ -294,6 +298,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <h1>Stock &amp; VIN incentives</h1>
       <p class="sub">Every car in the yard, with the incentive it carries. Add a VIN at stock-in; it drops out when it\'s paid.</p>
       <div class="bar">
+        <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
         <button class="btn primary" onclick="openStockForm()">+ Add VIN</button>
         <button class="btn" onclick="openStockImport()">Upload / paste stock</button>
         <button class="btn" onclick="downloadStockPDF()">Download stock sheet (PDF)</button>
@@ -336,6 +341,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <h1>Consultant scoring</h1>
       <p class="sub">The sales funnel for every consultant, ranked. Enquiries → test drives → bookings → retails → deliveries.</p>
       <div class="bar">
+        <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
         <div class="field"><label>Month</label><select id="scMonth" onchange="renderScoring()"></select></div>
         <div class="spacer" style="flex:1"></div>
         <button class="btn" onclick="exportScoring()">Export CSV</button>
@@ -350,6 +356,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <h1>Daily entry</h1>
       <p class="sub">Enter each consultant’s numbers for the day. Daily entries add up to the month’s funnel total (attendance stays monthly). Retails &amp; deliveries come from cars automatically.</p>
       <div class="bar" style="align-items:flex-end">
+        <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
         <div class="field"><label>Date</label><input type="date" id="dyDate" onchange="renderDaily()"></div>
         <div class="field"><label>Mode</label><select id="dyMode" onchange="renderDaily()"><option value="daily">Daily add</option><option value="opening">Opening balance (seed)</option></select></div>
         <div class="spacer" style="flex:1"></div>
@@ -433,7 +440,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b38 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b43 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -761,6 +768,15 @@ function applyRoleNav(){ const bo=state.role==='backoffice'; const allow={stock:
   document.querySelectorAll('#nav button[data-view]').forEach(b=>{ b.style.display=(bo&&!allow[b.dataset.view])?'none':''; });
   document.querySelectorAll('#nav .navlabel').forEach(l=>{ l.style.display=bo?'none':''; });
 }
+function tableFilter(inp){
+  var view=inp&&inp.closest?inp.closest('.view'):null; if(!view)return;
+  var q=(inp.value||'').trim().toLowerCase();
+  view.querySelectorAll('table').forEach(function(tbl){ tbl.querySelectorAll('tbody tr').forEach(function(tr){ tr.style.display=(!q||(tr.textContent||'').toLowerCase().indexOf(q)>=0)?'':'none'; }); });
+  view.querySelectorAll('.rc-li').forEach(function(el){ el.style.display=(!q||(el.textContent||'').toLowerCase().indexOf(q)>=0)?'':'none'; });
+  view.querySelectorAll('.tablewrap').forEach(function(wrap){ var any=Array.prototype.some.call(wrap.querySelectorAll('tbody tr'),function(tr){return tr.style.display!=='none';}); var prev=wrap.previousElementSibling; var title=(prev&&prev.classList&&prev.classList.contains('section-title'))?prev:null; var hide=q&&!any; wrap.style.display=hide?'none':''; if(title)title.style.display=hide?'none':''; });
+}
+function reFilter(viewId){ var v=document.getElementById('view-'+viewId); if(!v)return; var inp=v.querySelector('.viewsearch'); if(inp&&inp.value)tableFilter(inp); }
+function setupSearch(){ document.querySelectorAll('.view').forEach(function(view){ var inp=view.querySelector('.viewsearch'); if(!inp||view.__searchObs)return; var obs=new MutationObserver(function(){ if(inp.value)tableFilter(inp); }); obs.observe(view,{childList:true,subtree:true}); view.__searchObs=obs; }); }
 function show(v){
   applyRoleNav(); if(state.role==='backoffice' && !({stock:1,cars:1}[v])) v='stock';
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
@@ -776,6 +792,7 @@ function show(v){
   if(v==="arrears")renderArrears();
   if(v==="slabs")renderSlabs();
   if(v==="upload")renderColRef();
+  reFilter(v);
 }
 
 /* ============================ COMPUTE ============================ */
@@ -1326,9 +1343,10 @@ function specDefault(specCode){ const s=(state.specs||[]).find(x=>x.specCode===s
 function specModels(){ return [...new Set((state.specs||[]).map(s=>s.model))].sort(); }
 function variantsFor(model){ return (state.specs||[]).filter(s=>s.model===model); }
 function daysInStock(d){ const D=parseDate(d); if(!D)return null; return Math.round((new Date()-D)/86400000); }
-function vinSold(vin){ vin=String(vin||'').trim(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim()===vin && yes(c.PaymentRealised) && !yes(c.Cancelled)); }
-function vinBooked(vin){ vin=String(vin||'').trim(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim()===vin && !yes(c.Cancelled) && (c.BookingDate||c.RetailDate)); }
-function stockStatus(row){ if(vinSold(row.VIN)||row.status==='Paid') return 'Paid'; if(row.taggedTo||vinBooked(row.VIN)||row.status==='Booked') return 'Booked'; return 'Free'; }
+function vinSold(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && yes(c.PaymentRealised) && !yes(c.Cancelled)); }
+function vinBooked(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && !yes(c.Cancelled) && (c.BookingDate||c.RetailDate)); }
+function vinRetailed(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && !yes(c.Cancelled) && c.RetailDate && !yes(c.PaymentRealised)); }
+function stockStatus(row){ if(vinSold(row.VIN)||row.status==='Paid') return 'Paid'; if(vinRetailed(row.VIN)) return 'Retailed'; if(row.taggedTo||vinBooked(row.VIN)||row.status==='Booked') return 'Booked'; return 'Free'; }
 function isBoosted(row){ const d=specDefault(row.specCode); return d>0 && Number(row.incentive||0)>d; }
 function ageTier(row){ const st=stockStatus(row); if(st!=='Free')return 0; const dd=daysInStock(row.stockInDate); const f=state.settings.ageFlags||[90,150,180]; if(dd==null)return 0; if(dd>=f[2])return 3; if(dd>=f[1])return 2; if(dd>=f[0])return 1; return 0; }
 
@@ -1370,11 +1388,11 @@ function tagStock(id){ const r=state.stock.find(s=>s.id===id); if(!r)return; con
   const nm=prompt('Tag VIN '+r.VIN+' to which consultant? (blank to free)\n'+names.join(', '), r.taggedTo||''); if(nm===null)return; r.taggedTo=nm.trim(); persist(); if(cloudActive())cloud('upsertStock',{row:r}); renderStock(); }
 
 function stockSegments(){ const S=state.stock.map(r=>({r, st:stockStatus(r), tier:ageTier(r), boost:isBoosted(r), dd:daysInStock(r.stockInDate)}));
-  const fresh=[],prio=[],free=[],booked=[],paid=[];
-  S.forEach(x=>{ if(x.st==='Paid')paid.push(x); else if(x.st==='Booked')booked.push(x); else if(x.boost||x.tier>0)prio.push(x); else if(x.dd!=null&&x.dd<=7)fresh.push(x); else free.push(x); });
+  const fresh=[],prio=[],free=[],booked=[],retailed=[],paid=[];
+  S.forEach(x=>{ if(x.st==='Paid')paid.push(x); else if(x.st==='Retailed')retailed.push(x); else if(x.st==='Booked')booked.push(x); else if(x.boost||x.tier>0)prio.push(x); else if(x.dd!=null&&x.dd<=7)fresh.push(x); else free.push(x); });
   const bydays=(a,b)=>(b.dd||0)-(a.dd||0);
-  prio.sort(bydays); free.sort(bydays); booked.sort(bydays);
-  return {fresh,prio,free,booked,paid};
+  prio.sort(bydays); free.sort(bydays); booked.sort(bydays); retailed.sort(bydays);
+  return {fresh,prio,free,booked,retailed,paid};
 }
 function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.style.display=state.isAdmin?'inline-flex':'none'; const box=document.getElementById('stockSegments');
   if(!state.stock.length){ box.innerHTML=`<div class="empty">No VINs yet. ${specModels().length?'':'Load the Hyundai catalogue, then '}click \u201c+ Add VIN\u201d.</div>`; return; }
@@ -1384,7 +1402,7 @@ function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.st
     <td>${r.stockId||''}</td><td>${r.model}</td><td>${r.variant||''}</td><td>${r.colour||''}</td>
     <td class="mono" style="font-size:11px">${r.VIN}</td><td class="num">${x.dd!=null?x.dd:'\u2014'} ${badge(x.tier)}</td>
     <td class="num rupee">${inr(r.incentive)}${x.boost?' <span class="tag warn">boost</span>':''}</td>
-    <td>${x.st==='Free'?'<span class="tag yes">Free</span>':x.st==='Booked'?'<span class="tag blue">Booked'+(r.taggedTo?' \u00b7 '+r.taggedTo:'')+'</span>':'<span class="tag no">Paid</span>'}</td>
+    <td>${x.st==='Free'?'<span class="tag yes">Free</span>':x.st==='Booked'?'<span class="tag blue">Booked'+(r.taggedTo?' \u00b7 '+r.taggedTo:'')+'</span>':x.st==='Retailed'?'<span class="tag warn">Retailed</span>':'<span class="tag no">Paid</span>'}</td>
     <td class="rowact"><button class="linkbtn" onclick="editStock('${r.id}')">Edit</button> <button class="linkbtn" onclick="tagStock('${r.id}')">Tag</button> <button class="linkbtn" style="color:var(--red)" onclick="delStock('${r.id}')">Del</button></td></tr>`; };
   const table=(title,list,color)=> list.length?`<div class="section-title" style="margin:18px 0 8px"><h2>${title} <span style="color:var(--muted);font-weight:400">(${list.length})</span></h2></div>
     <div class="tablewrap" style="border-left:4px solid ${color}"><table><thead><tr><th>Stock ID</th><th>Model</th><th>Variant</th><th>Colour</th><th>VIN</th><th class="num">Days</th><th class="num">Incentive</th><th>Status</th><th></th></tr></thead><tbody>${list.map(x=>rowHtml(x)).join('')}</tbody></table></div>`:'';
@@ -1392,7 +1410,8 @@ function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.st
     table('\uD83D\uDD34 Priority \u2014 clear-out (boosted / aged free stock)',seg.prio,'#B45309')
     + table('\uD83D\uDFE2 Just arrived (last 7 days)',seg.fresh,'#0E9F6E')
     + table('Free stock',seg.free,'#CBD5E1')
-    + table('Booked',seg.booked,'#9AA7B4')
+    + table('Booked \u2014 reserved, not retailed',seg.booked,'#9AA7B4')
+    + table('\uD83D\uDD35 Retailed \u2014 awaiting full payment',seg.retailed,'#2563EB')
     + table('Paid \u00b7 consumed',seg.paid,'#E3E8EF');
 }
 async function seedCatalogue(){ if(!state.unlocked){ toast('Unlock admin (Slabs & settings) to load the catalogue'); return; }
@@ -1407,8 +1426,8 @@ function incentivePDF(mode){
     if(!specs.length){ toast('Load the Hyundai catalogue first'); return; }
     specs.forEach(s=>{ const m=String(s.model||'').toUpperCase(); (byModel[m]=byModel[m]||[]).push({variant:s.variant||'',fuel:s.fuel||'',inc:Number(s.defaultIncentive||0)}); });
   } else {
-    const stock=(state.stock||[]).filter(s=>s.model&&s.variant);
-    if(!stock.length){ toast('No stock in hand yet — add or upload VINs first'); return; }
+    const stock=(state.stock||[]).filter(s=>s.model&&s.variant && (function(st){return st==='Free'||st==='Booked';})(stockStatus(s)));
+    if(!stock.length){ toast('No available stock — all units are retailed/paid, or none loaded yet'); return; }
     const map={};
     stock.forEach(s=>{ const m=String(s.model||'').toUpperCase(); const key=m+'||'+(s.variant||'')+'||'+(s.fuel||'');
       const g=map[key]||(map[key]={model:m,variant:s.variant||'',fuel:s.fuel||'',qty:0,incs:[]}); g.qty++; g.incs.push(Number(s.incentive||0)); });
@@ -1417,7 +1436,7 @@ function incentivePDF(mode){
   const models=Object.keys(byModel).sort();
   const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   const title=isH?'Incentive Structure — HMIL copy':'Incentive Structure — Salesperson copy';
-  const sub=isH?'Every model and variant in the price structure, with a model average. Dealer margin is not shown.':'The incentive on the cars we currently have in stock, and how many are in the yard. Dealer margin is not shown.';
+  const sub=isH?'Every model and variant in the price structure, with a model average. Dealer margin is not shown.':'The incentive on the cars available to sell right now (retailed and paid units are excluded). Dealer margin is not shown.';
   let body='';
   models.forEach(m=>{
     const rows=byModel[m].slice().sort((a,b)=>String(a.variant).localeCompare(String(b.variant)));
@@ -1430,8 +1449,8 @@ function incentivePDF(mode){
       </tbody></table>`;
     } else {
       const totQty=rows.reduce((a,r)=>a+r.qty,0);
-      body+=`<h2 style="background:#0B2A4A;color:#fff;padding:6px 10px;border-radius:6px;margin:16px 0 6px;font-size:13px">${m} <span style="float:right;font-weight:400">${totQty} in stock</span></h2>
-      <table><thead><tr><th>Variant</th><th>Fuel</th><th style="text-align:center">In stock</th><th style="text-align:right">Incentive</th></tr></thead><tbody>
+      body+=`<h2 style="background:#0B2A4A;color:#fff;padding:6px 10px;border-radius:6px;margin:16px 0 6px;font-size:13px">${m} <span style="float:right;font-weight:400">${totQty} available</span></h2>
+      <table><thead><tr><th>Variant</th><th>Fuel</th><th style="text-align:center">Available</th><th style="text-align:right">Incentive</th></tr></thead><tbody>
       ${rows.map(r=>{ const mn=Math.min.apply(null,r.incs), mx=Math.max.apply(null,r.incs); const inc=(mn===mx)?inr(mn):(inr(mn)+'–'+inr(mx)); return `<tr><td>${r.variant}</td><td>${r.fuel}</td><td style="text-align:center">${r.qty}</td><td style="text-align:right;font-weight:700">${inc}</td></tr>`; }).join('')}
       </tbody></table>`;
     }
@@ -1569,7 +1588,8 @@ function rcMonthLong(mk){ var p=(mk||"").split("-"); return (RC_MONTHS[(p[0]||""
 
 function rcDays(a,b){ var A=parseDate(a),B=parseDate(b); if(!A||!B)return null; return Math.round((B-A)/86400000); }
 function rcModel(month){ var cars=state.cars.filter(function(c){return c.MonthKey===month;}); return computeCars(cars, state.kpi, state.snapshots, state.settings, state.stock); }
-function rcData(month,name){ var S=state.settings; var m=rcModel(month); var r=m.sc.find(function(x){return x.sc===name;}); if(!r) return null;
+function rcData(month,name){ var S=state.settings; var m=rcModel(month); var r=m.sc.find(function(x){return x.sc===name;}) || m.sc.find(function(x){return String(x.sc||'').trim().toUpperCase()===String(name||'').trim().toUpperCase();}); if(!r) return null;
+  name=r.sc; /* canonicalize to the exact name carried on the cars so internal name matches line up */
   var mine=m.cars.filter(function(c){return c.SalesConsultant===name;});
   var retCars=mine.filter(function(c){return !yes(c.Cancelled)&&c.RetailDate;});
   var base=mine.reduce(function(a,c){return a+(c.PayAmt||0);},0);
@@ -1652,10 +1672,12 @@ function rcCardHTML(d){ if(!d) return ""; var S=state.settings;
 }
 function renderReportCards(){ var sel=document.getElementById("rcMonth"); var months=allMonths(); var cur=sel.value||(months[0]||"");
   sel.innerHTML=months.length?months.map(function(m){return '<option '+(m===cur?"selected":"")+'>'+m+'</option>';}).join(""):'<option value="">—</option>';
-  var month=sel.value||cur; var roster=scoringRoster();
+  var month=sel.value||cur;
   var list=document.getElementById("rcList"), prev=document.getElementById("rcPreview");
-  if(!month||!roster.length){ list.innerHTML='<div class="empty">Add consultants and this month\u2019s data first.</div>'; prev.innerHTML=""; return; }
-  var data=roster.map(function(c){return rcData(month,c.name);}).filter(Boolean).sort(function(a,b){return b.total-a.total;});
+  var mm=rcModel(month); var names=[...new Set(mm.sc.map(function(x){return x.sc;}))].filter(Boolean);
+  if(!names.length){ names=scoringRoster().map(function(c){return c.name;}); }
+  if(!month||!names.length){ list.innerHTML='<div class="empty">No cars or scoring for this month yet. Log retails (or pick another month) to prepare report cards.</div>'; prev.innerHTML=""; return; }
+  var data=names.map(function(n){return rcData(month,n);}).filter(Boolean).sort(function(a,b){return b.total-a.total;});
   list.innerHTML=data.map(function(d,i){ return '<div class="rc-li'+(i===0?" sel":"")+'" data-n="'+d.name.replace(/"/g,"&quot;")+'" onclick="rcSelect(this.dataset.n)"><b>'+d.name+'</b><br><span style="font-size:12px;color:#5B6B7E">'+d.retailed+' cars · '+(d.held?"HELD":inr(d.total))+'</span></div>'; }).join("");
   if(data.length) rcSelect(data[0].name);
 }
@@ -1786,6 +1808,7 @@ async function pushAll(){ if(!cloudActive()){toast('Connect the Sheet first');re
   for(const key in state.kpi){ const p=key.split('|'); await cloud('saveKpi',{kpi:Object.assign({key,MonthKey:p[0],SalesConsultant:p[1]},state.kpi[key])}); }
   if(cm)cm.textContent='Pushed '+state.cars.length+' cars + settings to the Sheet.'; setCloudStatus('connected'); toast('Everything pushed to cloud'); }
 
+function switchLogin(){ showKeyGate(); const i=document.getElementById('keyInput'); if(i){ i.value=''; i.focus(); } const e=document.getElementById('keyErr'); if(e)e.textContent=''; }
 function showKeyGate(){ const g=document.getElementById('keyGate'); if(g){ g.style.display='grid'; const i=document.getElementById('keyInput'); if(i){ i.value=state.accessKey||''; i.focus(); } } }
 function hideKeyGate(){ const g=document.getElementById('keyGate'); if(g)g.style.display='none'; }
 async function submitKey(){ const v=document.getElementById('keyInput').value.trim(); state.accessKey=v; persist();
@@ -1803,6 +1826,7 @@ function migrateIds(){ let ch=false; state.cars.forEach(c=>{ if(!c.id){c.id=uid(
 applyLogos(); migrateIds(); state.settings=normSettings(state.settings);
 const beEl=document.getElementById('beUrl'); if(beEl) beEl.value=state.backendUrl||'';
 const kEl=document.getElementById('keyField'); if(kEl) kEl.value=state.accessKey||'';
+try{setupSearch();}catch(e){}
 if(cloudActive()) cloudLoad(); else { setCloudStatus('local'); renderDashboard(); }
 </script>
 </body>

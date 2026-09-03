@@ -149,13 +149,17 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 .brandtxt{display:flex;flex-direction:column;line-height:1.05}
 .brand .hy{margin-left:2px}
 .subhead{display:flex;align-items:center;gap:10px}
+.formmodal:not(:empty){position:fixed;inset:0;z-index:400;background:rgba(11,31,51,.45);display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow-y:auto;animation:fmFade .12s ease}
+@keyframes fmFade{from{opacity:0}to{opacity:1}}
+.formmodal:not(:empty)>*{width:100%;max-width:680px;margin:0 auto!important;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:fmSlide .16s ease}
+@keyframes fmSlide{from{transform:translateY(-14px);opacity:0}to{transform:translateY(0);opacity:1}}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b45</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b47</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -212,7 +216,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <button class="btn primary" onclick="openCarForm()">+ Add car</button>
       </div>
       <div id="carWarn"></div>
-      <div id="carFormWrap"></div>
+      <div id="carFormWrap" class="formmodal"></div>
       <div class="tablewrap" style="margin-top:6px"><table id="carsTable"><thead></thead><tbody></tbody></table></div>
     </section>
 
@@ -259,7 +263,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <div class="section-title"><h2>Disbursement</h2></div>
       <div class="tablewrap"><table id="payTable"><thead></thead><tbody></tbody></table></div>
       <div id="payFoot"></div>
-      <div id="payMarkDetail"></div>
+      <div id="payMarkDetail" class="formmodal"></div>
     </section>
 
     <!-- REPORT CARDS -->
@@ -289,7 +293,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <div id="arrearsTotals" class="grid g4" style="margin-bottom:14px"></div>
         <div class="bar"><button class="btn primary" onclick="addArrearsPerson()">+ Add person (left the team)</button><button class="btn" onclick="printArrears('')">Print all statements</button><div class="spacer" style="flex:1"></div><div class="field"><label>Cutover (live from)</label><select id="arrCut" style="width:130px" onchange="setArrearsCutover(this.value)"></select></div></div>
         <div class="tablewrap"><table id="arrearsTable"><thead><tr><th>Consultant</th><th class="num">Owed</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
-        <div id="arrearsDetail"></div>
+        <div id="arrearsDetail" class="formmodal"></div>
       </div>
     </section>
 
@@ -307,7 +311,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <div class="spacer" style="flex:1"></div>
         <button class="btn" id="btnSeedCat" onclick="seedCatalogue()">Load Hyundai catalogue</button>
       </div>
-      <div id="stockFormWrap"></div>
+      <div id="stockFormWrap" class="formmodal"></div>
       <div id="stockSegments"></div>
     </section>
 
@@ -440,7 +444,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b45 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b47 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1807,7 +1811,9 @@ async function cloud(action,payload){ const body=Object.assign({action, key:stat
   try{ const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}); return await res.json(); }
   catch(e){ return {ok:false,error:String(e)}; } }
 function normCar(c){ c=Object.assign({},c); if(!c.id)c.id=uid();
-  for(const k in c){ if(c[k]===null||c[k]===undefined)c[k]=""; else if(typeof c[k]!=="string") c[k]=String(c[k]); } return c; }
+  for(const k in c){ if(c[k]===null||c[k]===undefined)c[k]=""; else if(typeof c[k]!=="string") c[k]=String(c[k]); }
+  if(c.MonthKey && /^\d{4}[-\/]\d{1,2}/.test(c.MonthKey)){ var _mk=mkOfDate(String(c.MonthKey).replace(/\//g,"-")); if(_mk)c.MonthKey=_mk; }  /* date-format month -> AUG-2026 (in-memory only; sheet untouched) */
+  return c; }
 async function cloudLoad(){ if(!cloudActive()){setCloudStatus('local');renderDashboard();return;}
   try{rebuildAllMonthly();}catch(e){} try{refreshAll();}catch(e){}  /* paint cached data instantly, don't wait on the network */
   setCloudStatus('syncing'); const r=await cloud('getAll',{specsVer:(state.specs&&state.specs.length?state.specsVer:'')||''});
@@ -1849,9 +1855,11 @@ function applyLogos(){ const r=document.getElementById('brandRDB'); if(r)r.src=L
   const h=document.getElementById('brandHY'); if(h)h.src=LOGO_HY; const l=document.getElementById('lockLogo'); if(l)l.src=LOGO_RDB; const g=document.getElementById('gateLogo'); if(g)g.src=LOGO_RDB; }
 function migrateIds(){ let ch=false; state.cars.forEach(c=>{ if(!c.id){c.id=uid();ch=true;} }); if(ch)persist(); }
 applyLogos(); migrateIds(); state.settings=normSettings(state.settings);
+state.cars=(state.cars||[]).map(normCar); persist();
 const beEl=document.getElementById('beUrl'); if(beEl) beEl.value=state.backendUrl||'';
 const kEl=document.getElementById('keyField'); if(kEl) kEl.value=state.accessKey||'';
 try{setupSearch();}catch(e){}
+try{ document.addEventListener('click',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('formmodal')){ t.innerHTML=''; if(t.dataset)t.dataset.open=''; } }); document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ document.querySelectorAll('.formmodal').forEach(function(fm){ if((fm.innerHTML||'').trim()){ fm.innerHTML=''; if(fm.dataset)fm.dataset.open=''; } }); } }); }catch(e){}
 if(cloudActive()) cloudLoad(); else { setCloudStatus('local'); renderDashboard(); }
 </script>
 </body>

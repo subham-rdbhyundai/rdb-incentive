@@ -155,7 +155,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b43</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b45</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -440,7 +440,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b43 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b45 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1346,7 +1346,9 @@ function daysInStock(d){ const D=parseDate(d); if(!D)return null; return Math.ro
 function vinSold(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && yes(c.PaymentRealised) && !yes(c.Cancelled)); }
 function vinBooked(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && !yes(c.Cancelled) && (c.BookingDate||c.RetailDate)); }
 function vinRetailed(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && !yes(c.Cancelled) && c.RetailDate && !yes(c.PaymentRealised)); }
-function stockStatus(row){ if(vinSold(row.VIN)||row.status==='Paid') return 'Paid'; if(vinRetailed(row.VIN)) return 'Retailed'; if(row.taggedTo||vinBooked(row.VIN)||row.status==='Booked') return 'Booked'; return 'Free'; }
+function vinDelivered(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && !yes(c.Cancelled) && c.DeliveryDate); }
+function vinDeliveredUnpaid(vin){ vin=String(vin||'').trim().toUpperCase(); if(!vin)return false; return state.cars.some(c=>String(c.VIN||'').trim().toUpperCase()===vin && !yes(c.Cancelled) && c.DeliveryDate && !yes(c.PaymentRealised)); }
+function stockStatus(row){ if(vinDelivered(row.VIN)) return 'Delivered'; if(vinSold(row.VIN)||row.status==='Paid') return 'Paid'; if(vinRetailed(row.VIN)) return 'Retailed'; if(row.taggedTo||vinBooked(row.VIN)||row.status==='Booked') return 'Booked'; return 'Free'; }
 function isBoosted(row){ const d=specDefault(row.specCode); return d>0 && Number(row.incentive||0)>d; }
 function ageTier(row){ const st=stockStatus(row); if(st!=='Free')return 0; const dd=daysInStock(row.stockInDate); const f=state.settings.ageFlags||[90,150,180]; if(dd==null)return 0; if(dd>=f[2])return 3; if(dd>=f[1])return 2; if(dd>=f[0])return 1; return 0; }
 
@@ -1386,13 +1388,22 @@ function editStock(id){ const r=state.stock.find(s=>s.id===id); if(r)openStockFo
 function delStock(id){ if(confirm('Remove this VIN?')){ state.stock=state.stock.filter(s=>s.id!==id); persist(); if(cloudActive())cloud('deleteStock',{id}); renderStock(); } }
 function tagStock(id){ const r=state.stock.find(s=>s.id===id); if(!r)return; const names=(state.settings.consultants||[]).map(c=>c.name);
   const nm=prompt('Tag VIN '+r.VIN+' to which consultant? (blank to free)\n'+names.join(', '), r.taggedTo||''); if(nm===null)return; r.taggedTo=nm.trim(); persist(); if(cloudActive())cloud('upsertStock',{row:r}); renderStock(); }
+function returnToFree(id){ var s=state.stock.find(function(x){return x.id===id;}); if(!s)return;
+  var vin=String(s.VIN||'').trim().toUpperCase();
+  var bookingCars=state.cars.filter(function(c){return String(c.VIN||'').trim().toUpperCase()===vin && !yes(c.Cancelled) && c.BookingDate && !c.RetailDate;});
+  var msg='Return '+(s.VIN||'this unit')+' to free stock?';
+  msg += bookingCars.length?('\\n\\nThis marks '+bookingCars.length+' booking'+(bookingCars.length>1?'s':'')+' as cancelled (kept in the sheet for records) and clears the consultant tag.'):('\\n\\nThis clears the consultant tag.');
+  if(typeof confirm==='function' && !confirm(msg))return;
+  if(s.taggedTo){ s.taggedTo=''; if(cloudActive())cloud('upsertStock',{row:s}); }
+  bookingCars.forEach(function(c){ c.Cancelled='Yes'; if(cloudActive())cloud('upsertCar',{car:c}); });
+  persist(); renderStock(); toast('Returned to free stock'); }
 
 function stockSegments(){ const S=state.stock.map(r=>({r, st:stockStatus(r), tier:ageTier(r), boost:isBoosted(r), dd:daysInStock(r.stockInDate)}));
-  const fresh=[],prio=[],free=[],booked=[],retailed=[],paid=[];
-  S.forEach(x=>{ if(x.st==='Paid')paid.push(x); else if(x.st==='Retailed')retailed.push(x); else if(x.st==='Booked')booked.push(x); else if(x.boost||x.tier>0)prio.push(x); else if(x.dd!=null&&x.dd<=7)fresh.push(x); else free.push(x); });
+  const fresh=[],prio=[],free=[],booked=[],retailed=[],paid=[],delivered=[];
+  S.forEach(x=>{ if(x.st==='Delivered')delivered.push(x); else if(x.st==='Paid')paid.push(x); else if(x.st==='Retailed')retailed.push(x); else if(x.st==='Booked')booked.push(x); else if(x.boost||x.tier>0)prio.push(x); else if(x.dd!=null&&x.dd<=7)fresh.push(x); else free.push(x); });
   const bydays=(a,b)=>(b.dd||0)-(a.dd||0);
-  prio.sort(bydays); free.sort(bydays); booked.sort(bydays); retailed.sort(bydays);
-  return {fresh,prio,free,booked,retailed,paid};
+  prio.sort(bydays); free.sort(bydays); booked.sort(bydays); retailed.sort(bydays); paid.sort(bydays); delivered.sort(bydays);
+  return {fresh,prio,free,booked,retailed,paid,delivered};
 }
 function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.style.display=state.isAdmin?'inline-flex':'none'; const box=document.getElementById('stockSegments');
   if(!state.stock.length){ box.innerHTML=`<div class="empty">No VINs yet. ${specModels().length?'':'Load the Hyundai catalogue, then '}click \u201c+ Add VIN\u201d.</div>`; return; }
@@ -1402,8 +1413,8 @@ function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.st
     <td>${r.stockId||''}</td><td>${r.model}</td><td>${r.variant||''}</td><td>${r.colour||''}</td>
     <td class="mono" style="font-size:11px">${r.VIN}</td><td class="num">${x.dd!=null?x.dd:'\u2014'} ${badge(x.tier)}</td>
     <td class="num rupee">${inr(r.incentive)}${x.boost?' <span class="tag warn">boost</span>':''}</td>
-    <td>${x.st==='Free'?'<span class="tag yes">Free</span>':x.st==='Booked'?'<span class="tag blue">Booked'+(r.taggedTo?' \u00b7 '+r.taggedTo:'')+'</span>':x.st==='Retailed'?'<span class="tag warn">Retailed</span>':'<span class="tag no">Paid</span>'}</td>
-    <td class="rowact"><button class="linkbtn" onclick="editStock('${r.id}')">Edit</button> <button class="linkbtn" onclick="tagStock('${r.id}')">Tag</button> <button class="linkbtn" style="color:var(--red)" onclick="delStock('${r.id}')">Del</button></td></tr>`; };
+    <td>${x.st==='Free'?'<span class="tag yes">Free</span>':x.st==='Booked'?'<span class="tag blue">Booked'+(r.taggedTo?' \u00b7 '+r.taggedTo:'')+'</span>':x.st==='Retailed'?'<span class="tag warn">Retailed \u00b7 payment pending</span>':x.st==='Paid'?'<span class="tag" style="background:#E0F2FE;color:#075985">Paid \u00b7 awaiting delivery</span>':x.st==='Delivered'?('<span class="tag no">Delivered</span>'+(vinDeliveredUnpaid(r.VIN)?' <span class="tag warn">\u26A0 payment pending</span>':'')):'<span class="tag no">'+x.st+'</span>'}</td>
+    <td class="rowact">${x.st==='Booked'?`<button class="linkbtn" style="color:#0E9F6E" onclick="returnToFree('${r.id}')">Return to free</button> `:''}<button class="linkbtn" onclick="editStock('${r.id}')">Edit</button> <button class="linkbtn" onclick="tagStock('${r.id}')">Tag</button> <button class="linkbtn" style="color:var(--red)" onclick="delStock('${r.id}')">Del</button></td></tr>`; };
   const table=(title,list,color)=> list.length?`<div class="section-title" style="margin:18px 0 8px"><h2>${title} <span style="color:var(--muted);font-weight:400">(${list.length})</span></h2></div>
     <div class="tablewrap" style="border-left:4px solid ${color}"><table><thead><tr><th>Stock ID</th><th>Model</th><th>Variant</th><th>Colour</th><th>VIN</th><th class="num">Days</th><th class="num">Incentive</th><th>Status</th><th></th></tr></thead><tbody>${list.map(x=>rowHtml(x)).join('')}</tbody></table></div>`:'';
   box.innerHTML =
@@ -1411,8 +1422,9 @@ function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.st
     + table('\uD83D\uDFE2 Just arrived (last 7 days)',seg.fresh,'#0E9F6E')
     + table('Free stock',seg.free,'#CBD5E1')
     + table('Booked \u2014 reserved, not retailed',seg.booked,'#9AA7B4')
-    + table('\uD83D\uDD35 Retailed \u2014 awaiting full payment',seg.retailed,'#2563EB')
-    + table('Paid \u00b7 consumed',seg.paid,'#E3E8EF');
+    + table('\uD83D\uDD35 Retailed \u2014 payment pending',seg.retailed,'#2563EB')
+    + table('\uD83D\uDCB0 Paid \u2014 awaiting delivery',seg.paid,'#7C3AED')
+    + table('\u2705 Delivered',seg.delivered,'#059669');
 }
 async function seedCatalogue(){ if(!state.unlocked){ toast('Unlock admin (Slabs & settings) to load the catalogue'); return; }
   if(!cloudActive()){ toast('Connect the Sheet first'); return; }
@@ -1671,15 +1683,28 @@ function rcCardHTML(d){ if(!d) return ""; var S=state.settings;
     +'<div class="rc-foot"><span>RDB Hyundai \u00b7 Haldia \u00b7 Tamluk \u00b7 Contai</span><span>Approved: Managing Director ____________</span></div></div>';
 }
 function renderReportCards(){ var sel=document.getElementById("rcMonth"); var months=allMonths(); var cur=sel.value||(months[0]||"");
-  sel.innerHTML=months.length?months.map(function(m){return '<option '+(m===cur?"selected":"")+'>'+m+'</option>';}).join(""):'<option value="">—</option>';
+  sel.innerHTML=months.length?months.map(function(m){return '<option '+(m===cur?"selected":"")+'>'+m+'</option>';}).join(""):'<option value="">\u2014</option>';
   var month=sel.value||cur;
   var list=document.getElementById("rcList"), prev=document.getElementById("rcPreview");
-  var mm=rcModel(month); var names=[...new Set(mm.sc.map(function(x){return x.sc;}))].filter(Boolean);
-  if(!names.length){ names=scoringRoster().map(function(c){return c.name;}); }
-  if(!month||!names.length){ list.innerHTML='<div class="empty">No cars or scoring for this month yet. Log retails (or pick another month) to prepare report cards.</div>'; prev.innerHTML=""; return; }
-  var data=names.map(function(n){return rcData(month,n);}).filter(Boolean).sort(function(a,b){return b.total-a.total;});
-  list.innerHTML=data.map(function(d,i){ return '<div class="rc-li'+(i===0?" sel":"")+'" data-n="'+d.name.replace(/"/g,"&quot;")+'" onclick="rcSelect(this.dataset.n)"><b>'+d.name+'</b><br><span style="font-size:12px;color:#5B6B7E">'+d.retailed+' cars · '+(d.held?"HELD":inr(d.total))+'</span></div>'; }).join("");
-  if(data.length) rcSelect(data[0].name);
+  if(!month){ list.innerHTML='<div class="empty">Pick a month with data.</div>'; prev.innerHTML=""; return; }
+  var mk=String(month).trim().toUpperCase();
+  var monthCars=state.cars.filter(function(c){return String(c.MonthKey||'').trim().toUpperCase()===mk && !yes(c.Cancelled);});
+  var carNames=[]; var seenC={}; monthCars.forEach(function(c){ var nm=String(c.SalesConsultant||'').trim(); var k=nm.toUpperCase(); if(nm&&!seenC[k]){seenC[k]=1;carNames.push(nm);} });
+  var rosterNames=scoringRoster().map(function(c){return c.name;}).filter(Boolean);
+  var names=[]; var seen={}; carNames.concat(rosterNames).forEach(function(n){ var k=String(n).trim().toUpperCase(); if(n&&!seen[k]){seen[k]=1;names.push(n);} });
+  var data=[], errs=0; names.forEach(function(n){ try{ var d=rcData(month,n); if(d)data.push(d); }catch(e){ errs++; if(window.console)console.warn('report card error for',n,e); } });
+  data.sort(function(a,b){return b.total-a.total;});
+  if(!data.length){
+    var unattributed=monthCars.filter(function(c){return !String(c.SalesConsultant||'').trim();}).length;
+    var msg;
+    if(!monthCars.length) msg='No cars retailed in '+month+' yet. Log retails (or pick another month) to prepare report cards.';
+    else if(!carNames.length) msg='<b>'+monthCars.length+' car'+(monthCars.length>1?'s':'')+' in '+month+' have no sales consultant set.</b><br>Open <b>Retail Car</b>, edit each one and choose the consultant (or tag the VIN to a consultant in <b>Stock in hand</b> before uploading). The cards will appear automatically.';
+    else if(errs) msg='Could not prepare the cards for '+month+' (data error). Tell your admin \u2014 it has been logged to the browser console.';
+    else msg='No report-card data for '+month+' yet '+(unattributed?('('+unattributed+' car'+(unattributed>1?'s':'')+' missing a consultant) '):'')+'\u2014 enter this month\u2019s funnel/attendance under Daily Entry or Scoring.';
+    list.innerHTML='<div class="empty">'+msg+'</div>'; prev.innerHTML=""; return;
+  }
+  list.innerHTML=data.map(function(d,i){ return '<div class="rc-li'+(i===0?" sel":"")+'" data-n="'+d.name.replace(/"/g,"&quot;")+'" onclick="rcSelect(this.dataset.n)"><b>'+d.name+'</b><br><span style="font-size:12px;color:#5B6B7E">'+d.retailed+' cars \u00b7 '+(d.held?"HELD":inr(d.total))+'</span></div>'; }).join("");
+  rcSelect(data[0].name);
 }
 function rcSelect(name){ var month=document.getElementById("rcMonth").value; var d=rcData(month,name);
   document.querySelectorAll("#rcList .rc-li").forEach(function(e){ e.classList.toggle("sel", e.dataset.n===name); });

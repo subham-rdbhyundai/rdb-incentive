@@ -162,7 +162,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b49</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b51</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -447,7 +447,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b49 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b51 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1142,13 +1142,13 @@ function commitRetailImport(){ const rows=(_retailImport||[]).filter(r=>r.ok); i
 }
 function openStockImport(){ const w=document.getElementById('stockFormWrap');
   w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h2>Upload / paste stock</h2>
-    <p class="sub" style="margin:2px 0 8px">Paste rows from your Hyundai stock report or a spreadsheet \u2014 one VIN per line. A header row is auto-detected. Columns: <b>VIN, Model, Variant, Fuel, Colour, Stock-in date, Outlet, Consultant, Incentive</b>. Only VIN, Model and Variant are required; incentive fills from the spec if left blank.</p>
+    <p class="sub" style="margin:2px 0 8px">Paste rows from your Hyundai stock report or a spreadsheet \u2014 one VIN per line. A header row is auto-detected. Columns: <b>VIN, Model, Variant, Fuel, Colour, Stock-in date, Outlet, Consultant, Incentive</b>. Only VIN, Model and Variant are required. <b>Leave the Incentive column blank</b> \u2014 the app fills the correct capped default from the catalogue automatically. Only fill it to deliberately override a specific VIN.</p>
     <div style="margin-bottom:8px"><button class="btn" onclick="downloadStockTemplate()">Download template</button></div>
     <textarea id="stkPaste" style="width:100%;height:150px;font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px" placeholder="VIN,Model,Variant,Fuel,Colour,2026-08-01,Haldia,,7500"></textarea>
     <div style="margin-top:10px;display:flex;gap:8px"><button class="btn primary" onclick="parseStockPreview()">Preview</button><button class="btn" onclick="document.getElementById('stockFormWrap').innerHTML=''">Cancel</button></div>
     <div id="stkPreview" style="margin-top:12px"></div></div>`;
 }
-function downloadStockTemplate(){ const csv='VIN,Model,Variant,Fuel,Colour,StockInDate,Outlet,Consultant,Incentive\nMALXXXXXXXXXXXXX,CRETA,SX (O),Petrol,Atlas White,2026-08-01,Haldia,,7500\n';
+function downloadStockTemplate(){ const csv='VIN,Model,Variant,Fuel,Colour,StockInDate,Outlet,Consultant,Incentive\nMALXXXXXXXXXXXXX,CRETA,SX (O),Petrol,Atlas White,2026-08-01,Haldia,,\n';
   const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='RDB_stock_template.csv'; document.body.appendChild(a); a.click(); a.remove(); }
 function _csvLine(line){ const out=[]; let cur='',q=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(ch==='"'){q=!q;} else if(ch===','&&!q){out.push(cur);cur='';} else cur+=ch; } out.push(cur); return out.map(s=>s.trim().replace(/^"|"$/g,'')); }
 function parseStockPreview(){ const txt=(document.getElementById('stkPaste').value||'').trim(); const pv=document.getElementById('stkPreview');
@@ -1347,6 +1347,8 @@ function copyLastTargets(){ const m=(document.getElementById('tgtMonth').value||
 
 /* ============================ VIN STOCK LEDGER ============================ */
 function specDefault(specCode){ const s=(state.specs||[]).find(x=>x.specCode===specCode); return s?Number(s.defaultIncentive||0):0; }
+function incentiveSuspect(row){ var inc=Number(row.incentive||0); if(!inc)return false; var cei=(state.settings.incentiveCeiling!=null?state.settings.incentiveCeiling:20000); var sd=specDefault(row.specCode); if(inc>cei)return true; if(sd>0 && inc>sd*3)return true; return false; }
+function resetFlaggedIncentives(){ if(!(state.specs&&state.specs.length)){ toast('Load the Hyundai catalogue first, then reset.'); return; } var suspects=state.stock.filter(incentiveSuspect); var withDef=suspects.filter(function(s){return specDefault(s.specCode)>0;}); if(!withDef.length){ toast(suspects.length?'Flagged VINs have no catalogue match \u2014 edit them manually.':'No flagged VINs to reset.'); return; } var msg='Reset '+withDef.length+' flagged incentive'+(withDef.length!==1?'s':'')+' to the catalogue default?\\n\\nOnly the flagged VINs change (kept in the sheet \u2014 nothing deleted).'; if(suspects.length>withDef.length) msg+='\\n\\n'+(suspects.length-withDef.length)+' flagged VIN(s) have no catalogue match and are left for manual edit.'; if(typeof confirm==='function' && !confirm(msg)) return; var n=0; withDef.forEach(function(s){ s.incentive=specDefault(s.specCode); if(cloudActive())cloud('upsertStock',{row:s}); n++; }); persist(); renderStock(); toast('Reset '+n+' incentive'+(n!==1?'s':'')+' to catalogue default'); }
 function specModels(){ return [...new Set((state.specs||[]).map(s=>s.model))].sort(); }
 function variantsFor(model){ return (state.specs||[]).filter(s=>s.model===model); }
 function daysInStock(d){ const D=parseDate(d); if(!D)return null; return Math.round((new Date()-D)/86400000); }
@@ -1419,12 +1421,14 @@ function renderStock(){ const b=document.getElementById('btnSeedCat'); if(b)b.st
   const rowHtml=(x,editable=true)=>{ const r=x.r; return `<tr>
     <td>${r.stockId||''}</td><td>${r.model}</td><td>${r.variant||''}</td><td>${r.colour||''}</td>
     <td class="mono" style="font-size:11px">${r.VIN}</td><td class="num">${x.dd!=null?x.dd:'\u2014'} ${badge(x.tier)}</td>
-    <td class="num rupee">${inr(r.incentive)}${x.boost?' <span class="tag warn">boost</span>':''}</td>
+    <td class="num rupee">${inr(r.incentive)}${incentiveSuspect(r)?' <span class="tag" style="background:#FEE2E2;color:#C2350B" title="Model default is about \u20B9'+(specDefault(r.specCode)||'?')+'. This looks like a dealer margin or a typo in the incentive field \u2014 Edit to the correct incentive.">\u26A0 check</span>':(x.boost?' <span class="tag warn">boost</span>':'')}</td>
     <td>${x.st==='Free'?'<span class="tag yes">Free</span>':x.st==='Booked'?'<span class="tag blue">Booked'+(r.taggedTo?' \u00b7 '+r.taggedTo:'')+'</span>':x.st==='Retailed'?'<span class="tag warn">Retailed \u00b7 payment pending</span>':x.st==='Paid'?'<span class="tag" style="background:#E0F2FE;color:#075985">Paid \u00b7 awaiting delivery</span>':x.st==='Delivered'?('<span class="tag no">Delivered</span>'+(vinDeliveredUnpaid(r.VIN)?' <span class="tag warn">\u26A0 payment pending</span>':'')):'<span class="tag no">'+x.st+'</span>'}</td>
     <td class="rowact">${x.st==='Booked'?`<button class="linkbtn" style="color:#0E9F6E" onclick="returnToFree('${r.id}')">Return to free</button> `:''}<button class="linkbtn" onclick="editStock('${r.id}')">Edit</button> <button class="linkbtn" onclick="tagStock('${r.id}')">Tag</button> <button class="linkbtn" style="color:var(--red)" onclick="delStock('${r.id}')">Del</button></td></tr>`; };
   const table=(title,list,color)=> list.length?`<div class="section-title" style="margin:18px 0 8px"><h2>${title} <span style="color:var(--muted);font-weight:400">(${list.length})</span></h2></div>
     <div class="tablewrap" style="border-left:4px solid ${color}"><table><thead><tr><th>Stock ID</th><th>Model</th><th>Variant</th><th>Colour</th><th>VIN</th><th class="num">Days</th><th class="num">Incentive</th><th>Status</th><th></th></tr></thead><tbody>${list.map(x=>rowHtml(x)).join('')}</tbody></table></div>`:'';
-  box.innerHTML =
+  var _susp=state.stock.filter(incentiveSuspect);
+  var _suspBanner=_susp.length? '<div class="note" style="border-left-color:#C2350B;background:#FEF2F2;margin:0 0 14px"><b>\u26A0 '+_susp.length+' VIN'+(_susp.length>1?'s':'')+' have an incentive far above the model default.</b> This usually means the dealer margin or a wrong number was entered in the incentive field \u2014 it inflates payouts. Find the red <b>check</b> tag below and Edit each, or <button class="btn sm" onclick="resetFlaggedIncentives()" style="margin-left:6px;vertical-align:middle">Reset all flagged to catalogue default</button></div>':'';
+  box.innerHTML = _suspBanner+
     table('\uD83D\uDD34 Priority \u2014 clear-out (boosted / aged free stock)',seg.prio,'#B45309')
     + table('\uD83D\uDFE2 Just arrived (last 7 days)',seg.fresh,'#0E9F6E')
     + table('Free stock',seg.free,'#CBD5E1')

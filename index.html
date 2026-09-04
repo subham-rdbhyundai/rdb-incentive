@@ -162,7 +162,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b56</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b58</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -257,7 +257,6 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <div class="bar" style="margin:0">
         <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
           <div class="field"><label>Month</label><select id="poMonth" onchange="renderPayouts()" style="width:150px"></select></div>
-          <button class="btn primary" onclick="renderPayouts()">Calculate month</button>
           <button class="btn" onclick="exportPayouts()">Export CSV</button>
         </div>
       </div>
@@ -448,7 +447,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b56 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b58 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1026,8 +1025,11 @@ function addPaid(sc,month){ const S=state.settings; S.paidLog=S.paidLog||{}; con
 function delPaid(sc,month,i){ const S=state.settings; const key=month+'|'+sc; if(S.paidLog&&S.paidLog[key]){ S.paidLog[key].splice(i,1); persist(); syncConfig(); const box=document.getElementById('payMarkDetail'); if(box)box.dataset.open=''; renderPayouts(); openMarkPaid(sc,month); } }
 function renderPayouts(){
   const m=model();
-  // ---- full KPI funnel + TSR override ----
-  const scs=m.sc.sort((a,b)=>a.month<b.month?1:a.month>b.month?-1:a.sc<b.sc?-1:1);
+  const poEl=document.getElementById("poMonth");
+  const month=(((poEl&&poEl.value)||allMonths()[0]||currentMonthLabel())+'').toUpperCase();
+  if(poEl){ poEl.innerHTML=monthPickOptions(month); poEl.value=month; }
+  // ---- KPI funnel + TSR override, for the SELECTED month only ----
+  const scs=m.sc.filter(function(r){return String(r.month||'').toUpperCase()===month;}).sort((a,b)=>a.sc<b.sc?-1:1);
   const S0=state.settings, sw=S0.wCSI+S0.wTAT+S0.wETB+S0.wATT+S0.wUP+S0.wPROF;
   const th=document.querySelector("#tsrTable thead");
   th.innerHTML=`<tr><th>Month</th><th>Consultant</th><th class="num">Ret.</th>
@@ -1044,18 +1046,15 @@ function renderPayouts(){
       <td class="num" style="color:var(--muted)" title="from Daily entry">${K.enq??'\u2014'}</td><td class="num" style="color:var(--muted)" title="from Daily entry">${K.td??'\u2014'}</td><td class="num" style="color:var(--muted)" title="from Daily entry">${K.hv??'\u2014'}</td><td class="num" style="color:var(--muted)" title="from Daily entry">${K.bk??'\u2014'}</td><td class="num">${inp('wd',K.wd)}</td><td class="num">${inp('dp',K.dp)}</td>
       <td class="num" style="color:var(--muted)">${sub(r.CSI)}</td><td class="num" style="color:var(--muted)">${sub(r.TAT)}</td><td class="num" style="color:var(--muted)">${sub(r.ETB)}</td><td class="num" style="color:var(--muted)">${sub(r.ATT)}</td><td class="num" style="color:var(--muted)">${sub(r.UP)}</td><td class="num" style="color:var(--muted)">${sub(r.PROF)}</td>
       <td class="num">${(autoT*100).toFixed(0)}%</td><td class="num">${inp('tsr',K.tsr,58)}</td><td class="num"><b>${r.Gate!=null?pct(r.Gate):'—'}</b></td><td>${src}</td></tr>`;
-  }).join(""):`<tr><td colspan="18" class="empty">No consultants with cars yet.</td></tr>`;
+  }).join(""):`<tr><td colspan="18" class="empty">No consultants with cars in ${month} yet. Pick another month, or log retails for this month.</td></tr>`;
   tb.querySelectorAll("input").forEach(el=>el.onchange=()=>{ const k=el.dataset.key,f=el.dataset.f; state.kpi[k]=state.kpi[k]||{}; state.kpi[k][f]=el.value.trim()===""?"":el.value.trim(); persist(); syncKpi(k); renderPayouts(); });
 
-  const poEl=document.getElementById("poMonth");
-  const month=((poEl.value||allMonths()[0]||currentMonthLabel())+'').toUpperCase();
-  poEl.innerHTML=monthPickOptions(month); poEl.value=month;
   const S=state.settings;
   const d=disburseMonth(m,month,S);
   const ph=document.querySelector("#payTable thead"); ph.innerHTML="<tr><th>Consultant</th><th>Outlet</th><th class='num'>Due (earned)</th><th class='num'>Released</th><th class='num'>Pending</th><th class='num'>Top-seller</th><th class='num'>Mgr</th><th class='num'>Clawback</th><th class='num'>Payable</th><th class='num'>Paid</th><th class='num'>Balance</th><th>Action</th></tr>";
   const pb=document.querySelector("#payTable tbody");
   const leadNames=Object.values(S.leads||{});
-  pb.innerHTML=d.rows.length?d.rows.sort((a,b)=>b.payable-a.payable).map(r=>{ const esc=r.sc.replace(/'/g,"\\'"); return `<tr><td>${r.sc}${leadNames.includes(r.sc)?' <span class="tag blue">manager</span>':''}${r.delUnpaid?` <span class="tag warn" title="${r.delUnpaid} delivered, payment pending">\u26A0 ${r.delUnpaid}</span>`:''}</td><td>${r.outlet}</td><td class="num rupee">${inr(r.due)}</td><td class="num rupee" style="color:var(--green)">${inr(r.released)}</td><td class="num rupee" style="color:var(--amber)">${r.pending?inr(r.pending):'\u2014'}</td><td class="num rupee">${r.top?inr(r.top):'\u2014'}</td><td class="num rupee">${r.mgr?inr(r.mgr):'\u2014'}</td><td class="num rupee" style="color:var(--red)">${r.claw?('-'+inr(r.claw)):'\u2014'}</td><td class="num rupee"><b>${inr(r.payable)}</b></td><td class="num rupee">${r.paid?inr(r.paid):'\u2014'}</td><td class="num rupee" style="font-weight:700;color:${r.balance>0?'var(--amber)':'var(--green)'}">${inr(r.balance)}</td><td><button class="btn sm" onclick="openMarkPaid('${esc}','${month}')">Mark paid</button></td></tr>`; }).join(""):`<tr><td colspan="12" class="empty">Pick a month and click <b>Calculate month</b>.</td></tr>`;
+  pb.innerHTML=d.rows.length?d.rows.sort((a,b)=>b.payable-a.payable).map(r=>{ const esc=r.sc.replace(/'/g,"\\'"); return `<tr><td>${r.sc}${leadNames.includes(r.sc)?' <span class="tag blue">manager</span>':''}${r.delUnpaid?` <span class="tag warn" title="${r.delUnpaid} delivered, payment pending">\u26A0 ${r.delUnpaid}</span>`:''}</td><td>${r.outlet}</td><td class="num rupee">${inr(r.due)}</td><td class="num rupee" style="color:var(--green)">${inr(r.released)}</td><td class="num rupee" style="color:var(--amber)">${r.pending?inr(r.pending):'\u2014'}</td><td class="num rupee">${r.top?inr(r.top):'\u2014'}</td><td class="num rupee">${r.mgr?inr(r.mgr):'\u2014'}</td><td class="num rupee" style="color:var(--red)">${r.claw?('-'+inr(r.claw)):'\u2014'}</td><td class="num rupee"><b>${inr(r.payable)}</b></td><td class="num rupee">${r.paid?inr(r.paid):'\u2014'}</td><td class="num rupee" style="font-weight:700;color:${r.balance>0?'var(--amber)':'var(--green)'}">${inr(r.balance)}</td><td><button class="btn sm" onclick="openMarkPaid('${esc}','${month}')">Mark paid</button></td></tr>`; }).join(""):`<tr><td colspan="12" class="empty">No payout to show for this month yet.</td></tr>`;
   const noTarget = !(S.targetsByMonth&&S.targetsByMonth[month]&&S.targetsByMonth[month].company&&["enq","td","bk","rt","de"].some(k=>num(S.targetsByMonth[month].company[k])>0));
   const heldNow=m.sc.filter(r=>r.held && r.month===month).map(r=>r.sc);
   const readyOK=!noTarget && heldNow.length===0;

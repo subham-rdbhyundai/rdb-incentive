@@ -162,7 +162,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b51</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b52</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -313,6 +313,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
         <button class="btn" onclick="incentivePDF('hmil')">Incentive PDF · HMIL</button>
         <div class="spacer" style="flex:1"></div>
         <button class="btn" id="btnSeedCat" onclick="seedCatalogue()">Load Hyundai catalogue</button>
+        <button class="btn" onclick="resetIncentivesFromCatalogue(false)" title="Set every VIN\u2019s incentive to the correct catalogue default (fixes inflated / wrong values)">Reset incentives to catalogue</button>
       </div>
       <div id="stockFormWrap" class="formmodal"></div>
       <div id="stockSegments"></div>
@@ -447,7 +448,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b51 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b52 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1347,8 +1348,18 @@ function copyLastTargets(){ const m=(document.getElementById('tgtMonth').value||
 
 /* ============================ VIN STOCK LEDGER ============================ */
 function specDefault(specCode){ const s=(state.specs||[]).find(x=>x.specCode===specCode); return s?Number(s.defaultIncentive||0):0; }
-function incentiveSuspect(row){ var inc=Number(row.incentive||0); if(!inc)return false; var cei=(state.settings.incentiveCeiling!=null?state.settings.incentiveCeiling:20000); var sd=specDefault(row.specCode); if(inc>cei)return true; if(sd>0 && inc>sd*3)return true; return false; }
-function resetFlaggedIncentives(){ if(!(state.specs&&state.specs.length)){ toast('Load the Hyundai catalogue first, then reset.'); return; } var suspects=state.stock.filter(incentiveSuspect); var withDef=suspects.filter(function(s){return specDefault(s.specCode)>0;}); if(!withDef.length){ toast(suspects.length?'Flagged VINs have no catalogue match \u2014 edit them manually.':'No flagged VINs to reset.'); return; } var msg='Reset '+withDef.length+' flagged incentive'+(withDef.length!==1?'s':'')+' to the catalogue default?\\n\\nOnly the flagged VINs change (kept in the sheet \u2014 nothing deleted).'; if(suspects.length>withDef.length) msg+='\\n\\n'+(suspects.length-withDef.length)+' flagged VIN(s) have no catalogue match and are left for manual edit.'; if(typeof confirm==='function' && !confirm(msg)) return; var n=0; withDef.forEach(function(s){ s.incentive=specDefault(s.specCode); if(cloudActive())cloud('upsertStock',{row:s}); n++; }); persist(); renderStock(); toast('Reset '+n+' incentive'+(n!==1?'s':'')+' to catalogue default'); }
+function catalogueDefaultFor(row){ var specs=state.specs||[]; var s=specs.find(function(x){return x.specCode&&x.specCode===row.specCode;}); if(!s){ var m=String(row.model||'').trim().toUpperCase(), v=String(row.variant||'').trim().toUpperCase(); s=specs.find(function(x){return String(x.model||'').trim().toUpperCase()===m && String(x.variant||'').trim().toUpperCase()===v;}); } return s?Number(s.defaultIncentive||0):0; }
+function incentiveSuspect(row){ var inc=Number(row.incentive||0); if(!inc)return false; var cei=(state.settings.incentiveCeiling!=null?Number(state.settings.incentiveCeiling):20000); var sd=catalogueDefaultFor(row); if(sd>0 && inc>sd*2)return true; if(inc>cei)return true; return false; }
+function resetIncentivesFromCatalogue(flaggedOnly){ if(!(state.specs&&state.specs.length)){ toast('Load the Hyundai catalogue first, then reset.'); return; }
+  var rows=state.stock.filter(function(s){ var d=catalogueDefaultFor(s); if(!(d>0))return false; if(flaggedOnly) return incentiveSuspect(s); return Number(s.incentive||0)!==d; });
+  var noMatch=state.stock.filter(function(s){ return (flaggedOnly?incentiveSuspect(s):true) && !(catalogueDefaultFor(s)>0) && Number(s.incentive||0)>0; }).length;
+  if(!rows.length){ toast(flaggedOnly?'No flagged VINs to reset.':'All incentives already match the catalogue.'); return; }
+  var msg=(flaggedOnly?'Reset '+rows.length+' flagged VIN':'Reset '+rows.length+' VIN')+(rows.length!==1?'s':'')+' to the catalogue default incentive?\\n\\nThis overwrites the incentive on those rows (kept in the sheet \u2014 nothing deleted). Any manual override is replaced by the catalogue value.';
+  if(noMatch) msg+='\\n\\n'+noMatch+' VIN(s) have no catalogue match (check their model/variant/spec code) and are left for manual edit.';
+  if(typeof confirm==='function' && !confirm(msg)) return;
+  var n=0; rows.forEach(function(s){ s.incentive=catalogueDefaultFor(s); if(cloudActive())cloud('upsertStock',{row:s}); n++; }); persist(); renderStock(); toast('Reset '+n+' incentive'+(n!==1?'s':'')+' to catalogue default');
+}
+function resetFlaggedIncentives(){ resetIncentivesFromCatalogue(true); }
 function specModels(){ return [...new Set((state.specs||[]).map(s=>s.model))].sort(); }
 function variantsFor(model){ return (state.specs||[]).filter(s=>s.model===model); }
 function daysInStock(d){ const D=parseDate(d); if(!D)return null; return Math.round((new Date()-D)/86400000); }

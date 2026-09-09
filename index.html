@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b66</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b67</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -488,7 +488,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b66 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b67 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1205,6 +1205,10 @@ function renderQuoteDash(consRows, selfPack, pabPack, month){
     +card('Reply rate', replPct, hasRepl?'of Pabbly sends':'no reply column found', (hasRepl&&pabN>0)?(replN/pabN>=0.5?'var(--green)':(replN/pabN>=0.25?'#B45309':'var(--red)')):'')
     +'</div>';
 }
+function pabColMatch(cols,re){ cols=cols||[]; for(var i=0;i<cols.length;i++){ if(re.test(cols[i]))return cols[i]; } return null; }
+function pabTable(cols,rows,rc){ return '<div class="tablewrap"><table><thead><tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
+  +rows.map(function(r){ return '<tr>'+cols.map(function(c){ var v=r[c]==null?'':String(r[c]); if(rc&&c===rc){ v=pabIsReplied(r[rc])?'<span class="tag yes">'+(String(r[rc]).trim()||'Replied')+'</span>':'<span class="tag no">'+(String(r[rc]).trim()||'No reply')+'</span>'; } return '<td>'+v+'</td>'; }).join('')+'</tr>'; }).join('')
+  +'</tbody></table></div>'; }
 function renderPabbly(rows,headers,month){
   var box=document.getElementById('quotePabbly'); if(!box)return;
   var cols=(headers&&headers.length)?headers:(rows&&rows[0]?Object.keys(rows[0]):[]);
@@ -1213,9 +1217,17 @@ function renderPabbly(rows,headers,month){
   var rc=pabReplyCol(headers,rows); var replN=0; if(rc){ list.forEach(function(r){ if(pabIsReplied(r[rc]))replN++; }); }
   var head='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2><span style="font-size:12px;color:var(--muted)">'+(dateCol?month+' \u00b7 ':'')+list.length+' sent'+(rc?' \u00b7 '+replN+' replied ('+(list.length?Math.round(replN/list.length*100):0)+'%)':'')+' \u00b7 from Sheet1</span></div>';
   if(!list.length){ var raw=(rows||[]).length; var msg = raw>0 ? ('Read '+raw+' row'+(raw>1?'s':'')+' from Sheet1, but '+(dateCol?'none are dated in '+month+' (using the \u201c'+dateCol+'\u201d column) \u2014 try another month':'no date column was recognised, so month filtering is off')+'.') : 'Sheet1 has no data rows yet.'; box.innerHTML=head+'<div class="card pad"><div class="hint">'+msg+'</div></div>'; return; }
-  box.innerHTML=head+'<div class="card pad"><div class="tablewrap"><table><thead><tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
-    +list.map(function(r){ var replied=rc?pabIsReplied(r[rc]):null; return '<tr>'+cols.map(function(c){ var v=r[c]==null?'':String(r[c]); if(c===rc){ v=replied?'<span class="tag yes">'+(String(r[c]).trim()||'Replied')+'</span>':'<span class="tag no">'+(String(r[c]).trim()||'No reply')+'</span>'; } return '<td>'+v+'</td>'; }).join('')+'</tr>'; }).join('')
-    +'</tbody></table></div><div class="hint" style="margin-top:6px">Sent to customers via Pabbly (Sheet1)'+(rc?'. Reply status auto-detected from the \u201c'+rc+'\u201d column':'. No reply column detected \u2014 tell me the column name to track replies')+'. Search above to find a customer or phone.</div></div>';
+  var consCol=pabColMatch(cols, /consultant|salesperson|sales.?person|sales.?exec|executive|advisor|assigned|\bsc\b|\bcre\b|agent|owner|staff/i);
+  if(consCol){
+    var groups={}, order=[];
+    list.forEach(function(r){ var k=String(r[consCol]||'').trim().toUpperCase()||'(NO CONSULTANT)'; if(!groups[k]){ groups[k]={name:(r[consCol]||'\u2014'),rows:[],repl:0}; order.push(k); } groups[k].rows.push(r); if(rc&&pabIsReplied(r[rc]))groups[k].repl++; });
+    order.sort(function(x,y){ return groups[y].rows.length-groups[x].rows.length; });
+    var showCols=cols.filter(function(c){ return c!==consCol; });
+    var body=order.map(function(k){ var g=groups[k]; var badge=g.rows.length+' sent'+(rc?' \u00b7 '+g.repl+' replied':''); return '<details class="qgrp"><summary><span>'+g.name+'</span><span class="qcount">'+badge+'</span></summary>'+pabTable(showCols,g.rows,rc)+'</details>'; }).join('');
+    box.innerHTML=head+'<div class="card pad">'+body+'<div class="hint" style="margin-top:6px">Grouped by consultant (\u201c'+consCol+'\u201d column)'+(rc?'. Reply status from the \u201c'+rc+'\u201d column':'')+'. Tap a name to see their sends. Search above to find a customer or phone across everyone.</div></div>';
+  } else {
+    box.innerHTML=head+'<div class="card pad">'+pabTable(cols,list,rc)+'<div class="hint" style="margin-top:6px">Sent to customers via Pabbly (Sheet1). No consultant column detected \u2014 tell me which column holds the consultant name and I\u2019ll group these by consultant too'+(rc?'. Reply status auto-detected from \u201c'+rc+'\u201d':'')+'. Search above to find a customer or phone.</div></div>';
+  }
 }
 function qIsSelf(r){ return !!(r.self||r.Self||r.selfServe) || !String(r.consultant||'').trim(); }
 function qMonthOf(r){ var dt=new Date(r.ts); if(isNaN(dt))return ''; return (MONTHS[dt.getMonth()]+'-'+dt.getFullYear()).toUpperCase(); }

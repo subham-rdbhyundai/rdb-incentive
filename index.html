@@ -162,7 +162,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b58</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b60</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -194,6 +194,8 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <div class="grid g4" id="statRow"></div>
       <div id="tgtHeadline"></div>
       <div id="monitorBox"></div>
+      <div id="dataHealth"></div>
+      <div id="monthlyTrend"></div>
       <div class="section-title"><h2>The slab curve</h2><span class="pill blue" style="background:var(--blue-soft)">Reference model: <select id="refModel" onchange="renderCurve()" style="border:0;background:none;font-weight:700;color:var(--deep)"></select></span></div>
       <div class="slab-viz">
         <div style="color:var(--muted);font-size:12.5px">What each additional car pays a consultant this month. The step up is the pull to sell one more.</div>
@@ -390,6 +392,15 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
       <div id="slabBody" style="display:none">
         <h1>Slabs & settings</h1>
         <p class="sub">Edit the maths for a chosen effective month, then save it as a snapshot. Cars use the slab that was in force for their own month.</p>
+        <div class="card pad" style="margin-bottom:14px;border-left:4px solid #0E7C4A">
+          <div class="section-title" style="margin:0 0 6px"><h2>\uD83D\uDCBE Backup &amp; restore</h2><span style="font-size:12px;color:var(--muted)">a safety net independent of Google Sheets</span></div>
+          <p class="hint" style="margin:0 0 10px">Download a full snapshot (cars, stock, settings) whenever you like \u2014 keep it safe. Restore replaces everything with a chosen backup file.</p>
+          <div class="bar" style="margin:0">
+            <button class="btn primary" onclick="downloadBackup()">Download backup</button>
+            <button class="btn" onclick="document.getElementById('restoreFile').click()">Restore from backup\u2026</button>
+            <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreBackup(this)">
+          </div>
+        </div>
         <div class="card pad">
           <div class="bar" style="margin:0;align-items:end">
             <div class="field"><label>Effective month (this slab applies from)</label><input id="effMonth" placeholder="OCT-2026" style="width:130px"></div>
@@ -447,7 +458,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b58 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b60 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -807,6 +818,38 @@ function model(){ return computeCars(state.cars, state.kpi, state.snapshots, sta
 
 /* ============================ DASHBOARD ============================ */
 function currentEff(){ if(!state.snapshots.length) return "Base (live)"; const s=[...state.snapshots].sort((a,b)=>monthNum(b.effMonth)-monthNum(a.effMonth))[0]; return s.effMonth; }
+function renderDataHealth(){
+  var box=document.getElementById('dataHealth'); if(!box)return;
+  var issues=[], vinCount={};
+  (state.cars||[]).forEach(function(c){ if(yes(c.Cancelled))return;
+    var who=(String(c.SalesConsultant||'').trim()||'(no consultant)')+' \u00b7 '+(c.Model||'')+' \u00b7 '+(c.VIN||'no VIN');
+    if(c.DuesOnDelivery!==''&&c.DuesOnDelivery!=null&&num(c.DuesOnDelivery)<0) issues.push({t:'Negative dues ('+inr(num(c.DuesOnDelivery))+')',w:who});
+    if(c.CreditShare!==''&&c.CreditShare!=null&&(num(c.CreditShare)>1||num(c.CreditShare)<0)) issues.push({t:'Credit share out of 0\u20131 ('+c.CreditShare+')',w:who});
+    if(c.CSIScore!==''&&c.CSIScore!=null&&(num(c.CSIScore)>100||num(c.CSIScore)<0)) issues.push({t:'CSI out of 0\u2013100 ('+c.CSIScore+')',w:who});
+    if(c.AccessoriesValue!==''&&c.AccessoriesValue!=null&&num(c.AccessoriesValue)<0) issues.push({t:'Negative accessories',w:who});
+    if(!String(c.SalesConsultant||'').trim() && c.RetailDate) issues.push({t:'Retailed car with no sales consultant',w:(c.Model||'')+' \u00b7 '+(c.VIN||'no VIN')});
+    var vin=String(c.VIN||'').trim().toUpperCase(); if(vin) vinCount[vin]=(vinCount[vin]||0)+1;
+  });
+  Object.keys(vinCount).forEach(function(v){ if(vinCount[v]>1) issues.push({t:'Same VIN on '+vinCount[v]+' active cars (double-pay risk)',w:v}); });
+  (state.stock||[]).forEach(function(s){ if(incentiveSuspect(s)) issues.push({t:'Stock incentive far above model default ('+inr(num(s.incentive))+')',w:(s.model||'')+' '+(s.variant||'')+' \u00b7 '+(s.VIN||'')}); });
+  if(!issues.length){ box.innerHTML='<div class="card pad" style="border-left:4px solid #0E7C4A;margin-bottom:14px"><b style="color:#0E7C4A">\u2713 Data health: all clear</b> <span style="font-size:12px;color:var(--muted)">no anomalies found in cars or stock.</span></div>'; return; }
+  box.innerHTML='<div class="card pad" style="border-left:4px solid #C2350B;margin-bottom:14px"><div class="section-title" style="margin:0 0 6px"><h2>\u26A0 Data health \u2014 '+issues.length+' issue'+(issues.length>1?'s':'')+' to check</h2></div><ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">'+issues.slice(0,40).map(function(i){return '<li><b>'+i.t+'</b> \u2014 '+i.w+'</li>';}).join('')+'</ul>'+(issues.length>40?'<div class="hint">\u2026and '+(issues.length-40)+' more.</div>':'')+'</div>';
+}
+function renderMonthlyTrend(){
+  var box=document.getElementById('monthlyTrend'); if(!box)return;
+  var months=allMonths().slice(0,6).slice().reverse();
+  if(!months.length){ box.innerHTML=''; return; }
+  var S=state.settings, m=model();
+  var rows=months.map(function(mo){
+    var d; try{ d=disburseMonth(m,mo,S); }catch(e){ d={totPayable:0}; }
+    var mc=(state.cars||[]).filter(function(c){return String(c.MonthKey||'').toUpperCase()===mo && !yes(c.Cancelled);});
+    var scRows=m.sc.filter(function(r){return String(r.month||'').toUpperCase()===mo && r.TSR!=null;});
+    var avgTsr=scRows.length? Math.round(scRows.reduce(function(a,r){return a+(r.TSR||0);},0)/scRows.length*100):null;
+    return {mo:mo, retails:mc.filter(function(c){return c.RetailDate;}).length, delivered:mc.filter(function(c){return c.DeliveryDate;}).length, payable:Math.round(d.totPayable||0), tsr:avgTsr};
+  });
+  var maxPay=Math.max.apply(null,rows.map(function(r){return r.payable;}).concat([1]));
+  box.innerHTML='<div class="section-title"><h2>Monthly trend</h2></div><div class="card pad"><div class="tablewrap"><table><thead><tr><th>Month</th><th class="num">Retails</th><th class="num">Delivered</th><th class="num">Avg TSR</th><th class="num">Payable</th><th>Payout</th></tr></thead><tbody>'+rows.map(function(r){var w=Math.round((r.payable/maxPay)*100);return '<tr><td>'+r.mo+'</td><td class="num">'+r.retails+'</td><td class="num">'+r.delivered+'</td><td class="num">'+(r.tsr!=null?r.tsr+'%':'\u2014')+'</td><td class="num rupee">'+inr(r.payable)+'</td><td><div style="background:var(--blue-soft);height:10px;border-radius:5px;width:130px"><div style="background:var(--blue);height:10px;border-radius:5px;width:'+w+'%"></div></div></td></tr>';}).join('')+'</tbody></table></div></div>';
+}
 function renderDashboard(){
   document.getElementById("effPill").textContent=currentEff();
   const m=model();
@@ -827,6 +870,7 @@ function renderDashboard(){
   renderCurve();
   const tb=document.querySelector("#outletTable tbody");
   tb.innerHTML = m.outlets.length? m.outlets.sort((a,b)=>a.month<b.month?1:-1).map(o=>`<tr><td>${o.month}</td><td>${o.outlet}</td><td class="num">${o.cars}</td><td class="num">${o.target}</td><td class="num">${(o.ratio*100).toFixed(0)}%</td><td>${o.qualified?'<span class="tag yes">Unlocked</span>':'<span class="tag no">—</span>'}</td></tr>`).join("") : `<tr><td colspan="6" class="empty">No cars yet. Add cars or load the sample.</td></tr>`;
+  try{renderDataHealth();}catch(e){} try{renderMonthlyTrend();}catch(e){}
 }
 function renderMonitor(){ const box=document.getElementById('monitorBox'); if(!box)return; if(!state.isAdmin){ box.innerHTML=''; return; }
   const month=allMonths()[0]; const specMargin={}; (state.specs||[]).forEach(s=>{ if(s.margin!=null)specMargin[s.specCode]=Number(s.margin); });
@@ -904,7 +948,7 @@ function openCarForm(car){
   w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h2>${car?'Edit car':'Add car'}</h2><div class="formgrid" id="cf">
   ${CAR_FIELDS.map(([f,l,ph])=>{
     if(f==="Tenure") return field(f,l,c[f]||"Consultant",["Consultant","Trainee"]);
-    if(f==="SalesConsultant"){ const names=(state.settings.consultants||[]).map(x=>x.name); if(names.length){ return `<div class="field"><label>${l}</label><select data-f="SalesConsultant" onchange="onPickConsultant(this)"><option value=""></option>`+names.map(n=>`<option ${c[f]===n?'selected':''}>${n}</option>`).join("")+`</select></div>`; } }
+    if(f==="SalesConsultant"){ let names=(state.settings.consultants||[]).map(x=>x.name); const cur=c[f]||""; if(cur && names.indexOf(cur)<0) names=[cur].concat(names); if(names.length){ return `<div class="field"><label>${l}</label><select data-f="SalesConsultant" onchange="onPickConsultant(this)"><option value=""></option>`+names.map(n=>`<option ${c[f]===n?'selected':''}>${n}${(state.settings.consultants||[]).some(x=>x.name===n)?'':' (former)'}</option>`).join("")+`</select></div>`; } }
     if(f==="Outlet") return field(f,l,c[f]||"Tamluk",["Haldia","Tamluk","Contai"]);
     if(f==="Model") return field(f,l,c[f]||"VENUE",Object.keys(state.settings.rates));
     if(f==="VIN") return `<div class="field"><label>${l} <span style="background:#1E5AA8;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:800;letter-spacing:.3px">ENTER FIRST \u2192 auto-fills</span></label><input data-f="VIN" type="text" value="${c[f]!=null?String(c[f]).replace(/"/g,'&quot;'):''}" placeholder="${ph}" onchange="vinAutoFill()"><div id="vinHint" style="font-size:11px;margin-top:3px;line-height:1.3"></div></div>`;
@@ -915,9 +959,10 @@ function openCarForm(car){
   </div><div style="margin-top:14px;display:flex;gap:8px"><button class="btn primary" onclick="saveCar(${car?c._idx:-1})">${car?'Save changes':'Add car'}</button><button class="btn" onclick="document.getElementById('carFormWrap').innerHTML=''">Cancel</button></div></div>`;
   w.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
-function field(f,l,val,opts){ return `<div class="field"><label>${l}</label><select data-f="${f}">${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join("")}</select></div>`; }
+function field(f,l,val,opts){ var list=(opts||[]).slice(); if(val && list.indexOf(val)<0 && !list.some(function(o){return String(o).toUpperCase()===String(val).toUpperCase();})) list=[val].concat(list); return `<div class="field"><label>${l}</label><select data-f="${f}">${list.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join("")}</select></div>`; }
 function saveCar(idx){
   const obj={}; document.querySelectorAll("#cf [data-f]").forEach(el=>obj[el.dataset.f]=el.value.trim());
+  sanitizeCar(obj);
   const vin=String(obj.VIN||"").trim();
   if(vin){ const paidElse=state.cars.some((c,i)=>i!==idx && String(c.VIN||"").trim()===vin && yes(c.PaymentRealised) && !yes(c.Cancelled));
     if(paidElse && !confirm("\u26A0 This VIN is already marked paid on another car entry. Logging it again could double-pay the incentive. Continue anyway?")) return; }
@@ -930,7 +975,7 @@ function saveCar(idx){
     else if(stockStatus(srow)==="Paid") warn="\u26A0 This VIN is already marked Paid in stock"; }
   toast(warn || (idx>=0?"Car updated":"Car added"));
 }
-const CARCOLS=[["MonthKey","Month"],["Outlet","Outlet"],["SalesConsultant","Consultant"],["Tenure","Ten."],["Model","Model"],["Seq","Car#","num"],["Aging","Aging","num"],["Base","Base","num","inr"],["BandPct","Band","num","pctd"],["Penalty","Pen.","num","pctd"],["CarSale","Sale","num","inr"],["Upsell","Upsell","num","inr"],["CarMax","Max","num","inr"],["Gate","Gate","num","pctd"],["PayableFlag","Pay?","","yn"],["Booster","Boost","num","inr"],["PayAmt","Payable","num","inr"]];
+const CARCOLS=[["MonthKey","Month"],["Outlet","Outlet"],["SalesConsultant","Consultant"],["Customer","Customer"],["Tenure","Ten."],["Model","Model"],["VIN","VIN"],["Seq","Car#","num"],["Aging","Aging","num"],["Base","Base","num","inr"],["BandPct","Band","num","pctd"],["Penalty","Pen.","num","pctd"],["CarSale","Sale","num","inr"],["Upsell","Upsell","num","inr"],["CarMax","Max","num","inr"],["Gate","Gate","num","pctd"],["PayableFlag","Pay?","","yn"],["Booster","Boost","num","inr"],["PayAmt","Payable","num","inr"]];
 function renderCars(){
   const m=model(); let rows=m.cars.map((c,i)=>({...c,_idx:state.cars.indexOf(state.cars[c._i]) }));
   // reindex properly
@@ -988,13 +1033,51 @@ function parseCSV(text){
   if(f!==""||row.length){row.push(f);rows.push(row);}
   return rows.filter(r=>r.some(x=>x.trim()!==""));
 }
+function downloadBackup(){
+  var snap={ _rdbBackup:1, when:new Date().toISOString(), cars:state.cars||[], stock:state.stock||[], settings:state.settings||{}, snapshots:state.snapshots||[], kpi:state.kpi||{}, daily:state.daily||{} };
+  var name='RDB_backup_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
+  download(name, JSON.stringify(snap));
+  toast('Backup downloaded: '+(snap.cars.length)+' cars, '+(snap.stock.length)+' stock');
+}
+function restoreBackup(inp){
+  var f=inp&&inp.files&&inp.files[0]; if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    var snap; try{ snap=JSON.parse(rd.result); }catch(e){ toast('Not a valid backup file'); inp.value=''; return; }
+    if(!snap || !snap._rdbBackup || !Array.isArray(snap.cars)){ toast('This file is not an RDB backup'); inp.value=''; return; }
+    var when=snap.when? new Date(snap.when).toLocaleString('en-IN') : '(unknown time)';
+    var m='Restore this backup?\n\nFrom: '+when+'\nCars: '+snap.cars.length+'  \u00b7  Stock: '+((snap.stock||[]).length)+'\n\nThis REPLACES all current cars, stock and settings \u2014 in this app AND in the Google Sheet. Consider downloading a fresh backup first.';
+    if(typeof confirm==='function' && !confirm(m)){ inp.value=''; return; }
+    state.cars=(snap.cars||[]).map(normCar);
+    state.stock=snap.stock||[];
+    state.settings=normSettings(snap.settings||state.settings);
+    state.snapshots=snap.snapshots||[];
+    if(snap.kpi)state.kpi=snap.kpi;
+    if(snap.daily)state.daily=snap.daily;
+    persist();
+    if(cloudActive()){
+      try{ syncConfig(); }catch(e){}
+      if(state.cars.length){ cloud('clearCars',{}); cloud('bulkAddCars',{cars:state.cars}); }
+      if(state.stock.length){ cloud('clearStock',{}); cloud('bulkStock',{rows:state.stock}); }
+    }
+    inp.value='';
+    try{ refreshAll(); }catch(e){}
+    toast('Restored '+state.cars.length+' cars, '+state.stock.length+' stock');
+  };
+  rd.readAsText(f);
+}
+function sanitizeCar(o){ var fixes=[];
+  function cl(f,mn,mx){ if(o[f]==null||o[f]==='')return; var v=num(o[f]),c=v; if(mn!=null&&c<mn)c=mn; if(mx!=null&&c>mx)c=mx; if(c!==v){o[f]=String(c);fixes.push(f);} }
+  cl('DuesOnDelivery',0,null); cl('CreditShare',0,1); cl('AccessoriesValue',0,null); cl('CSIScore',0,100); cl('CostOnSalesPct',0,null);
+  return fixes;
+}
 function ingestCSV(text){
   const rows=parseCSV(text); if(rows.length<2){msg("Need a header row and at least one data row.",true);return;}
   const hdr=rows[0].map(h=>h.trim()); const idx={}; CSV_COLS.forEach(c=>idx[c]=hdr.indexOf(c));
   const missing=CSV_COLS.filter(c=>idx[c]<0);
   if(missing.length>4){msg("This doesn't look like the template. Missing: "+missing.slice(0,6).join(", ")+"…",true);return;}
-  let n=0; const added=[]; rows.slice(1).forEach(r=>{ const o={}; CSV_COLS.forEach(c=>o[c]= idx[c]>=0?(r[idx[c]]||"").trim():""); if(o.MonthKey||o.SalesConsultant){o.id=uid(); state.cars.push(o); added.push(o); n++;} });
-  persist(); if(cloudActive()&&added.length) cloud('bulkAddCars',{cars:added}); msg(`Imported ${n} cars. <a onclick="show('cars')" style="cursor:pointer">View cars →</a>`,false); toast(n+" cars imported");
+  let n=0; const added=[]; let fixed=0; rows.slice(1).forEach(r=>{ const o={}; CSV_COLS.forEach(c=>o[c]= idx[c]>=0?(r[idx[c]]||"").trim():""); if(o.MonthKey||o.SalesConsultant){o.id=uid(); fixed+=sanitizeCar(o).length; state.cars.push(o); added.push(o); n++;} });
+  persist(); if(cloudActive()&&added.length) cloud('bulkAddCars',{cars:added}); msg(`Imported ${n} cars${fixed?` \u00b7 <b>${fixed} out-of-range value(s) auto-corrected</b> (dues can\u2019t be negative, credit share 0\u20131, CSI 0\u2013100)`:``}. <a onclick="show('cars')" style="cursor:pointer">View cars →</a>`,false); toast(n+" cars imported"+(fixed?", "+fixed+" fixed":""));
 }
 function msg(html,err){ document.getElementById("importMsg").innerHTML=`<div class="note ${err?'':'blue'}" style="${err?'background:var(--red-soft);border-color:#F0C8BE;color:var(--red)':''}">${html}</div>`; }
 function importPaste(){ ingestCSV(document.getElementById("pasteArea").value); }
@@ -1090,7 +1173,7 @@ function vinAutoFill(){
   const hint=document.getElementById('vinHint'); if(!vin){ if(hint)hint.innerHTML=''; return; }
   const s=state.stock.find(x=>String(x.VIN||'').trim().toLowerCase()===vin.toLowerCase());
   if(!s){ if(hint)hint.innerHTML='<span style="color:#B45309">\u26A0 VIN not in stock ledger \u2014 check for a typo, or add it under Stock & VIN.</span>'; return; }
-  const setSel=(f,val)=>{ if(!val)return; const el=q(f); if(el&&el.tagName==='SELECT'){ const has=[...el.options].some(o=>o.value===val||o.textContent===val); if(has)el.value=val; } };
+  const setSel=(f,val)=>{ if(!val)return; const el=q(f); if(!el||el.tagName!=='SELECT')return; let opt=[...el.options].find(o=>o.value===val||o.textContent===val); if(!opt)opt=[...el.options].find(o=>String(o.value).toUpperCase()===String(val).toUpperCase()||String(o.textContent).toUpperCase()===String(val).toUpperCase()); if(opt){el.value=opt.value;} else { const no=document.createElement('option'); no.value=val; no.textContent=val; el.appendChild(no); el.value=val; } };
   const setInp=(f,val)=>{ if(!val)return; const el=q(f); if(el&&el.tagName!=='SELECT'){ el.value=val; } };
   setSel('Model', s.model); setInp('StockRecdDate', s.stockInDate);
   const cons=s.taggedTo||''; const rc=(state.settings.consultants||[]).find(c=>c.name===cons); const consEl=q('SalesConsultant');
@@ -1562,6 +1645,7 @@ function renderArrears(){
   const cutEl=document.getElementById('arrCut'); if(cutEl){ const cv=(state.settings.arrearsCutover||'SEP-2026').toUpperCase(); cutEl.innerHTML=monthPickOptions(cv); cutEl.value=cv; }
   const roster=(state.settings.consultants||[]).map(c=>c.name);
   Object.keys(state.settings.arrears||{}).forEach(n=>{ if(roster.indexOf(n)<0)roster.push(n); });
+  (state.cars||[]).forEach(c=>{ const nm=String(c.SalesConsultant||'').trim(); if(nm && roster.indexOf(nm)<0)roster.push(nm); });  /* include anyone who sold a car, incl. departed consultants */
   let tOwed=0,tPaid=0;
   const rowsHtml=roster.map(n=>{ const owed=arrOwed(n), paid=arrPaid(n), bal=owed-paid; tOwed+=owed; tPaid+=paid;
     const a=(state.settings.arrears||{})[n]||{}; const fromBreak=arrBreakdownSum(a).has;
@@ -1630,7 +1714,7 @@ function rcData(month,name){ var S=state.settings; var m=rcModel(month); var r=m
   var retCars=mine.filter(function(c){return !yes(c.Cancelled)&&c.RetailDate;});
   var base=mine.reduce(function(a,c){return a+(c.PayAmt||0);},0);
   var awards=topSellerAwards(m,month,S); var cheque=awards[name]||0; var total=base+cheque;
-  var bd=retCars.slice().sort(function(a,b){return (a.Seq||0)-(b.Seq||0);}).map(function(c){return {seq:c.Seq||0,model:c.Model||'',carSale:c.CarSale||0,upsell:c.Upsell||0,carMax:c.CarMax||0,gate:c.Gate,booster:c.Booster||0,payAmt:c.PayAmt||0,payable:!!c.PayableFlag,delivered:!!c.DeliveryDate,paid:yes(c.PaymentRealised)};});
+  var bd=retCars.slice().sort(function(a,b){return (a.Seq||0)-(b.Seq||0);}).map(function(c){return {seq:c.Seq||0,model:c.Model||'',customer:c.Customer||'',carSale:c.CarSale||0,upsell:c.Upsell||0,carMax:c.CarMax||0,gate:c.Gate,booster:c.Booster||0,payAmt:c.PayAmt||0,payable:!!c.PayableFlag,delivered:!!c.DeliveryDate,paid:yes(c.PaymentRealised)};});
   var sr=(scoreRows(month).find(function(x){return x.name===name;}))||{};
   var K=state.kpi[month+"|"+name]||{}; var hi=r.retailed>=S.waiveAbove;
   var mates=m.sc.filter(function(x){return x.outlet===r.outlet;}); var awardsAll=topSellerAwards(m,month,S);
@@ -1703,11 +1787,11 @@ function rcCardHTML(d){ if(!d) return ""; var S=state.settings;
     +'<tr><td>Top-seller cheque (top-3, 8+ retails)</td><td class="n">'+inr(d.cheque)+'</td></tr>'
     +'<tr style="font-weight:800;background:#F5F8FC"><td>Total earned this month</td><td class="n">'+(d.held?"HELD":inr(d.total))+'</td></tr></table>'
     +'<p style="font-size:11px;color:#5B6B7E;margin:6px 0 0">Paid at quarter-end, after full payment is realised.</p></div>'
-    +'<div class="rc-sec"><h3>How each car was calculated</h3><table><tr><th>#</th><th>Model</th><th class="n">Base</th><th class="n">Upsell</th><th class="n">Car total</th><th class="n">Gate</th><th class="n">Booster</th><th class="n">Pays now</th><th>Status</th></tr>'
-    +((d.breakdown&&d.breakdown.length)? d.breakdown.map(function(c){ var status=c.payable?'released':(c.delivered&&!c.paid?'delivered, unpaid':(c.paid&&!c.delivered?'paid, awaiting delivery':'awaiting delivery')); var scol=c.payable?'#0E7C4A':'#B45309'; return '<tr><td>'+c.seq+'</td><td>'+c.model+'</td><td class="n">'+inr(c.carSale)+'</td><td class="n">'+(c.upsell?inr(c.upsell):'\u2014')+'</td><td class="n">'+inr(c.carMax)+'</td><td class="n">'+(c.gate==null?'held':pct(c.gate))+'</td><td class="n">'+(c.booster?inr(c.booster):'\u2014')+'</td><td class="n"><b>'+inr(c.payAmt)+'</b></td><td style="font-size:11px;color:'+scol+'">'+status+'</td></tr>'; }).join('') : '<tr><td colspan="9" style="color:#5B6B7E">No retailed cars this month.</td></tr>')
-    +'<tr style="font-weight:800;background:#F5F8FC"><td colspan="7">Released incentive (delivered + fully paid)</td><td class="n">'+inr(d.base)+'</td><td></td></tr>'
-    +(d.cheque?'<tr style="font-weight:700"><td colspan="7">Top-seller cheque</td><td class="n">'+inr(d.cheque)+'</td><td></td></tr>':'')
-    +'<tr style="font-weight:800;background:#EAF3FF"><td colspan="7">Total earned this month</td><td class="n">'+(d.held?"HELD":inr(d.total))+'</td><td></td></tr></table>'
+    +'<div class="rc-sec"><h3>How each car was calculated</h3><table><tr><th>#</th><th>Model</th><th>Customer</th><th class="n">Base</th><th class="n">Upsell</th><th class="n">Car total</th><th class="n">Gate</th><th class="n">Booster</th><th class="n">Pays now</th><th>Status</th></tr>'
+    +((d.breakdown&&d.breakdown.length)? d.breakdown.map(function(c){ var status=c.payable?'released':(c.delivered&&!c.paid?'delivered, unpaid':(c.paid&&!c.delivered?'paid, awaiting delivery':'awaiting delivery')); var scol=c.payable?'#0E7C4A':'#B45309'; return '<tr><td>'+c.seq+'</td><td>'+c.model+'</td><td>'+(c.customer||'\u2014')+'</td><td class="n">'+inr(c.carSale)+'</td><td class="n">'+(c.upsell?inr(c.upsell):'\u2014')+'</td><td class="n">'+inr(c.carMax)+'</td><td class="n">'+(c.gate==null?'held':pct(c.gate))+'</td><td class="n">'+(c.booster?inr(c.booster):'\u2014')+'</td><td class="n"><b>'+inr(c.payAmt)+'</b></td><td style="font-size:11px;color:'+scol+'">'+status+'</td></tr>'; }).join('') : '<tr><td colspan="10" style="color:#5B6B7E">No retailed cars this month.</td></tr>')
+    +'<tr style="font-weight:800;background:#F5F8FC"><td colspan="8">Released incentive (delivered + fully paid)</td><td class="n">'+inr(d.base)+'</td><td></td></tr>'
+    +(d.cheque?'<tr style="font-weight:700"><td colspan="8">Top-seller cheque</td><td class="n">'+inr(d.cheque)+'</td><td></td></tr>':'')
+    +'<tr style="font-weight:800;background:#EAF3FF"><td colspan="8">Total earned this month</td><td class="n">'+(d.held?"HELD":inr(d.total))+'</td><td></td></tr></table>'
     +'<p style="font-size:11px;color:#5B6B7E;margin:6px 0 0">Car total = base incentive (car-ladder band, less any penalty) + upsell (extended warranty, accessories, exchange). Each car pays <b>Car total \u00d7 quality gate + booster</b>, and only once it\u2019s <b>delivered and fully paid</b>. Retailed-but-pending cars show \u20B90 until released; held consultants earn \u20B90 until monthly numbers are entered.</p></div>'
     +'<div class="rc-sec"><h3>Watch-outs this month</h3>'+miss+'</div>'
     +'<div class="rc-sec"><h3>How to earn more next month</h3>'+tips+'</div>'

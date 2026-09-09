@@ -156,13 +156,24 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 .formmodal .formgrid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
 .formmodal .field{min-width:0}
 .formmodal .field input,.formmodal .field select,.formmodal .field textarea{width:100%;min-width:0;box-sizing:border-box}
+
+details.qgrp{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff;overflow:hidden}
+details.qgrp>summary{cursor:pointer;padding:10px 14px;font-weight:650;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+details.qgrp>summary::-webkit-details-marker{display:none}
+details.qgrp>summary::before{content:"\25B8";display:inline-block;margin-right:8px;transition:transform .15s;color:var(--muted)}
+details.qgrp[open]>summary::before{transform:rotate(90deg)}
+details.qgrp>summary:hover{background:#f6f8fb}
+details.qgrp[open]>summary{border-bottom:1px solid var(--line)}
+details.qgrp .qcount{background:#EEF2FF;color:#1E40AF;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+details.qgrp .tablewrap{padding:2px 6px 6px}
+details.qgrp>summary>span:first-child{flex:1}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b65</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b66</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -477,7 +488,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b65 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b66 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1146,7 +1157,7 @@ function loadQuotes(){
   if(pab)pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="card pad"><div class="hint">Loading\u2026</div></div>';
   var pCons = cfg.pass ? fetchQuoteData(cfg.url,cfg.pass).then(function(d){ if(!d||d.ok!==true) throw new Error((d&&d.error)||'password rejected'); return {rows:d.rows||[]}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   var pSelf = cloudActive() ? cloud('selfQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed'}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
-  var pPab  = cloudActive() ? cloud('pabblyQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed'}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
+  var pPab  = cloudActive() ? cloud('pabblyQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed', tabs:(d&&d.tabs)||null}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   Promise.all([pCons,pSelf,pPab]).then(function(res){
     if(status)status.textContent='';
     var C=res[0], S=res[1], P=res[2];
@@ -1159,7 +1170,7 @@ function loadQuotes(){
       else { renderSelfQuotes(S.rows,S.headers,month); } }
     else if(self){ self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="card pad"><div class="hint">Connect the cloud to load self-service quotes.</div></div>'; }
     // pabbly (Sheet1)
-    if(P){ if(P.__err){ if(pab)pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+P.__err+'<br><span style="font-size:12px">Deploy Code.gs (b31); Sheet1 must exist in that spreadsheet.</span></div>'; }
+    if(P){ if(P.__err){ var tabsHtml=P.tabs&&P.tabs.length?'<br><span style="font-size:12px">Tabs found in that spreadsheet: <b>'+P.tabs.join('</b>, <b>')+'</b>. Tell me which one holds the Pabbly sends.</span>':'<br><span style="font-size:12px">Deploy Code.gs (b32) and make sure Sheet1 exists.</span>'; if(pab)pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+P.__err+tabsHtml+'</div>'; }
       else { renderPabbly(P.rows,P.headers,month); } }
     else if(pab){ pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="card pad"><div class="hint">Connect the cloud to load Pabbly sends.</div></div>'; }
     // dashboard (aggregate)
@@ -1167,7 +1178,12 @@ function loadQuotes(){
   });
 }
 function sheetDateCol(headers,rows){ var cols=(headers&&headers.length)?headers:(rows&&rows[0]?Object.keys(rows[0]):[]); return cols.filter(function(h){return /date|time|stamp|\bts\b|when|sent/i.test(h);})[0]; }
-function sheetRowsInMonth(rows,headers,month){ rows=rows||[]; var dc=sheetDateCol(headers,rows); if(!dc)return {list:rows.slice(),dateCol:null}; var list=rows.filter(function(r){ var dt=new Date(r[dc]); if(isNaN(dt))return false; return (MONTHS[dt.getMonth()]+'-'+dt.getFullYear()).toUpperCase()===month; }); return {list:list,dateCol:dc}; }
+function parseFlexDate(v){ if(v==null||v==='')return null; if(v instanceof Date)return isNaN(v)?null:v; var s=String(v).trim();
+  if(/^\d{4}-\d{1,2}-\d{1,2}/.test(s)){ var di=new Date(s.replace(' ','T')); if(!isNaN(di))return di; di=new Date(s); return isNaN(di)?null:di; }
+  var m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[ ,T]+(\d{1,2}):(\d{2}))?/);
+  if(m){ var dd=+m[1],mm=+m[2],yy=+m[3]; if(yy<100)yy+=2000; if(mm>12&&dd<=12){ var t=dd;dd=mm;mm=t; } var hh=m[4]?+m[4]:0,mi=m[5]?+m[5]:0; var d=new Date(yy,mm-1,dd,hh,mi); if(!isNaN(d)&&mm>=1&&mm<=12&&dd>=1&&dd<=31)return d; }
+  var d2=new Date(s); return isNaN(d2)?null:d2; }
+function sheetRowsInMonth(rows,headers,month){ rows=rows||[]; var dc=sheetDateCol(headers,rows); if(!dc)return {list:rows.slice(),dateCol:null}; var list=rows.filter(function(r){ var dt=parseFlexDate(r[dc]); if(!dt)return false; return (MONTHS[dt.getMonth()]+'-'+dt.getFullYear()).toUpperCase()===month; }); return {list:list,dateCol:dc}; }
 function pabReplyCol(headers,rows){ var cols=(headers&&headers.length)?headers:(rows&&rows[0]?Object.keys(rows[0]):[]); return cols.filter(function(h){return /repl|response|responded|answered|customer\s*reply|status/i.test(h);})[0]; }
 function pabIsReplied(v){ if(v==null)return false; var s=String(v).trim().toLowerCase(); if(!s)return false; return !(s==='no'||s==='pending'||s==='not replied'||s==='no reply'||s==='0'||s==='false'||s==='awaiting'||s==='sent'||s==='delivered'); }
 function renderQuoteDash(consRows, selfPack, pabPack, month){
@@ -1193,10 +1209,10 @@ function renderPabbly(rows,headers,month){
   var box=document.getElementById('quotePabbly'); if(!box)return;
   var cols=(headers&&headers.length)?headers:(rows&&rows[0]?Object.keys(rows[0]):[]);
   var pm=sheetRowsInMonth(rows,headers,month); var list=pm.list, dateCol=pm.dateCol;
-  if(dateCol){ list.sort(function(a,b){ return new Date(b[dateCol])-new Date(a[dateCol]); }); }
+  if(dateCol){ list.sort(function(a,b){ return (parseFlexDate(b[dateCol])||0)-(parseFlexDate(a[dateCol])||0); }); }
   var rc=pabReplyCol(headers,rows); var replN=0; if(rc){ list.forEach(function(r){ if(pabIsReplied(r[rc]))replN++; }); }
   var head='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2><span style="font-size:12px;color:var(--muted)">'+(dateCol?month+' \u00b7 ':'')+list.length+' sent'+(rc?' \u00b7 '+replN+' replied ('+(list.length?Math.round(replN/list.length*100):0)+'%)':'')+' \u00b7 from Sheet1</span></div>';
-  if(!list.length){ box.innerHTML=head+'<div class="card pad"><div class="hint">No Pabbly sends'+(dateCol?' for '+month:'')+'.</div></div>'; return; }
+  if(!list.length){ var raw=(rows||[]).length; var msg = raw>0 ? ('Read '+raw+' row'+(raw>1?'s':'')+' from Sheet1, but '+(dateCol?'none are dated in '+month+' (using the \u201c'+dateCol+'\u201d column) \u2014 try another month':'no date column was recognised, so month filtering is off')+'.') : 'Sheet1 has no data rows yet.'; box.innerHTML=head+'<div class="card pad"><div class="hint">'+msg+'</div></div>'; return; }
   box.innerHTML=head+'<div class="card pad"><div class="tablewrap"><table><thead><tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
     +list.map(function(r){ var replied=rc?pabIsReplied(r[rc]):null; return '<tr>'+cols.map(function(c){ var v=r[c]==null?'':String(r[c]); if(c===rc){ v=replied?'<span class="tag yes">'+(String(r[c]).trim()||'Replied')+'</span>':'<span class="tag no">'+(String(r[c]).trim()||'No reply')+'</span>'; } return '<td>'+v+'</td>'; }).join('')+'</tr>'; }).join('')
     +'</tbody></table></div><div class="hint" style="margin-top:6px">Sent to customers via Pabbly (Sheet1)'+(rc?'. Reply status auto-detected from the \u201c'+rc+'\u201d column':'. No reply column detected \u2014 tell me the column name to track replies')+'. Search above to find a customer or phone.</div></div>';
@@ -1224,12 +1240,18 @@ function renderConsQuotes(all,month){
   var inMonth=(all||[]).filter(function(r){ return qMonthOf(r)===month; });
   inMonth.sort(function(a,b){ return new Date(b.ts)-new Date(a.ts); });
   var liveN=inMonth.filter(function(r){ return String(r.status||'')!=='Deleted'; }).length;
-  var head='<div class="section-title"><h2>Consultant quotations</h2><span style="font-size:12px;color:var(--muted)">'+month+' \u00b7 '+liveN+' live \u00b7 from submissions sheet</span></div>';
+  // group by consultant (case-insensitive, keep a display name)
+  var groups={}, order=[];
+  inMonth.forEach(function(r){ var k=String(r.consultant||'').trim().toUpperCase()||'(NO CONSULTANT)'; if(!groups[k]){ groups[k]={name:(r.consultant||'\u2014'),rows:[],live:0}; order.push(k); } groups[k].rows.push(r); if(String(r.status||'')!=='Deleted')groups[k].live++; });
+  order.sort(function(x,y){ return groups[y].live-groups[x].live || groups[y].rows.length-groups[x].rows.length; });
+  var head='<div class="section-title"><h2>Consultant quotations</h2><span style="font-size:12px;color:var(--muted)">'+month+' \u00b7 '+liveN+' live \u00b7 '+order.length+' consultant'+(order.length!==1?'s':'')+' \u00b7 click a name to expand</span></div>';
   if(!inMonth.length){ box.innerHTML=head+'<div class="card pad"><div class="hint">No consultant quotations for '+month+'.</div></div>'; return; }
-  box.innerHTML=head+'<div class="card pad"><div class="tablewrap"><table><thead><tr><th>Date</th><th>Consultant</th><th>Customer</th><th>Phone</th><th>Model</th><th>Quote #</th><th>Status</th></tr></thead><tbody>'
-    +inMonth.map(function(r){ var dt=new Date(r.ts); var ds=isNaN(dt)?'':dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}); var del=String(r.status||'')==='Deleted';
-      return '<tr style="'+(del?'opacity:.5':'')+'"><td>'+ds+'</td><td>'+(r.consultant||'\u2014')+'</td><td>'+(r.name||r.custName||'')+'</td><td>'+(r.phone||r.custPhone||'')+'</td><td>'+(r.model||'')+'</td><td>'+(r.quoteNo||'')+'</td><td>'+(del?'<span class="tag no">Deleted</span>':(r.status?r.status:'<span class="tag yes">OK</span>'))+'</td></tr>'; }).join('')
-    +'</tbody></table></div><div class="hint" style="margin-top:6px">Quotations prepared by consultants (submissions sheet). Search above to find a customer or phone.</div></div>';
+  function rowsTable(rows){ return '<div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Model</th><th>Quote #</th><th>Status</th></tr></thead><tbody>'
+    +rows.map(function(r){ var dt=new Date(r.ts); var ds=isNaN(dt)?'':dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}); var del=String(r.status||'')==='Deleted';
+      return '<tr style="'+(del?'opacity:.5':'')+'"><td>'+ds+'</td><td>'+(r.name||r.custName||'')+'</td><td>'+(r.phone||r.custPhone||'')+'</td><td>'+(r.model||'')+'</td><td>'+(r.quoteNo||'')+'</td><td>'+(del?'<span class="tag no">Deleted</span>':(r.status?r.status:'<span class="tag yes">OK</span>'))+'</td></tr>'; }).join('')
+    +'</tbody></table></div>'; }
+  var body=order.map(function(k){ var g=groups[k]; return '<details class="qgrp"><summary><span>'+g.name+'</span><span class="qcount">'+g.live+(g.rows.length!==g.live?' <span style="opacity:.6">(+'+(g.rows.length-g.live)+' del)</span>':'')+'</span></summary>'+rowsTable(g.rows)+'</details>'; }).join('');
+  box.innerHTML=head+'<div class="card pad">'+body+'<div class="hint" style="margin-top:6px">Grouped by consultant \u2014 tap a name to see their quotations (submissions sheet). Use the search box above to find a customer or phone across everyone.</div></div>';
 }
 function renderSelfQuotes(rows,headers,month){
   var box=document.getElementById('quoteSelfList'); if(!box)return;

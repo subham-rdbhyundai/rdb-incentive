@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b68</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b69</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -488,7 +488,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b68 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b69 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -979,7 +979,7 @@ function openCarForm(car){
   w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h2>${car?'Edit car':'Add car'}</h2><div class="formgrid" id="cf">
   ${CAR_FIELDS.map(([f,l,ph])=>{
     if(f==="Tenure") return field(f,l,c[f]||"Consultant",["Consultant","Trainee"]);
-    if(f==="SalesConsultant"){ let names=(state.settings.consultants||[]).map(x=>x.name); const cur=c[f]||""; if(cur && names.indexOf(cur)<0) names=[cur].concat(names); if(names.length){ return `<div class="field"><label>${l}</label><select data-f="SalesConsultant" onchange="onPickConsultant(this)"><option value=""></option>`+names.map(n=>`<option ${c[f]===n?'selected':''}>${n}${(state.settings.consultants||[]).some(x=>x.name===n)?'':' (former)'}</option>`).join("")+`</select></div>`; } }
+    if(f==="SalesConsultant"){ let names=(state.settings.consultants||[]).map(x=>x.name); const cur=c[f]||""; if(cur && names.indexOf(cur)<0) names=[cur].concat(names); if(names.length){ return `<div class="field"><label>${l}</label><select data-f="SalesConsultant" onchange="onPickConsultant(this)"><option value=""></option>`+names.map(n=>`<option value="${String(n).replace(/"/g,'&quot;')}" ${canonSc(c[f])===canonSc(n)?'selected':''}>${scDisplay(n)}</option>`).join("")+`</select></div>`; } }
     if(f==="Outlet") return field(f,l,c[f]||"Tamluk",["Haldia","Tamluk","Contai"]);
     if(f==="Model") return field(f,l,c[f]||"VENUE",Object.keys(state.settings.rates));
     if(f==="VIN") return `<div class="field"><label>${l} <span style="background:#1E5AA8;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:800;letter-spacing:.3px">ENTER FIRST \u2192 auto-fills</span></label><input data-f="VIN" type="text" value="${c[f]!=null?String(c[f]).replace(/"/g,'&quot;'):''}" placeholder="${ph}" onchange="vinAutoFill()"><div id="vinHint" style="font-size:11px;margin-top:3px;line-height:1.3"></div></div>`;
@@ -1161,9 +1161,10 @@ function loadQuotes(){
   Promise.all([pCons,pSelf,pPab]).then(function(res){
     if(status)status.textContent='';
     var C=res[0], S=res[1], P=res[2];
+    var consRows=(C&&!C.__err&&C.rows)?dedupeQuotes(C.rows):[];
     // consultant + coverage
     if(cfg.pass){ if(C&&C.__err){ if(cov)cov.innerHTML='<div class="note" style="border-left-color:#C2350B;background:#FEF2F2">Consultant quotes could not load: '+C.__err+' \u2014 check the password (Set password).</div>'; if(lst)lst.innerHTML=''; }
-      else { renderQuoteCoverage((C&&C.rows)||[],month); renderConsQuotes((C&&C.rows)||[],month); } }
+      else { renderQuoteCoverage(consRows,month); renderConsQuotes(consRows,month); } }
     else { if(cov)cov.innerHTML='<div class="card pad" style="margin-top:6px"><div class="hint">Set the Quote App password to load consultant quotations & coverage.</div></div>'; if(lst)lst.innerHTML=''; }
     // self-serve
     if(S){ if(S.__err){ if(self)self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+S.__err+'<br><span style="font-size:12px">Deploy Code.gs (b31) and make sure the incentive\u2019s Google account can open that sheet.</span></div>'; }
@@ -1174,7 +1175,7 @@ function loadQuotes(){
       else { renderPabbly(P.rows,P.headers,month); } }
     else if(pab){ pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="card pad"><div class="hint">Connect the cloud to load Pabbly sends.</div></div>'; }
     // dashboard (aggregate)
-    renderQuoteDash( (C&&!C.__err&&C.rows)||[], (S&&!S.__err)?S:null, (P&&!P.__err)?P:null, month );
+    renderQuoteDash( consRows, (S&&!S.__err)?S:null, (P&&!P.__err)?P:null, month );
   });
 }
 function sheetDateCol(headers,rows){ var cols=(headers&&headers.length)?headers:(rows&&rows[0]?Object.keys(rows[0]):[]); return cols.filter(function(h){return /date|time|stamp|\bts\b|when|sent/i.test(h);})[0]; }
@@ -1941,7 +1942,7 @@ function rcCardHTML(d){ if(!d) return ""; var S=state.settings;
   var tips='<ul class="rc-list rc-tip">'+d.tips.map(function(x){return "<li>"+x+"</li>";}).join("")+'</ul>';
   return '<div class="rc">'
     +'<div class="rc-brand"><img src="'+LOGO_RDB+'" alt="RDB Hyundai"><div class="ttl">Performance Report<br><span>'+rcMonthLong(d.month)+'</span></div><img class="hy" src="'+LOGO_HY+'" alt="Hyundai"></div>'
-    +'<div class="rc-hd"><div class="rc-name-row"><h2>'+d.name+'</h2><span class="rc-badge" style="background:'+d.badgeCol+';color:#fff">'+d.badge+'</span></div>'
+    +'<div class="rc-hd"><div class="rc-name-row"><h2>'+scDisplay(d.name)+'</h2><span class="rc-badge" style="background:'+d.badgeCol+';color:#fff">'+d.badge+'</span></div>'
     +'<div class="meta">'+(d.outlet||"")+' \u00b7 '+(d.tenure||"Consultant")+' \u00b7 Rank #'+d.rank+' of '+d.outOf+' at '+(d.outlet||"outlet")+'</div>'
     +'<div class="rc-headline">'+d.headline+'</div></div>'
     +'<div class="rc-stats">'
@@ -1990,7 +1991,7 @@ function renderReportCards(){ var sel=document.getElementById("rcMonth"); var mo
     else msg='No report-card data for '+month+' yet '+(unattributed?('('+unattributed+' car'+(unattributed>1?'s':'')+' missing a consultant) '):'')+'\u2014 enter this month\u2019s funnel/attendance under Daily Entry or Scoring.';
     list.innerHTML='<div class="empty">'+msg+'</div>'; prev.innerHTML=""; return;
   }
-  list.innerHTML=data.map(function(d,i){ return '<div class="rc-li'+(i===0?" sel":"")+'" data-n="'+d.name.replace(/"/g,"&quot;")+'" onclick="rcSelect(this.dataset.n)"><b>'+d.name+'</b><br><span style="font-size:12px;color:#5B6B7E">'+d.retailed+' cars \u00b7 '+(d.held?"HELD":inr(d.total))+'</span></div>'; }).join("");
+  list.innerHTML=data.map(function(d,i){ return '<div class="rc-li'+(i===0?" sel":"")+'" data-n="'+d.name.replace(/"/g,"&quot;")+'" onclick="rcSelect(this.dataset.n)"><b>'+scDisplay(d.name)+'</b><br><span style="font-size:12px;color:#5B6B7E">'+d.retailed+' cars \u00b7 '+(d.held?"HELD":inr(d.total))+'</span></div>'; }).join("");
   rcSelect(data[0].name);
 }
 function rcSelect(name){ var month=document.getElementById("rcMonth").value; var d=rcData(month,name);
@@ -2093,9 +2094,13 @@ async function cloud(action,payload){ const body=Object.assign({action, key:stat
   const url=backendUrl(); if(!url) return {ok:false,offline:true};
   try{ const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}); return await res.json(); }
   catch(e){ return {ok:false,error:String(e)}; } }
+function canonSc(name){ return String(name==null?'':name).replace(/\s*\(former\)\s*/gi,' ').replace(/\s+/g,' ').trim(); }
+function scDisplay(name){ var base=canonSc(name); if(!base)return base; var active=(state.settings.consultants||[]).some(function(x){return canonSc(x.name).toLowerCase()===base.toLowerCase();}); return active?base:base+' (former)'; }
+function dedupeQuotes(rows){ var byQ={}, out=[]; (rows||[]).forEach(function(r){ var q=String(r.quoteNo||'').trim(); if(!q){ out.push(r); return; } var ex=byQ[q]; if(!ex){ byQ[q]=r; } else { var exDel=String(ex.status||'')==="Deleted", rDel=String(r.status||'')==="Deleted"; if(exDel&&!rDel) byQ[q]=r; else if(exDel===rDel && (+new Date(r.ts)||0)>(+new Date(ex.ts)||0)) byQ[q]=r; } }); Object.keys(byQ).forEach(function(q){ out.push(byQ[q]); }); return out; }
 function normCar(c){ c=Object.assign({},c); if(!c.id)c.id=uid();
   for(const k in c){ if(c[k]===null||c[k]===undefined)c[k]=""; else if(typeof c[k]!=="string") c[k]=String(c[k]); }
   if(c.MonthKey && /^\d{4}[-\/]\d{1,2}/.test(c.MonthKey)){ var _mk=mkOfDate(String(c.MonthKey).replace(/\//g,"-")); if(_mk)c.MonthKey=_mk; }  /* date-format month -> AUG-2026 (in-memory only; sheet untouched) */
+  if(c.SalesConsultant)c.SalesConsultant=canonSc(c.SalesConsultant);  /* merge stray (former) suffixes */
   return c; }
 async function cloudLoad(){ if(!cloudActive()){setCloudStatus('local');renderDashboard();return;}
   try{rebuildAllMonthly();}catch(e){} try{refreshAll();}catch(e){}  /* paint cached data instantly, don't wait on the network */

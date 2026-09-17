@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b69</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b72</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -488,7 +488,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b69 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b72 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1158,13 +1158,14 @@ function loadQuotes(){
   var pCons = cfg.pass ? fetchQuoteData(cfg.url,cfg.pass).then(function(d){ if(!d||d.ok!==true) throw new Error((d&&d.error)||'password rejected'); return {rows:d.rows||[]}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   var pSelf = cloudActive() ? cloud('selfQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed'}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   var pPab  = cloudActive() ? cloud('pabblyQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed', tabs:(d&&d.tabs)||null}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
-  Promise.all([pCons,pSelf,pPab]).then(function(res){
+  var pLinks = cloudActive() ? cloud('consQuoteLinks',{}).then(function(d){ return (d&&d.ok)?(d.links||{}):{}; }).catch(function(){ return {}; }) : Promise.resolve({});
+  Promise.all([pCons,pSelf,pPab,pLinks]).then(function(res){
     if(status)status.textContent='';
-    var C=res[0], S=res[1], P=res[2];
+    var C=res[0], S=res[1], P=res[2], consLinks=res[3]||{};
     var consRows=(C&&!C.__err&&C.rows)?dedupeQuotes(C.rows):[];
     // consultant + coverage
     if(cfg.pass){ if(C&&C.__err){ if(cov)cov.innerHTML='<div class="note" style="border-left-color:#C2350B;background:#FEF2F2">Consultant quotes could not load: '+C.__err+' \u2014 check the password (Set password).</div>'; if(lst)lst.innerHTML=''; }
-      else { renderQuoteCoverage(consRows,month); renderConsQuotes(consRows,month); } }
+      else { renderQuoteCoverage(consRows,month); renderConsQuotes(consRows,month,consLinks); } }
     else { if(cov)cov.innerHTML='<div class="card pad" style="margin-top:6px"><div class="hint">Set the Quote App password to load consultant quotations & coverage.</div></div>'; if(lst)lst.innerHTML=''; }
     // self-serve
     if(S){ if(S.__err){ if(self)self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+S.__err+'<br><span style="font-size:12px">Deploy Code.gs (b31) and make sure the incentive\u2019s Google account can open that sheet.</span></div>'; }
@@ -1207,8 +1208,10 @@ function renderQuoteDash(consRows, selfPack, pabPack, month){
     +'</div>';
 }
 function pabColMatch(cols,re){ cols=cols||[]; for(var i=0;i<cols.length;i++){ if(re.test(cols[i]))return cols[i]; } return null; }
-function pabTable(cols,rows,rc){ return '<div class="tablewrap"><table><thead><tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
-  +rows.map(function(r){ return '<tr>'+cols.map(function(c){ var v=r[c]==null?'':String(r[c]); if(rc&&c===rc){ v=pabIsReplied(r[rc])?'<span class="tag yes">'+(String(r[rc]).trim()||'Replied')+'</span>':'<span class="tag no">'+(String(r[rc]).trim()||'No reply')+'</span>'; } return '<td>'+v+'</td>'; }).join('')+'</tr>'; }).join('')
+function quoteViewBtn(url){ if(!url)return ''; var u=String(url).replace(/"/g,'&quot;'); return '<a href="'+u+'" target="_blank" rel="noopener" style="display:inline-block;color:#002C5F;font-weight:600;font-size:12px;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:3px 11px;white-space:nowrap">View</a>'; }
+function pabTable(cols,rows,rc){ cols=(cols||[]).filter(function(c){return c!=='_link';}); var hasLink=rows.some(function(r){return r._link;});
+  return '<div class="tablewrap"><table><thead><tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+(hasLink?'<th>Quote</th>':'')+'</tr></thead><tbody>'
+  +rows.map(function(r){ return '<tr>'+cols.map(function(c){ var v=r[c]==null?'':String(r[c]); if(rc&&c===rc){ v=pabIsReplied(r[rc])?'<span class="tag yes">'+(String(r[rc]).trim()||'Replied')+'</span>':'<span class="tag no">'+(String(r[rc]).trim()||'No reply')+'</span>'; } return '<td>'+v+'</td>'; }).join('')+(hasLink?('<td>'+quoteViewBtn(r._link)+'</td>'):'')+'</tr>'; }).join('')
   +'</tbody></table></div>'; }
 function renderPabbly(rows,headers,month){
   var box=document.getElementById('quotePabbly'); if(!box)return;
@@ -1248,7 +1251,7 @@ function renderQuoteCoverage(all,month){
       return '<tr><td>'+r.name+'</td><td class="num">'+r.enq+'</td><td class="num">'+r.q+'</td><td class="num" style="font-weight:700;color:'+col+'">'+cov+'</td></tr>'; }).join('')
     +'</tbody></table></div><div class="hint" style="margin-top:6px">Coverage = consultant quotations \u00f7 enquiries punched. Self-service (link) quotations are listed separately below, not counted in this ratio.</div></div>';
 }
-function renderConsQuotes(all,month){
+function renderConsQuotes(all,month,linkMap){ linkMap=linkMap||{};
   var box=document.getElementById('quoteList'); if(!box)return;
   var inMonth=(all||[]).filter(function(r){ return qMonthOf(r)===month; });
   inMonth.sort(function(a,b){ return new Date(b.ts)-new Date(a.ts); });
@@ -1259,9 +1262,9 @@ function renderConsQuotes(all,month){
   order.sort(function(x,y){ return groups[y].live-groups[x].live || groups[y].rows.length-groups[x].rows.length; });
   var head='<div class="section-title"><h2>Consultant quotations</h2><span style="font-size:12px;color:var(--muted)">'+month+' \u00b7 '+liveN+' live \u00b7 '+order.length+' consultant'+(order.length!==1?'s':'')+' \u00b7 click a name to expand</span></div>';
   if(!inMonth.length){ box.innerHTML=head+'<div class="card pad"><div class="hint">No consultant quotations for '+month+'.</div></div>'; return; }
-  function rowsTable(rows){ return '<div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Model</th><th>Quote #</th><th>Status</th></tr></thead><tbody>'
+  function rowsTable(rows){ return '<div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Model</th><th>Quote #</th><th>Status</th><th>Quote</th></tr></thead><tbody>'
     +rows.map(function(r){ var dt=new Date(r.ts); var ds=isNaN(dt)?'':dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}); var del=String(r.status||'')==='Deleted';
-      return '<tr style="'+(del?'opacity:.5':'')+'"><td>'+ds+'</td><td>'+(r.name||r.custName||'')+'</td><td>'+(r.phone||r.custPhone||'')+'</td><td>'+(r.model||'')+'</td><td>'+(r.quoteNo||'')+'</td><td>'+(del?'<span class="tag no">Deleted</span>':(r.status?r.status:'<span class="tag yes">OK</span>'))+'</td></tr>'; }).join('')
+      return '<tr style="'+(del?'opacity:.5':'')+'"><td>'+ds+'</td><td>'+(r.name||r.custName||'')+'</td><td>'+(r.phone||r.custPhone||'')+'</td><td>'+(r.model||'')+'</td><td>'+(r.quoteNo||'')+'</td><td>'+(del?'<span class="tag no">Deleted</span>':(r.status?r.status:'<span class="tag yes">OK</span>'))+'</td><td>'+quoteViewBtn(linkMap[String(r.quoteNo||'').trim().toUpperCase()])+'</td></tr>'; }).join('')
     +'</tbody></table></div>'; }
   var body=order.map(function(k){ var g=groups[k]; return '<details class="qgrp"><summary><span>'+g.name+'</span><span class="qcount">'+g.live+(g.rows.length!==g.live?' <span style="opacity:.6">(+'+(g.rows.length-g.live)+' del)</span>':'')+'</span></summary>'+rowsTable(g.rows)+'</details>'; }).join('');
   box.innerHTML=head+'<div class="card pad">'+body+'<div class="hint" style="margin-top:6px">Grouped by consultant \u2014 tap a name to see their quotations (submissions sheet). Use the search box above to find a customer or phone across everyone.</div></div>';
@@ -1274,8 +1277,9 @@ function renderSelfQuotes(rows,headers,month){
   if(dateCol){ list.sort(function(a,b){ return new Date(b[dateCol])-new Date(a[dateCol]); }); }
   var head='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2><span style="font-size:12px;color:var(--muted)">'+(dateCol?month+' \u00b7 ':'')+list.length+' quote'+(list.length!==1?'s':'')+' \u00b7 from self-serve sheet</span></div>';
   if(!list.length){ box.innerHTML=head+'<div class="card pad"><div class="hint">No self-service quotations'+(dateCol?' for '+month:'')+'.</div></div>'; return; }
-  box.innerHTML=head+'<div class="card pad"><div class="tablewrap"><table><thead><tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'
-    +list.map(function(r){ return '<tr>'+cols.map(function(c){ var v=r[c]==null?'':String(r[c]); return '<td>'+v+'</td>'; }).join('')+'</tr>'; }).join('')
+  var linkCol=cols.filter(function(h){return /quote\s*link|^\s*link\s*$|url/i.test(h);})[0];
+  box.innerHTML=head+'<div class="card pad"><div class="tablewrap"><table><thead><tr>'+cols.map(function(c){return '<th>'+(c===linkCol?'Quote':c)+'</th>';}).join('')+'</tr></thead><tbody>'
+    +list.map(function(r){ return '<tr>'+cols.map(function(c){ var v=r[c]==null?'':String(r[c]); if(c===linkCol){ return '<td>'+quoteViewBtn(v)+'</td>'; } return '<td>'+v+'</td>'; }).join('')+'</tr>'; }).join('')
     +'</tbody></table></div><div class="hint" style="margin-top:6px">Sent directly by customers via the WhatsApp / self-serve link'+(dateCol?' (filtered to '+month+')':'')+'. Search above to find a customer or phone.</div></div>';
 }
 function renderPayouts(){

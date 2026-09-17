@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>RDB Incentive Claims</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --navy:#002C5F;--navy-900:#001B3A;--ink:#10233B;--paper:#fff;--wash:#F4F7FB;
+  --line:#E4EAF2;--muted:#65748B;--green:#0E8F5A;--green-bg:#E7F5EE;--amber:#B7791F;
+  --amber-bg:#FBF3E4;--red:#C2410C;--red-bg:#FBEBE3;--blue-bg:#E9F0F9;
+  --radius:14px;--shadow:0 1px 2px rgba(16,35,59,.06),0 8px 24px rgba(16,35,59,.05);
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Manrope,system-ui,sans-serif;background:var(--wash);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+.tnum{font-variant-numeric:tabular-nums}
+.hide{display:none!important}
+.bar{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;padding-top:calc(12px + env(safe-area-inset-top))}
+.logo{width:34px;height:34px;border-radius:8px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:800;font-size:14px}
+.bar .who{font-weight:700;font-size:15px;line-height:1.1}
+.bar .role{font-size:12px;color:#B9CBE3;font-weight:600;text-transform:capitalize}
+.bar .sp{margin-left:auto}
+.linkbtn{background:transparent;border:0;color:#B9CBE3;font-weight:600;font-size:13px}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+.narrow{max-width:560px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+.h1{font-size:19px;font-weight:800;margin:2px 0 14px}
+.sub{color:var(--muted);font-size:13px;font-weight:600}
+.hero{padding:22px 18px;background:linear-gradient(180deg,#00376f,#002249);color:#fff;border-radius:var(--radius);margin-bottom:14px}
+.hero .lbl{font-size:13px;color:#AFC5E1;font-weight:600}
+.hero .amt{font-size:40px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.hero .meta{color:#AFC5E1;font-size:13px;font-weight:600;margin-top:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.p-open{background:var(--blue-bg);color:var(--navy)}.p-mid{background:var(--amber-bg);color:var(--amber)}
+.p-done{background:var(--green-bg);color:var(--green)}.p-flag{background:var(--red-bg);color:var(--red)}
+.line{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.line:first-child{border-top:0}.line .m{font-weight:700}.line .d{color:var(--muted);font-size:12.5px;font-weight:600;margin-top:2px}
+.line .r{text-align:right;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;font-weight:700;font-size:15px;padding:13px 18px;width:100%}
+.btn.primary{background:var(--navy);color:#fff}.btn.ok{background:var(--green);color:#fff}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn.sm{width:auto;padding:9px 14px;font-size:13.5px;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:default}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+label.f{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}
+input.f,select.f,textarea.f{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:inherit;font-size:16px;background:#fff;color:var(--ink)}
+input.f:focus,select.f:focus{outline:2px solid var(--navy);border-color:var(--navy)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.amtbox{background:var(--blue-bg);border-radius:10px;padding:12px 14px;font-weight:800;color:var(--navy);text-align:center;margin-top:12px;font-size:18px}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:700}.stat .v{font-size:20px;font-weight:800;margin-top:2px}
+.qrow{border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:10px;overflow:hidden}
+.qhead{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer}
+.qhead .nm{font-weight:700}.qhead .ol{color:var(--muted);font-size:12.5px;font-weight:600}
+.qhead .amt{margin-left:auto;font-weight:800;text-align:right}
+.qbody{padding:0 14px 14px;border-top:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;font-size:14px;z-index:50;box-shadow:var(--shadow);max-width:88vw}
+.center{min-height:70vh;display:grid;place-items:center}
+.empty{text-align:center;color:var(--muted);font-weight:600;padding:36px 12px}
+.err{background:var(--red-bg);color:var(--red);border-radius:10px;padding:10px 12px;font-weight:600;font-size:13.5px;margin-top:10px}
+.warn{background:var(--amber-bg);color:var(--amber);border-radius:10px;padding:10px 12px;font-weight:700;font-size:13.5px;margin-bottom:12px}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;color:var(--muted)}
+.tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.steps{display:flex;gap:4px;margin-top:10px}
+.step{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.step.on{background:var(--green)}
+table.mini{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+table.mini th,table.mini td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+table.mini th{color:var(--muted);font-weight:700}
+</style>
+</head>
+<body>
+<!-- ====== paste your Apps Script /exec URL here ====== -->
+<script>var API_URL='https://script.google.com/macros/s/AKfycbySkb-_e-aYWRQLfUPs6HFMhv2L44K_M01X0onZdDhtsJ1P0LbIqV__b55H0cftXsKeOg/exec';</script>
+
+<div class="bar">
+  <div class="logo">RDB</div>
+  <div><div class="who" id="whoName">Incentive Claims</div><div class="role" id="whoRole"></div></div>
+  <span class="sp"></span>
+  <button class="linkbtn hide" id="logoutBtn" onclick="logout()">Log out</button>
+</div>
+<div class="wrap" id="app"></div>
+
+<script>
+var S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[]};
+var SESSMEM={};
+var store={get:function(k){try{return sessionStorage.getItem(k)}catch(e){return (k in SESSMEM)?SESSMEM[k]:null}},
+  set:function(k,v){try{sessionStorage.setItem(k,v)}catch(e){SESSMEM[k]=v}},
+  clear:function(){try{sessionStorage.clear()}catch(e){SESSMEM={}}}};
+var INR=new Intl.NumberFormat('en-IN');
+function rs(n){return 'Rs '+INR.format(Math.round(Number(n)||0));}
+function el(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+async function api(action,params){
+  var body=Object.assign({action:action,token:S.token},params||{});
+  var res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  var data=await res.json();
+  if(data&&data.error&&/session/i.test(data.error)) logout();
+  return data;
+}
+function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove();},2600);}
+
+function boot(){S.token=store.get('rdb_tok');S.role=store.get('rdb_role');S.name=store.get('rdb_name');
+  if(S.token&&S.role)enterApp();else renderLogin();}
+async function enterApp(){
+  el('whoName').textContent=S.name||'RDB';el('whoRole').textContent=S.role;el('logoutBtn').classList.remove('hide');
+  el('app').className='wrap'+(S.role==='consultant'?' narrow':'');
+  var mm=await api('getSlabMonths',{}); S.months=(mm&&mm.months)||[];
+  S.month=S.months[0]||null;
+  if(S.role==='consultant')loadConsultant();else loadStaff();
+}
+function logout(){store.clear();S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[]};
+  el('logoutBtn').classList.add('hide');el('whoRole').textContent='';el('whoName').textContent='Incentive Claims';el('app').className='wrap';renderLogin();}
+
+/* ===== LOGIN ===== */
+function renderLogin(){
+  el('app').innerHTML='<div class="center"><div class="card narrow" style="width:100%;max-width:380px">'
+   +'<div class="h1">Sign in</div><div class="sub">We send a one-time code to your WhatsApp.</div>'
+   +'<div id="step1"><label class="f" for="ph">Mobile number</label>'
+   +'<input class="f tnum" id="ph" type="tel" inputmode="numeric" placeholder="10-digit number" />'
+   +'<div style="height:12px"></div><button class="btn primary" id="sendBtn" onclick="doReq()">Send code</button></div>'
+   +'<div id="step2" class="hide"><label class="f" for="code">Enter the 6-digit code</label>'
+   +'<input class="f tnum" id="code" type="tel" inputmode="numeric" maxlength="6" placeholder="______" />'
+   +'<div style="height:12px"></div><button class="btn primary" id="verBtn" onclick="doVer()">Verify and sign in</button>'
+   +'<div style="height:8px"></div><button class="btn ghost" onclick="renderLogin()">Use a different number</button></div>'
+   +'<div id="loginErr"></div></div></div>';
+}
+async function doReq(){var b=el('sendBtn');b.disabled=true;b.textContent='Sending...';
+  var r=await api('requestOtp',{phone:el('ph').value});b.disabled=false;b.textContent='Send code';
+  if(!r.ok){el('loginErr').innerHTML='<div class="err">'+esc(r.error)+'</div>';return;}
+  S._phone=el('ph').value;el('step1').classList.add('hide');el('step2').classList.remove('hide');el('code').focus();}
+async function doVer(){var b=el('verBtn');b.disabled=true;b.textContent='Checking...';
+  var r=await api('verifyOtp',{phone:S._phone,code:el('code').value});b.disabled=false;b.textContent='Verify and sign in';
+  if(!r.ok){el('loginErr').innerHTML='<div class="err">'+esc(r.error)+'</div>';return;}
+  S.token=r.token;S.role=r.role;S.name=r.name;store.set('rdb_tok',r.token);store.set('rdb_role',r.role);store.set('rdb_name',r.name);enterApp();}
+
+/* ===== status helpers ===== */
+var FLOW=['Claimed','HRApproved','GMApproved','MDApproved','Disbursed'];
+function pill(st){
+  var m={Open:['p-open','Not submitted'],HRQuery:['p-flag','Sent back, fix it'],Claimed:['p-mid','With HR'],
+    HRApproved:['p-mid','With GM'],GMApproved:['p-mid','With MD'],MDApproved:['p-mid','For disbursement'],
+    Disbursed:['p-done','Paid'],Closed:['p-done','Closed'],Lapsed:['p-flag','Lapsed']}[st]||['p-open',st];
+  return '<span class="pill '+m[0]+'">'+esc(m[1])+'</span>';
+}
+function stepsBar(st){var i=FLOW.indexOf(st);var h='';for(var k=0;k<FLOW.length;k++)h+='<div class="step'+(k<=i&&i>=0?' on':'')+'"></div>';return '<div class="steps">'+h+'</div>';}
+function monthSelect(onchg){
+  return '<select class="f" onchange="'+onchg+'(this.value)">'+S.months.map(function(m){
+    return '<option value="'+m+'"'+(m===S.month?' selected':'')+'>'+m+'</option>';}).join('')+'</select>';
+}
+
+/* ===== CONSULTANT (self-entry) ===== */
+async function loadConsultant(){
+  el('app').innerHTML='<div class="empty">Loading '+esc(S.month||'')+'...</div>';
+  var sl=await api('getSlabs',{month:S.month}); S.slabs=sl;
+  var r=await api('getMyClaim',{month:S.month});
+  renderConsultant(r.claim);
+}
+function renderConsultant(claim){
+  var editable=(!claim||claim.status==='Open'||claim.status==='HRQuery');
+  var total=claim?claim.claimed:0, cars=claim?claim.cars:0, status=claim?claim.status:'Open';
+  var head='<div class="card" style="padding:14px 16px"><div class="sub">Claim month</div>'+monthSelect('changeMonthC')+'</div>'
+    +'<div class="hero"><div class="lbl">Claim total for '+esc(S.month)+'</div>'
+    +'<div class="amt tnum">'+rs(total)+'</div><div class="meta">'+cars+' cars &middot; '+pill(status)+'</div></div>';
+
+  if(!editable){
+    var money='';
+    if(status==='Disbursed'||status==='Closed'){
+      money='<div class="card"><div class="line"><div>Approved</div><div class="r tnum">'+rs(claim.approvedGross)+'</div></div>'
+        +'<div class="line"><div>TDS</div><div class="r tnum">- '+rs(claim.tds)+'</div></div>'
+        +'<div class="line"><div class="m">Credited</div><div class="r tnum m">'+rs(claim.net)+'</div></div>'
+        +(claim.payrollRef?'<div class="sub" style="margin-top:8px">Ref: '+esc(claim.payrollRef)+'</div>':'')+'</div>';
+    }
+    el('app').innerHTML=head+'<div class="card">'+stepsBar(status)+'<div class="sub" style="margin-top:10px">Submitted. You will get a WhatsApp at each step.</div></div>'
+      +linesCard(claim,false)+money;
+    return;
+  }
+
+  var sentBack=(status==='HRQuery')?'<div class="warn">Sent back by review: '+esc(claim.note||'please correct and resubmit')+'</div>':'';
+  var models=(S.slabs&&S.slabs.models)||[];
+  var form='<div class="card"><div class="h1">Add a car</div>'+sentBack
+    +'<label class="f">VIN / chassis</label><input class="f" id="fvin" placeholder="VIN or chassis no." />'
+    +'<label class="f">Customer name</label><input class="f" id="fcust" placeholder="Customer name" />'
+    +'<label class="f">Model</label><select class="f" id="fmodel" onchange="onModel()"><option value="">Select model</option>'
+      +models.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select>'
+    +'<label class="f">Slab</label><select class="f" id="fslab" onchange="onSlab()"><option value="">Select model first</option></select>'
+    +'<div class="grid2"><div><label class="f">Booking date</label><input class="f" id="fbook" type="date" /></div>'
+      +'<div><label class="f">Retail date</label><input class="f" id="fretail" type="date" /></div></div>'
+    +'<label class="f">Delivery date</label><input class="f" id="fdeliv" type="date" />'
+    +'<div class="amtbox" id="amtbox">Amount fills from the slab</div>'
+    +'<div style="height:12px"></div><button class="btn primary" id="addBtn" onclick="addCar()">Add this car</button></div>';
+
+  var submit=(cars>0)?'<div class="card"><button class="btn ok" onclick="submitMonth(\''+esc(claim.claimId)+'\')">Submit '+cars+' cars for '+esc(S.month)+' ('+rs(total)+')</button>'
+    +'<div class="sub" style="text-align:center;margin-top:10px">Once submitted it goes to HR and locks. Add every car first.</div></div>':'';
+
+  el('app').innerHTML=head+form+linesCard(claim,true)+submit;
+}
+function linesCard(claim,editable){
+  var lines=(claim&&claim.lines)||[];
+  if(!lines.length) return '<div class="card"><div class="empty">No cars added yet.</div></div>';
+  var rows=lines.map(function(l){
+    return '<div class="line"><div><div class="m">'+esc(l.Model)+' <span class="sub">'+esc(l.Slab)+'</span></div>'
+      +'<div class="d">'+esc(l.VIN||'-')+' &middot; '+esc(l.Customer||'-')+' &middot; retail '+esc(l.RetailDate||'-')+'</div></div>'
+      +'<div class="r"><div class="tnum" style="font-weight:700">'+rs(l.Amount)+'</div>'
+      +(editable?'<button class="btn ghost sm" style="margin-top:6px" onclick="removeCar(\''+esc(l.LineID)+'\')">Remove</button>':'')+'</div></div>';
+  }).join('');
+  return '<div class="card"><div class="h1">Cars in this claim</div>'+rows
+    +'<div class="line"><div class="m">Total</div><div class="r tnum m">'+rs(claim.claimed)+'</div></div></div>';
+}
+function onModel(){
+  var m=el('fmodel').value, sel=el('fslab');
+  var arr=(S.slabs&&S.slabs.slabsByModel&&S.slabs.slabsByModel[m])||[];
+  sel.innerHTML='<option value="">Select slab</option>'+arr.map(function(x){return '<option value="'+esc(x.slab)+'" data-amt="'+x.amount+'">'+esc(x.slab)+' ('+rs(x.amount)+')</option>';}).join('');
+  el('amtbox').textContent='Amount fills from the slab';
+}
+function onSlab(){
+  var o=el('fslab').selectedOptions[0];
+  el('amtbox').textContent=o&&o.dataset.amt?('Incentive: '+rs(o.dataset.amt)):'Amount fills from the slab';
+}
+async function addCar(){
+  var model=el('fmodel').value, slab=el('fslab').value;
+  if(!model||!slab){toast('Pick model and slab');return;}
+  var b=el('addBtn');b.disabled=true;b.textContent='Adding...';
+  var r=await api('addLine',{month:S.month,vin:el('fvin').value,customer:el('fcust').value,model:model,slab:slab,
+    bookingDate:el('fbook').value,retailDate:el('fretail').value,deliveryDate:el('fdeliv').value});
+  b.disabled=false;b.textContent='Add this car';
+  if(!r.ok){toast(r.error||'Could not add');return;}
+  toast('Car added');renderConsultant(r.claim);
+}
+async function removeCar(lineId){
+  if(!confirm('Remove this car from the claim?'))return;
+  var r=await api('removeLine',{lineId:lineId});
+  if(!r.ok){toast(r.error||'Could not remove');return;}
+  toast('Removed');renderConsultant(r.claim);
+}
+async function submitMonth(id){
+  if(!confirm('Submit this claim to HR? You cannot edit it after this.'))return;
+  var r=await api('submitClaim',{claimId:id});
+  if(!r.ok){toast(r.error||'Could not submit');return;}
+  toast('Submitted to HR');renderConsultant(r.claim);
+}
+function changeMonthC(m){S.month=m;loadConsultant();}
+
+/* ===== HR / GM / MD / ACCOUNTS ===== */
+async function loadStaff(){
+  el('app').innerHTML='<div class="empty">Loading '+esc(S.month||'')+'...</div>';
+  var ov=await api('overview',{month:S.month});
+  if(!ov.ok){el('app').innerHTML='<div class="err">'+esc(ov.error||'Could not load.')+'</div>';return;}
+  var lc=await api('listClaims',{month:S.month});
+  renderStaff(ov,(lc.claims||[]));
+}
+function renderStaff(ov,claims){
+  var shown=claims.filter(passFilter);
+  var strip='<div class="strip"><div class="stat"><div class="k">Claims</div><div class="v tnum">'+ov.total+'</div></div>'
+    +'<div class="stat"><div class="k">Pending</div><div class="v tnum">'+rs(ov.pendingRupees)+'</div></div>'
+    +'<div class="stat"><div class="k">Paid</div><div class="v tnum">'+rs(ov.disbursedRupees)+'</div></div></div>';
+  var bulk=bulkBtn(claims), exp=(S.role==='md'||S.role==='accounts')?'<button class="btn ghost" style="margin-bottom:14px" onclick="exportAccounts()">Export approved for accounts</button>':'';
+  var rows=shown.length?shown.map(rowHtml).join(''):'<div class="empty">Nothing in this view.</div>';
+  el('app').innerHTML='<div class="card" style="padding:14px 16px"><div class="sub">Month</div>'+monthSelect('changeMonth')+'</div>'
+    +strip+staffTabs()+bulk+exp+'<div id="exportBox"></div><div>'+rows+'</div>';
+}
+function stageFor(role){return {hr:'Claimed',gm:'HRApproved',md:'GMApproved'}[role];}
+function bulkBtn(claims){
+  var st=stageFor(S.role); if(!st)return '';
+  var n=claims.filter(function(c){return c.status===st;}).length;
+  if(!n)return '';
+  var label=S.role==='hr'?('Approve all '+n+' with no adjustment'):('Approve all '+n+' pending');
+  return '<button class="btn primary" style="margin-bottom:14px" onclick="bulkAdvance()">'+label+'</button>';
+}
+function rowHtml(c){
+  return '<div class="qrow"><div class="qhead" onclick="toggleRow(\''+esc(c.claimId)+'\')">'
+    +'<div><div class="nm">'+esc(c.name)+'</div><div class="ol">'+esc(c.outlet||'')+' &middot; '+c.cars+' cars &middot; '+pill(c.status)+'</div></div>'
+    +'<div class="amt tnum">'+rs(c.approvedGross!=null?c.approvedGross:c.claimed)+'</div></div>'
+    +'<div class="qbody hide" id="body-'+esc(c.claimId)+'"></div></div>';
+}
+async function toggleRow(id){
+  var body=el('body-'+id);
+  if(!body.classList.contains('hide')){body.classList.add('hide');return;}
+  body.classList.remove('hide');body.innerHTML='<div class="empty">Loading...</div>';
+  var r=await api('getClaim',{claimId:id});
+  if(!r.ok){body.innerHTML='<div class="err">'+esc(r.error)+'</div>';return;}
+  body.innerHTML=claimDetail(r.claim);
+}
+function claimDetail(c){
+  var lines=(c.lines||[]).map(function(l){
+    return '<tr><td>'+esc(l.Model)+'<br><span class="sub">'+esc(l.Slab)+'</span></td><td>'+esc(l.VIN||'-')+'<br><span class="sub">'+esc(l.Customer||'-')+'</span></td>'
+      +'<td class="sub">B '+esc(l.BookingDate||'-')+'<br>R '+esc(l.RetailDate||'-')+'<br>D '+esc(l.DeliveryDate||'-')+'</td>'
+      +'<td class="tnum" style="text-align:right;font-weight:700">'+rs(l.Amount)+'</td></tr>';
+  }).join('');
+  var money='<div class="line"><div>Claimed</div><div class="r tnum">'+rs(c.claimed)+'</div></div>';
+  if(c.adjustment)money+='<div class="line"><div>HR adjustment'+(c.adjReason?' ('+esc(c.adjReason)+')':'')+'</div><div class="r tnum">- '+rs(c.adjustment)+'</div></div>';
+  if(c.approvedGross!=null)money+='<div class="line"><div class="m">Approved gross</div><div class="r tnum m">'+rs(c.approvedGross)+'</div></div>';
+  if(c.status==='Disbursed'||c.status==='Closed'){money+='<div class="line"><div>TDS</div><div class="r tnum">- '+rs(c.tds)+'</div></div>'
+    +'<div class="line"><div class="m">Net paid</div><div class="r tnum m">'+rs(c.net)+'</div></div>';}
+  var trail='<div class="sub" style="margin-top:8px">'+[c.hrBy?'HR: '+esc(c.hrBy):'',c.gmBy?'GM: '+esc(c.gmBy):'',c.mdBy?'MD: '+esc(c.mdBy):''].filter(Boolean).join(' &middot; ')+'</div>';
+  return '<div style="padding-top:12px">'+stepsBar(c.status)
+    +'<table class="mini"><tr><th>Model</th><th>VIN / customer</th><th>Dates</th><th style="text-align:right">Amt</th></tr>'+lines+'</table>'
+    +'<div style="margin-top:8px">'+money+'</div>'+trail
+    +'<div class="row-btns" style="margin-top:12px">'+staffActions(c)+'</div></div>';
+}
+function staffActions(c){
+  var b='';
+  if(S.role==='hr'&&c.status==='Claimed'){
+    b+='<input class="f" id="adj-'+esc(c.claimId)+'" type="number" placeholder="Month adjustment (gate + reverse), 0 if none" style="margin-bottom:8px" />';
+    b+='<input class="f" id="adjr-'+esc(c.claimId)+'" placeholder="Reason for adjustment (optional)" style="margin-bottom:8px" />';
+    b+=btn('ok','Approve activity','hrApprove',c.claimId)+btn('ghost','Send back','sendBack',c.claimId);
+  }
+  else if(S.role==='gm'&&c.status==='HRApproved'){b+=btn('ok','GM sign-off','gmApprove',c.claimId)+btn('ghost','Send back','sendBack',c.claimId);}
+  else if(S.role==='md'){
+    if(c.status==='GMApproved')b+=btn('ok','Final approval','mdApprove',c.claimId)+btn('ghost','Send back','sendBack',c.claimId);
+    if(c.status==='MDApproved')b+=btn('primary','Mark disbursed','markDisbursed',c.claimId);
+    b+=btn('ghost','Override','override',c.claimId);
+  }
+  else if(S.role==='accounts'&&c.status==='MDApproved'){b+=btn('primary','Mark disbursed','markDisbursed',c.claimId);}
+  return b||'<span class="sub">No action for you at this stage.</span>';
+}
+function btn(kind,label,action,id){return '<button class="btn '+kind+' sm" onclick="act(\''+action+'\',\''+id+'\')">'+esc(label)+'</button>';}
+async function act(action,id){
+  var extra={claimId:id};
+  if(action==='hrApprove'){var a=el('adj-'+id),r2=el('adjr-'+id);extra.adjustment=a&&a.value?Number(a.value):0;extra.adjReason=r2?r2.value:'';}
+  if(action==='sendBack'){var why=prompt('Reason to send back to the consultant:');if(!why)return;extra.reason=why;}
+  if(action==='markDisbursed'){var tds=prompt('TDS amount (blank = 0 / handled in payroll):');if(tds!==null&&tds!=='')extra.tds=Number(tds);
+    var ref=prompt('Payroll / payment reference:');if(ref===null)return;extra.payrollRef=ref;}
+  if(action==='override'){var to=prompt('New state (Claimed, HRApproved, GMApproved, MDApproved, Disbursed, Closed):');if(!to)return;
+    var w=prompt('Reason (required, logged):');if(!w)return;extra.toState=to;extra.reason=w;}
+  var r=await api(action,extra);
+  if(!r.ok){toast(r.error||'Action failed');return;}
+  toast('Done');loadStaff();
+}
+async function bulkAdvance(){
+  var lc=await api('listClaims',{month:S.month});var st=stageFor(S.role);
+  var ids=(lc.claims||[]).filter(function(c){return c.status===st;}).map(function(c){return c.claimId;});
+  if(!ids.length){toast('Nothing to approve');return;}
+  if(!confirm('Approve '+ids.length+' claims?'))return;
+  var r=await api('bulkAdvance',{claimIds:ids});
+  toast('Approved '+(r.approved||[]).length+', skipped '+(r.skipped||[]).length);loadStaff();
+}
+async function exportAccounts(){
+  var box=el('exportBox');box.innerHTML='<div class="empty">Loading...</div>';
+  var r=await api('exportApproved',{month:S.month});
+  if(!r.ok){box.innerHTML='<div class="err">'+esc(r.error)+'</div>';return;}
+  if(!r.rows.length){box.innerHTML='<div class="card"><div class="empty">No approved claims yet for '+esc(S.month)+'.</div></div>';return;}
+  var rows=r.rows.map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.outlet)+'</td><td class="tnum" style="text-align:right">'+rs(x.approvedGross)+'</td><td class="tnum" style="text-align:right">'+rs(x.net)+'</td><td>'+esc(x.status)+'</td></tr>';}).join('');
+  box.innerHTML='<div class="card"><div class="h1">Approved payables '+esc(S.month)+'</div>'
+    +'<table class="mini"><tr><th>Name</th><th>Outlet</th><th style="text-align:right">Approved</th><th style="text-align:right">Net</th><th>Status</th></tr>'+rows+'</table>'
+    +'<div class="sub" style="margin-top:8px">Share this list with accounts for disbursement, then mark each claim disbursed with its payroll reference.</div></div>';
+}
+function staffTabs(){
+  var opts=[['all','All']];
+  if(S.role==='hr')opts.push(['Claimed','To review']);
+  if(S.role==='gm')opts.push(['HRApproved','To sign off']);
+  if(S.role==='md')opts.push(['GMApproved','To approve'],['MDApproved','To disburse']);
+  if(S.role==='accounts')opts.push(['MDApproved','To disburse']);
+  opts.push(['HRQuery','Sent back'],['Disbursed','Paid']);
+  return '<div class="tabs">'+opts.map(function(o){return '<button class="tab '+(S.filter===o[0]?'on':'')+'" onclick="setFilter(\''+o[0]+'\')">'+esc(o[1])+'</button>';}).join('')+'</div>';
+}
+function passFilter(c){if(S.filter==='all')return true;return c.status===S.filter;}
+function setFilter(f){S.filter=f;loadStaff();}
+function changeMonth(m){S.month=m;S.filter='all';loadStaff();}
+
+boot();
+</script>
+</body>
+</html>

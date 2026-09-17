@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b72</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b73</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -488,7 +488,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b72 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b73 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1158,7 +1158,7 @@ function loadQuotes(){
   var pCons = cfg.pass ? fetchQuoteData(cfg.url,cfg.pass).then(function(d){ if(!d||d.ok!==true) throw new Error((d&&d.error)||'password rejected'); return {rows:d.rows||[]}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   var pSelf = cloudActive() ? cloud('selfQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed'}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   var pPab  = cloudActive() ? cloud('pabblyQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed', tabs:(d&&d.tabs)||null}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
-  var pLinks = cloudActive() ? cloud('consQuoteLinks',{}).then(function(d){ return (d&&d.ok)?(d.links||{}):{}; }).catch(function(){ return {}; }) : Promise.resolve({});
+  var pLinks = cloudActive() ? cloud('consQuoteLinks',{}).then(function(d){ return d||{}; }).catch(function(e){ return {ok:false,error:(e&&e.message)||'error'}; }) : Promise.resolve({ok:false,error:'cloud not connected'});
   Promise.all([pCons,pSelf,pPab,pLinks]).then(function(res){
     if(status)status.textContent='';
     var C=res[0], S=res[1], P=res[2], consLinks=res[3]||{};
@@ -1251,7 +1251,7 @@ function renderQuoteCoverage(all,month){
       return '<tr><td>'+r.name+'</td><td class="num">'+r.enq+'</td><td class="num">'+r.q+'</td><td class="num" style="font-weight:700;color:'+col+'">'+cov+'</td></tr>'; }).join('')
     +'</tbody></table></div><div class="hint" style="margin-top:6px">Coverage = consultant quotations \u00f7 enquiries punched. Self-service (link) quotations are listed separately below, not counted in this ratio.</div></div>';
 }
-function renderConsQuotes(all,month,linkMap){ linkMap=linkMap||{};
+function renderConsQuotes(all,month,linkResp){ var linkMap=(linkResp&&linkResp.links)||{}; var _matched=0;
   var box=document.getElementById('quoteList'); if(!box)return;
   var inMonth=(all||[]).filter(function(r){ return qMonthOf(r)===month; });
   inMonth.sort(function(a,b){ return new Date(b.ts)-new Date(a.ts); });
@@ -1264,10 +1264,10 @@ function renderConsQuotes(all,month,linkMap){ linkMap=linkMap||{};
   if(!inMonth.length){ box.innerHTML=head+'<div class="card pad"><div class="hint">No consultant quotations for '+month+'.</div></div>'; return; }
   function rowsTable(rows){ return '<div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Model</th><th>Quote #</th><th>Status</th><th>Quote</th></tr></thead><tbody>'
     +rows.map(function(r){ var dt=new Date(r.ts); var ds=isNaN(dt)?'':dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}); var del=String(r.status||'')==='Deleted';
-      return '<tr style="'+(del?'opacity:.5':'')+'"><td>'+ds+'</td><td>'+(r.name||r.custName||'')+'</td><td>'+(r.phone||r.custPhone||'')+'</td><td>'+(r.model||'')+'</td><td>'+(r.quoteNo||'')+'</td><td>'+(del?'<span class="tag no">Deleted</span>':(r.status?r.status:'<span class="tag yes">OK</span>'))+'</td><td>'+quoteViewBtn(linkMap[String(r.quoteNo||'').trim().toUpperCase()])+'</td></tr>'; }).join('')
+      return '<tr style="'+(del?'opacity:.5':'')+'"><td>'+ds+'</td><td>'+(r.name||r.custName||'')+'</td><td>'+(r.phone||r.custPhone||'')+'</td><td>'+(r.model||'')+'</td><td>'+(r.quoteNo||'')+'</td><td>'+(del?'<span class="tag no">Deleted</span>':(r.status?r.status:'<span class="tag yes">OK</span>'))+'</td><td>'+(function(){var _l=linkMap[String(r.quoteNo||'').trim().toUpperCase()]; if(_l)_matched++; return quoteViewBtn(_l);})()+'</td></tr>'; }).join('')
     +'</tbody></table></div>'; }
   var body=order.map(function(k){ var g=groups[k]; return '<details class="qgrp"><summary><span>'+g.name+'</span><span class="qcount">'+g.live+(g.rows.length!==g.live?' <span style="opacity:.6">(+'+(g.rows.length-g.live)+' del)</span>':'')+'</span></summary>'+rowsTable(g.rows)+'</details>'; }).join('');
-  box.innerHTML=head+'<div class="card pad">'+body+'<div class="hint" style="margin-top:6px">Grouped by consultant \u2014 tap a name to see their quotations (submissions sheet). Use the search box above to find a customer or phone across everyone.</div></div>';
+  box.innerHTML=head+'<div class="card pad">'+body+'<div class="hint" style="margin-top:6px">Grouped by consultant \u2014 tap a name to see their quotations (submissions sheet). Use the search box above to find a customer or phone across everyone.'+(function(){ var keys=linkMap?Object.keys(linkMap).length:0; if(_matched>0) return ''; if(!linkResp||linkResp.ok===false){ return '<div class="note" style="margin-top:8px;border-left-color:#C2350B;background:#FEF2F2">Consultant quote links could not be read: '+((linkResp&&linkResp.error)||'no response')+(linkResp&&linkResp.headers?('<br><span style=\'font-size:12px\'>Columns seen on that sheet: '+linkResp.headers.join(', ')+'</span>'):'')+'</div>'; } if(keys===0){ return '<div class="note" style="margin-top:8px;border-left-color:#B45309;background:#FFFBEB">The submissions sheet was read but returned 0 links. Check the \u201cShare Link\u201d column has full https:// URLs.</div>'; } var sampleQ=(inMonth[0]&&inMonth[0].quoteNo)||''; var sampleK=Object.keys(linkMap)[0]||''; return '<div class="note" style="margin-top:8px;border-left-color:#B45309;background:#FFFBEB">Read '+keys+' links from the submissions sheet, but none matched the quote numbers shown here. Example quote here: <b>'+sampleQ+'</b>. Example key in sheet: <b>'+sampleK+'</b>. If these differ, tell me and I will align the match.</div>'; })()+'</div></div>';
 }
 function renderSelfQuotes(rows,headers,month){
   var box=document.getElementById('quoteSelfList'); if(!box)return;

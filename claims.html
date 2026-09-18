@@ -156,11 +156,12 @@ function monthLabel(m){
   var names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var p=String(m).split('-'); return (p.length>=2&&names[+p[1]])?(names[+p[1]]+' '+p[0]):m;
 }
+function ymValid(m){return /^\d{4}-\d{2}$/.test(String(m));}
 function monthSelect(onchg){
-  if(!S.months.length) return '<div class="sub">No months available yet.</div>';
-  return '<div class="mgrid">'+S.months.map(function(m){
-    return '<button class="mchip'+(m===S.month?' on':'')+'" onclick="'+onchg+'(\''+m+'\')">'+esc(monthLabel(m))+'</button>';
-  }).join('')+'</div>';
+  var valid=S.months.filter(ymValid).sort();
+  var val=ymValid(S.month)?S.month:(valid.length?valid[valid.length-1]:'');
+  var attrs=valid.length?(' min="'+valid[0]+'" max="'+valid[valid.length-1]+'"'):'';
+  return '<input class="f" type="month" id="cmonth" value="'+val+'"'+attrs+' onchange="'+onchg+'(this.value)">';
 }
 
 /* ===== CONSULTANT (self-entry) ===== */

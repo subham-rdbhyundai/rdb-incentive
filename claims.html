@@ -91,7 +91,7 @@ table.mini th{color:var(--muted);font-weight:700}
 <div class="wrap" id="app"></div>
 
 <script>
-var S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[]};
+var S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[],claim:null,editLineId:null,vinInfo:null};
 var SESSMEM={};
 var store={get:function(k){try{return sessionStorage.getItem(k)}catch(e){return (k in SESSMEM)?SESSMEM[k]:null}},
   set:function(k,v){try{sessionStorage.setItem(k,v)}catch(e){SESSMEM[k]=v}},
@@ -157,12 +157,15 @@ function monthLabel(m){
   var p=String(m).split('-'); return (p.length>=2&&names[+p[1]])?(names[+p[1]]+' '+p[0]):m;
 }
 function ymValid(m){return /^\d{4}-\d{2}$/.test(String(m));}
+function isVinMonth(m){return String(m)>='2026-08';}
 function monthSelect(onchg){
   var val=ymValid(S.month)?(S.month+'-01'):'';
   return '<input class="f" type="date" id="cmonth" value="'+val+'" onchange="'+onchg+'(this.value)">';
 }
 
 /* ===== CONSULTANT (self-entry) ===== */
+function fmtDate(v){ if(!v) return '-'; var s=String(v); if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s.split('-').reverse().join('/'); var d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('en-GB'); }
+function dInput(v){ if(!v) return ''; var s=String(v); if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; var d=new Date(s); if(isNaN(d)) return ''; return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 async function loadConsultant(){
   el('app').innerHTML='<div class="empty">Loading '+esc(monthLabel(S.month)||'')+'...</div>';
   var sl=await api('getSlabs',{month:S.month}); S.slabs=sl;
@@ -170,6 +173,7 @@ async function loadConsultant(){
   renderConsultant(r.claim);
 }
 function renderConsultant(claim){
+  S.claim=claim;
   var editable=(!claim||claim.status==='Open'||claim.status==='HRQuery');
   var total=claim?claim.claimed:0, cars=claim?claim.cars:0, status=claim?claim.status:'Open';
   var head='<div class="card" style="padding:14px 16px"><div class="sub">Claim month</div>'+monthSelect('changeMonthC')+'</div>'
@@ -190,19 +194,32 @@ function renderConsultant(claim){
   }
 
   var sentBack=(status==='HRQuery')?'<div class="warn">Sent back by review: '+esc(claim.note||'please correct and resubmit')+'</div>':'';
+  var vinMode=isVinMonth(S.month);
   var models=(S.slabs&&S.slabs.models)||[];
-  var noRates=(!models.length)?'<div class="warn">No rate card found for '+esc(monthLabel(S.month))+'. Pick a month that has slabs loaded (Aug 2025 to Jul 2026).</div>':'';
-  var form='<div class="card"><div class="h1">Add a car</div>'+sentBack+noRates
-    +'<label class="f">VIN / chassis</label><input class="f" id="fvin" placeholder="VIN or chassis no." />'
-    +'<label class="f">Customer name</label><input class="f" id="fcust" placeholder="Customer name" />'
-    +'<label class="f">Model</label><select class="f" id="fmodel" onchange="onModel()"><option value="">Select model</option>'
-      +models.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select>'
-    +'<label class="f">Slab</label><select class="f" id="fslab" onchange="onSlab()"><option value="">Select model first</option></select>'
-    +'<div class="grid2"><div><label class="f">Booking date</label><input class="f" id="fbook" type="date" /></div>'
+  var datesHtml='<div class="grid2"><div><label class="f">Booking date</label><input class="f" id="fbook" type="date" /></div>'
       +'<div><label class="f">Retail date</label><input class="f" id="fretail" type="date" /></div></div>'
-    +'<label class="f">Delivery date</label><input class="f" id="fdeliv" type="date" />'
-    +'<div class="amtbox" id="amtbox">Amount fills from the slab</div>'
-    +'<div style="height:12px"></div><button class="btn primary" id="addBtn" onclick="addCar()">Add this car</button></div>';
+      +'<label class="f">Delivery date</label><input class="f" id="fdeliv" type="date" />';
+  var form;
+  if(vinMode){
+    form='<div class="card"><div class="h1">Add a car</div>'+sentBack
+      +'<div class="sub" style="margin-bottom:8px">From Aug 2026 a car is priced by VIN. Enter the VIN and tap Check to pull the incentive from stock.</div>'
+      +'<label class="f">VIN / chassis</label><div style="display:flex;gap:8px"><input class="f" id="fvin" placeholder="VIN or chassis no." style="flex:1" /><button class="btn ghost" style="width:auto" onclick="checkVin()">Check</button></div>'
+      +'<div class="amtbox" id="vinbox">Enter the VIN and tap Check</div>'
+      +'<label class="f">Customer name</label><input class="f" id="fcust" placeholder="Customer name" />'
+      +datesHtml
+      +'<div style="height:12px"></div><button class="btn primary" id="addBtn" onclick="addCar()">Add this car</button></div>';
+  } else {
+    var noRates=(!models.length)?'<div class="warn">No rate card found for '+esc(monthLabel(S.month))+'. Pick a month that has slabs loaded (Aug 2025 to Jul 2026).</div>':'';
+    form='<div class="card"><div class="h1">Add a car</div>'+sentBack+noRates
+      +'<label class="f">VIN / chassis</label><input class="f" id="fvin" placeholder="VIN or chassis no." />'
+      +'<label class="f">Customer name</label><input class="f" id="fcust" placeholder="Customer name" />'
+      +'<label class="f">Model</label><select class="f" id="fmodel" onchange="onModel()"><option value="">Select model</option>'
+        +models.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select>'
+      +'<label class="f">Slab</label><select class="f" id="fslab" onchange="onSlab()"><option value="">Select model first</option></select>'
+      +datesHtml
+      +'<div class="amtbox" id="amtbox">Amount fills from the slab</div>'
+      +'<div style="height:12px"></div><button class="btn primary" id="addBtn" onclick="addCar()">Add this car</button></div>';
+  }
 
   var submit=(cars>0)?'<div class="card"><button class="btn ok" onclick="submitMonth(\''+esc(claim.claimId)+'\')">Submit '+cars+' cars for '+esc(S.month)+' ('+rs(total)+')</button>'
     +'<div class="sub" style="text-align:center;margin-top:10px">Once submitted it goes to HR and locks. Add every car first.</div></div>':'';
@@ -211,15 +228,30 @@ function renderConsultant(claim){
 }
 function linesCard(claim,editable){
   var lines=(claim&&claim.lines)||[];
+  var title=editable?'Review your cars, edit or remove any, then submit':'Cars in this claim';
   if(!lines.length) return '<div class="card"><div class="empty">No cars added yet.</div></div>';
   var rows=lines.map(function(l){
     return '<div class="line"><div><div class="m">'+esc(l.Model)+' <span class="sub">'+esc(l.Slab)+'</span></div>'
-      +'<div class="d">'+esc(l.VIN||'-')+' &middot; '+esc(l.Customer||'-')+' &middot; retail '+esc(l.RetailDate||'-')+'</div></div>'
+      +'<div class="d">'+esc(l.VIN||'-')+' &middot; '+esc(l.Customer||'-')+' &middot; retail '+esc(fmtDate(l.RetailDate))+(String(l.LineStatus).toLowerCase()==='flagged'?' &middot; <span style="color:var(--red);font-weight:700">flag: '+esc(l.Note||'')+'</span>':'')+'</div></div>'
       +'<div class="r"><div class="tnum" style="font-weight:700">'+rs(l.Amount)+'</div>'
-      +(editable?'<button class="btn ghost sm" style="margin-top:6px" onclick="removeCar(\''+esc(l.LineID)+'\')">Remove</button>':'')+'</div></div>';
+      +(editable?'<div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end"><button class="btn ghost sm" onclick="editCar(\''+esc(l.LineID)+'\')">Edit</button><button class="btn ghost sm" onclick="removeCar(\''+esc(l.LineID)+'\')">Remove</button></div>':'')
+      +'</div></div>';
   }).join('');
-  return '<div class="card"><div class="h1">Cars in this claim</div>'+rows
+  return '<div class="card"><div class="h1">'+title+'</div>'+rows
     +'<div class="line"><div class="m">Total</div><div class="r tnum m">'+rs(claim.claimed)+'</div></div></div>';
+}
+function editCar(lineId){
+  var l=((S.claim&&S.claim.lines)||[]).filter(function(x){return x.LineID===lineId;})[0];
+  if(!l){toast('Line not found');return;}
+  S.editLineId=lineId;
+  if(el('fvin'))el('fvin').value=l.VIN||''; if(el('fcust'))el('fcust').value=l.Customer||'';
+  if(el('fmodel')){ el('fmodel').value=l.Model||''; onModel(); if(el('fslab'))el('fslab').value=l.Slab||''; onSlab(); }
+  if(el('fbook'))el('fbook').value=dInput(l.BookingDate);
+  if(el('fretail'))el('fretail').value=dInput(l.RetailDate);
+  if(el('fdeliv'))el('fdeliv').value=dInput(l.DeliveryDate);
+  if(isVinMonth(S.month) && l.VIN) checkVin();
+  el('addBtn').textContent='Save changes'; el('addBtn').classList.remove('primary'); el('addBtn').classList.add('ok');
+  if(el('fvin'))el('fvin').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function onModel(){
   var m=el('fmodel').value, sel=el('fslab');
@@ -231,15 +263,27 @@ function onSlab(){
   var o=el('fslab').selectedOptions[0];
   el('amtbox').textContent=o&&o.dataset.amt?('Incentive: '+rs(o.dataset.amt)):'Amount fills from the slab';
 }
+async function checkVin(){
+  var vin=el('fvin')?el('fvin').value.trim():''; if(!vin){toast('Enter a VIN');return;}
+  var box=el('vinbox'); if(box)box.textContent='Checking...';
+  var r=await api('getVIN',{vin:vin});
+  if(!r.ok){ S.vinInfo=null; if(box)box.innerHTML='<span style="color:var(--red)">'+esc(r.error)+'</span>'; return; }
+  S.vinInfo=r;
+  if(box)box.innerHTML='<b>'+esc(r.model)+(r.variant?' \u00b7 '+esc(r.variant):'')+'</b> \u2014 '+rs(r.incentive)+(r.flag?'<div class="warn" style="margin-top:8px">Will be flagged for HR: '+esc(r.flag)+'</div>':'');
+}
 async function addCar(){
-  var model=el('fmodel').value, slab=el('fslab').value;
-  if(!model||!slab){toast('Pick model and slab');return;}
-  var b=el('addBtn');b.disabled=true;b.textContent='Adding...';
-  var r=await api('addLine',{month:S.month,vin:el('fvin').value,customer:el('fcust').value,model:model,slab:slab,
-    bookingDate:el('fbook').value,retailDate:el('fretail').value,deliveryDate:el('fdeliv').value});
-  b.disabled=false;b.textContent='Add this car';
-  if(!r.ok){toast(r.error||'Could not add');return;}
-  toast('Car added');renderConsultant(r.claim);
+  var vinMode=isVinMonth(S.month);
+  var payload={vin:(el('fvin')?el('fvin').value.trim():''), customer:(el('fcust')?el('fcust').value:''),
+    bookingDate:(el('fbook')?el('fbook').value:''), retailDate:(el('fretail')?el('fretail').value:''), deliveryDate:(el('fdeliv')?el('fdeliv').value:'')};
+  if(vinMode){ if(!payload.vin){toast('Enter the VIN');return;} }
+  else { var model=el('fmodel')?el('fmodel').value:'', slab=el('fslab')?el('fslab').value:''; if(!model||!slab){toast('Pick model and slab');return;} payload.model=model; payload.slab=slab; }
+  var editing=!!S.editLineId, b=el('addBtn'); b.disabled=true; b.textContent=editing?'Saving...':'Adding...';
+  var r;
+  if(editing){ payload.lineId=S.editLineId; r=await api('editLine',payload); }
+  else { payload.month=S.month; r=await api('addLine',payload); }
+  b.disabled=false; b.textContent=editing?'Save changes':'Add this car';
+  if(!r.ok){toast(r.error||'Could not save');return;}
+  S.editLineId=null; S.vinInfo=null; toast(editing?'Car updated':'Car added'); renderConsultant(r.claim);
 }
 async function removeCar(lineId){
   if(!confirm('Remove this car from the claim?'))return;
@@ -297,8 +341,9 @@ async function toggleRow(id){
 }
 function claimDetail(c){
   var lines=(c.lines||[]).map(function(l){
-    return '<tr><td>'+esc(l.Model)+'<br><span class="sub">'+esc(l.Slab)+'</span></td><td>'+esc(l.VIN||'-')+'<br><span class="sub">'+esc(l.Customer||'-')+'</span></td>'
-      +'<td class="sub">B '+esc(l.BookingDate||'-')+'<br>R '+esc(l.RetailDate||'-')+'<br>D '+esc(l.DeliveryDate||'-')+'</td>'
+    var flagged=String(l.LineStatus).toLowerCase()==='flagged';
+    return '<tr'+(flagged?' style="background:var(--red-bg)"':'')+'><td>'+esc(l.Model)+'<br><span class="sub">'+esc(l.Slab)+'</span>'+(flagged?'<br><span style="color:var(--red);font-weight:700">\u26A0 '+esc(l.Note||'flagged')+'</span>':'')+'</td><td>'+esc(l.VIN||'-')+'<br><span class="sub">'+esc(l.Customer||'-')+'</span></td>'
+      +'<td class="sub">B '+esc(fmtDate(l.BookingDate))+'<br>R '+esc(fmtDate(l.RetailDate))+'<br>D '+esc(fmtDate(l.DeliveryDate))+'</td>'
       +'<td class="tnum" style="text-align:right;font-weight:700">'+rs(l.Amount)+'</td></tr>';
   }).join('');
   var money='<div class="line"><div>Claimed</div><div class="r tnum">'+rs(c.claimed)+'</div></div>';

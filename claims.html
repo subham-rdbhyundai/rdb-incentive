@@ -91,7 +91,7 @@ table.mini th{color:var(--muted);font-weight:700}
 <div class="wrap" id="app"></div>
 
 <script>
-var S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[],claim:null,editLineId:null,vinInfo:null};
+var S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[],claim:null,editLineId:null,vinInfo:null,myClaims:[]};
 var SESSMEM={};
 var store={get:function(k){try{return sessionStorage.getItem(k)}catch(e){return (k in SESSMEM)?SESSMEM[k]:null}},
   set:function(k,v){try{sessionStorage.setItem(k,v)}catch(e){SESSMEM[k]=v}},
@@ -169,9 +169,21 @@ function dInput(v){ if(!v) return ''; var s=String(v); if(/^\d{4}-\d{2}-\d{2}$/.
 async function loadConsultant(){
   el('app').innerHTML='<div class="empty">Loading '+esc(monthLabel(S.month)||'')+'...</div>';
   var sl=await api('getSlabs',{month:S.month}); S.slabs=sl;
+  var mc=await api('getMyClaims',{}); S.myClaims=(mc&&mc.claims)||[];
   var r=await api('getMyClaim',{month:S.month});
   renderConsultant(r.claim);
 }
+function myClaimsCard(){
+  var list=S.myClaims||[];
+  if(!list.length) return '';
+  var rows=list.map(function(c){
+    return '<div class="qrow"><div class="qhead" onclick="openMyMonth(\''+esc(c.month)+'\')">'
+      +'<div><div class="nm">'+esc(monthLabel(c.month))+'</div><div class="ol">'+c.cars+' cars &middot; '+pill(c.status)+'</div></div>'
+      +'<div class="amt tnum">'+rs(c.net!=null?c.net:c.claimed)+'</div></div></div>';
+  }).join('');
+  return '<div class="card"><div class="h1">My claims to date</div><div class="sub" style="margin-bottom:10px">Every month you have claimed. Tap one to open it.</div>'+rows+'</div>';
+}
+function openMyMonth(m){ S.month=m; loadConsultant(); }
 function renderConsultant(claim){
   S.claim=claim;
   var editable=(!claim||claim.status==='Open'||claim.status==='HRQuery');
@@ -188,8 +200,8 @@ function renderConsultant(claim){
         +'<div class="line"><div class="m">Credited</div><div class="r tnum m">'+rs(claim.net)+'</div></div>'
         +(claim.payrollRef?'<div class="sub" style="margin-top:8px">Ref: '+esc(claim.payrollRef)+'</div>':'')+'</div>';
     }
-    el('app').innerHTML=head+'<div class="card">'+stepsBar(status)+'<div class="sub" style="margin-top:10px">Submitted. You will get a WhatsApp at each step.</div></div>'
-      +linesCard(claim,false)+money;
+    el('app').innerHTML=head+'<div class="card">'+stepsBar(status)+'<div class="sub" style="margin-top:10px">Submitted and with the review team. Open this page any time to see the status.</div></div>'
+      +linesCard(claim,false)+money+myClaimsCard();
     return;
   }
 
@@ -224,7 +236,7 @@ function renderConsultant(claim){
   var submit=(cars>0)?'<div class="card"><button class="btn ok" onclick="submitMonth(\''+esc(claim.claimId)+'\')">Submit '+cars+' cars for '+esc(S.month)+' ('+rs(total)+')</button>'
     +'<div class="sub" style="text-align:center;margin-top:10px">Once submitted it goes to HR and locks. Add every car first.</div></div>':'';
 
-  el('app').innerHTML=head+form+linesCard(claim,true)+submit;
+  el('app').innerHTML=head+form+linesCard(claim,true)+submit+myClaimsCard();
 }
 function linesCard(claim,editable){
   var lines=(claim&&claim.lines)||[];
@@ -312,7 +324,12 @@ function renderStaff(ov,claims){
   var strip='<div class="strip"><div class="stat"><div class="k">Claims</div><div class="v tnum">'+ov.total+'</div></div>'
     +'<div class="stat"><div class="k">Pending</div><div class="v tnum">'+rs(ov.pendingRupees)+'</div></div>'
     +'<div class="stat"><div class="k">Paid</div><div class="v tnum">'+rs(ov.disbursedRupees)+'</div></div></div>';
-  var bulk=bulkBtn(claims), exp=(S.role==='md'||S.role==='accounts')?'<button class="btn ghost" style="margin-bottom:14px" onclick="exportAccounts()">Export approved for accounts</button>':'';
+  var canExport=['hr','gm','md','accounts'].indexOf(S.role)>=0;
+  var bulk=bulkBtn(claims), exp=canExport?('<div class="row-btns" style="margin-bottom:14px">'
+    +'<button class="btn primary" style="width:auto" onclick="downloadEngine(true)">Download for incentive engine</button>'
+    +'<button class="btn ghost" style="width:auto" onclick="downloadEngine(false)">Download all (checking)</button>'
+    +((S.role==='md'||S.role==='accounts')?'<button class="btn ghost" style="width:auto" onclick="exportAccounts()">View approved payables</button>':'')
+    +'</div>'):'';
   var rows=shown.length?shown.map(rowHtml).join(''):'<div class="empty">Nothing in this view.</div>';
   el('app').innerHTML='<div class="card" style="padding:14px 16px"><div class="sub">Month</div>'+monthSelect('changeMonth')+'</div>'
     +strip+staffTabs()+bulk+exp+'<div id="exportBox"></div><div>'+rows+'</div>';
@@ -327,7 +344,7 @@ function bulkBtn(claims){
 }
 function rowHtml(c){
   return '<div class="qrow"><div class="qhead" onclick="toggleRow(\''+esc(c.claimId)+'\')">'
-    +'<div><div class="nm">'+esc(c.name)+'</div><div class="ol">'+esc(c.outlet||'')+' &middot; '+c.cars+' cars &middot; '+pill(c.status)+'</div></div>'
+    +'<div><div class="nm">'+esc(c.name)+'</div><div class="ol">'+esc(c.outlet||'')+' &middot; '+c.cars+' cars &middot; '+pill(c.status)+(c.exported?' &middot; <span class="pill p-done">exported</span>':'')+'</div></div>'
     +'<div class="amt tnum">'+rs(c.approvedGross!=null?c.approvedGross:c.claimed)+'</div></div>'
     +'<div class="qbody hide" id="body-'+esc(c.claimId)+'"></div></div>';
 }
@@ -386,6 +403,21 @@ async function act(action,id){
   if(!r.ok){toast(r.error||'Action failed');return;}
   toast('Done');loadStaff();
 }
+async function downloadEngine(mark){
+  var r=await api('exportCars',{month:S.month, mark:mark});
+  if(!r.ok){ toast(r.error||'Export failed'); return; }
+  if(!r.rows.length){ toast(mark?'No new MD-approved cars to export for this month':'No cars this month'); return; }
+  downloadCSV('RDB_claims_'+S.month+(mark?'_engine':'_all')+'.csv', toCSV(r.headers, r.rows));
+  toast(mark?('Exported '+r.marked+' claim(s), '+r.rows.length+' cars'):('Downloaded '+r.rows.length+' cars'));
+  if(mark) loadStaff();
+}
+function toCSV(headers, rows){
+  var q=function(v){ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  var lines=[headers.join(',')];
+  rows.forEach(function(row){ lines.push(headers.map(function(h){return q(row[h]);}).join(',')); });
+  return lines.join('\n');
+}
+function downloadCSV(name,text){ var b=new Blob([text],{type:'text/csv'}); var u=URL.createObjectURL(b); var a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(u);},1000); }
 async function bulkAdvance(){
   var lc=await api('listClaims',{month:S.month});var st=stageFor(S.role);
   var ids=(lc.claims||[]).filter(function(c){return c.status===st;}).map(function(c){return c.claimId;});

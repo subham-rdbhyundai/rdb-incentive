@@ -183,7 +183,7 @@ function myClaimsCard(){
   }).join('');
   return '<div class="card"><div class="h1">My claims to date</div><div class="sub" style="margin-bottom:10px">Every month you have claimed. Tap one to open it.</div>'+rows+'</div>';
 }
-function openMyMonth(m){ S.month=m; loadConsultant(); }
+function openMyMonth(m){ S.month=m; window.scrollTo(0,0); loadConsultant(); }
 function renderConsultant(claim){
   S.claim=claim;
   var editable=(!claim||claim.status==='Open'||claim.status==='HRQuery');

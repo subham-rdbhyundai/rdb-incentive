@@ -168,10 +168,9 @@ function fmtDate(v){ if(!v) return '-'; var s=String(v); if(/^\d{4}-\d{2}-\d{2}$
 function dInput(v){ if(!v) return ''; var s=String(v); if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; var d=new Date(s); if(isNaN(d)) return ''; return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 async function loadConsultant(){
   el('app').innerHTML='<div class="empty">Loading '+esc(monthLabel(S.month)||'')+'...</div>';
-  var sl=await api('getSlabs',{month:S.month}); S.slabs=sl;
-  var mc=await api('getMyClaims',{}); S.myClaims=(mc&&mc.claims)||[];
-  var r=await api('getMyClaim',{month:S.month});
-  renderConsultant(r.claim);
+  var res=await Promise.all([api('getSlabs',{month:S.month}), api('getMyClaims',{}), api('getMyClaim',{month:S.month})]);
+  S.slabs=res[0]; S.myClaims=(res[1]&&res[1].claims)||[];
+  renderConsultant(res[2].claim);
 }
 function myClaimsCard(){
   var list=S.myClaims||[];
@@ -314,9 +313,9 @@ function changeMonthC(v){ if(!v)return; S.month=String(v).slice(0,7); loadConsul
 /* ===== HR / GM / MD / ACCOUNTS ===== */
 async function loadStaff(){
   el('app').innerHTML='<div class="empty">Loading '+esc(monthLabel(S.month)||'')+'...</div>';
-  var ov=await api('overview',{month:S.month});
+  var res=await Promise.all([api('overview',{month:S.month}), api('listClaims',{month:S.month})]);
+  var ov=res[0], lc=res[1];
   if(!ov.ok){el('app').innerHTML='<div class="err">'+esc(ov.error||'Could not load.')+'</div>';return;}
-  var lc=await api('listClaims',{month:S.month});
   renderStaff(ov,(lc.claims||[]));
 }
 function renderStaff(ov,claims){

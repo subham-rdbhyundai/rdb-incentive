@@ -91,7 +91,7 @@ table.mini th{color:var(--muted);font-weight:700}
 <div class="wrap" id="app"></div>
 
 <script>
-var S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[],claim:null,editLineId:null,vinInfo:null,myClaims:[]};
+var S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[],claim:null,editLineId:null,vinInfo:null,myClaims:[],claimMonths:[]};
 var SESSMEM={};
 var store={get:function(k){try{return sessionStorage.getItem(k)}catch(e){return (k in SESSMEM)?SESSMEM[k]:null}},
   set:function(k,v){try{sessionStorage.setItem(k,v)}catch(e){SESSMEM[k]=v}},
@@ -114,9 +114,15 @@ function boot(){S.token=store.get('rdb_tok');S.role=store.get('rdb_role');S.name
 async function enterApp(){
   el('whoName').textContent=S.name||'RDB';el('whoRole').textContent=S.role;el('logoutBtn').classList.remove('hide');
   el('app').className='wrap'+(S.role==='consultant'?' narrow':'');
-  var mm=await api('getSlabMonths',{}); S.months=(mm&&mm.months)||[];
-  S.month=S.months[0]||null;
-  if(S.role==='consultant')loadConsultant();else loadStaff();
+  if(S.role==='consultant'){
+    var mm=await api('getSlabMonths',{}); S.months=(mm&&mm.months)||[];
+    S.month=S.months[0]||todayMonth();
+    loadConsultant();
+  } else {
+    var cm=await api('getClaimMonths',{}); S.claimMonths=(cm&&cm.months)||[];
+    S.month=S.claimMonths[0]||todayMonth();
+    loadStaff();
+  }
 }
 function logout(){store.clear();S={token:null,role:null,name:null,month:null,filter:'all',slabs:null,months:[]};
   el('logoutBtn').classList.add('hide');el('whoRole').textContent='';el('whoName').textContent='Incentive Claims';el('app').className='wrap';renderLogin();}
@@ -158,6 +164,7 @@ function monthLabel(m){
 }
 function ymValid(m){return /^\d{4}-\d{2}$/.test(String(m));}
 function isVinMonth(m){return String(m)>='2026-08';}
+function todayMonth(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function monthSelect(onchg){
   var val=ymValid(S.month)?(S.month+'-01'):'';
   return '<input class="f" type="date" id="cmonth" value="'+val+'" onchange="'+onchg+'(this.value)">';
@@ -313,8 +320,8 @@ function changeMonthC(v){ if(!v)return; S.month=String(v).slice(0,7); loadConsul
 /* ===== HR / GM / MD / ACCOUNTS ===== */
 async function loadStaff(){
   el('app').innerHTML='<div class="empty">Loading '+esc(monthLabel(S.month)||'')+'...</div>';
-  var res=await Promise.all([api('overview',{month:S.month}), api('listClaims',{month:S.month})]);
-  var ov=res[0], lc=res[1];
+  var res=await Promise.all([api('overview',{month:S.month}), api('listClaims',{month:S.month}), api('getClaimMonths',{})]);
+  var ov=res[0], lc=res[1]; S.claimMonths=(res[2]&&res[2].months)||S.claimMonths||[];
   if(!ov.ok){el('app').innerHTML='<div class="err">'+esc(ov.error||'Could not load.')+'</div>';return;}
   renderStaff(ov,(lc.claims||[]));
 }
@@ -330,7 +337,8 @@ function renderStaff(ov,claims){
     +((S.role==='md'||S.role==='accounts')?'<button class="btn ghost" style="width:auto" onclick="exportAccounts()">View approved payables</button>':'')
     +'</div>'):'';
   var rows=shown.length?shown.map(rowHtml).join(''):'<div class="empty">Nothing in this view.</div>';
-  el('app').innerHTML='<div class="card" style="padding:14px 16px"><div class="sub">Month</div>'+monthSelect('changeMonth')+'</div>'
+  var monthChips=(S.claimMonths&&S.claimMonths.length)?('<div class="mgrid" style="margin-top:10px">'+S.claimMonths.map(function(m){return '<button class="mchip'+(m===S.month?' on':'')+'" onclick="changeMonth(\''+m+'\')">'+esc(monthLabel(m))+'</button>';}).join('')+'</div>'):'';
+  el('app').innerHTML='<div class="card" style="padding:14px 16px"><div class="sub">Month with claims</div>'+monthChips+'<div class="sub" style="margin:12px 0 4px">Or pick any month</div>'+monthSelect('changeMonth')+'</div>'
     +strip+staffTabs()+bulk+exp+'<div id="exportBox"></div><div>'+rows+'</div>';
 }
 function stageFor(role){return {hr:'Claimed',gm:'HRApproved',md:'GMApproved'}[role];}

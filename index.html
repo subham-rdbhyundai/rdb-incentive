@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b76</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b78</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -345,6 +345,7 @@ details.qgrp>summary>span:first-child{flex:1}
         <div class="spacer" style="flex:1"></div>
         <button class="btn" id="btnSeedCat" onclick="seedCatalogue()">Load Hyundai catalogue</button>
         <button class="btn" onclick="resetIncentivesFromCatalogue(true)" title="Fix VINs whose incentive is far above the model default (uses the catalogue value, or the model average when the exact variant isn\u2019t listed)">Fix wrong incentives</button>
+        <button class="btn" onclick="resetIncentivesFromCatalogue(false)" title="Set EVERY car in stock to its October 2026 scheme incentive (per model and variant). Nothing is deleted.">Apply scheme to all cars</button>
       </div>
       <div id="stockFormWrap" class="formmodal"></div>
       <div id="stockSegments"></div>
@@ -488,7 +489,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b76 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b78 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1612,7 +1613,15 @@ function copyLastTargets(){ const m=(document.getElementById('tgtMonth').value||
 
 /* ============================ VIN STOCK LEDGER ============================ */
 function specDefault(specCode){ const s=(state.specs||[]).find(x=>x.specCode===specCode); return s?Number(s.defaultIncentive||0):0; }
-function catalogueDefaultFor(row){ var specs=state.specs||[]; var s=specs.find(function(x){return x.specCode&&x.specCode===row.specCode;}); if(!s){ var m=String(row.model||'').trim().toUpperCase(), v=String(row.variant||'').trim().toUpperCase(); s=specs.find(function(x){return String(x.model||'').trim().toUpperCase()===m && String(x.variant||'').trim().toUpperCase()===v;}); } if(s) return Number(s.defaultIncentive||0);
+var VIN_INCENTIVE_OVERRIDE={
+  "MALB281CLTM231418":15000,  // old Exter
+  "MALGW41DLTM232578":12000,
+  "MALPC813LTM385776":15000,
+  "MALB351CLTM762084":6000,
+  "MALB351CLTM772419":6000
+};
+function catalogueDefaultFor(row){ var _vo=VIN_INCENTIVE_OVERRIDE[String(row.VIN||'').trim().toUpperCase()]; if(_vo>0) return _vo;
+  var specs=state.specs||[]; var s=specs.find(function(x){return x.specCode&&x.specCode===row.specCode;}); if(!s){ var m=String(row.model||'').trim().toUpperCase(), v=String(row.variant||'').trim().toUpperCase(); s=specs.find(function(x){return String(x.model||'').trim().toUpperCase()===m && String(x.variant||'').trim().toUpperCase()===v;}); } if(s) return Number(s.defaultIncentive||0);
   /* variant not found in catalogue -> fall back to this model's average default */
   var m2=String(row.model||'').trim().toUpperCase(); var ms=specs.filter(function(x){return String(x.model||'').trim().toUpperCase()===m2 && Number(x.defaultIncentive)>0;}); if(ms.length) return Math.round(ms.reduce(function(a,x){return a+Number(x.defaultIncentive||0);},0)/ms.length); return 0; }
 function incentiveSuspect(row){ var inc=Number(row.incentive||0); if(!inc)return false; var cei=(state.settings.incentiveCeiling!=null?Number(state.settings.incentiveCeiling):20000); var sd=catalogueDefaultFor(row); if(sd>0 && inc>sd*2)return true; if(inc>cei)return true; return false; }
@@ -1620,10 +1629,10 @@ function resetIncentivesFromCatalogue(flaggedOnly){ if(!(state.specs&&state.spec
   var rows=state.stock.filter(function(s){ var d=catalogueDefaultFor(s); if(!(d>0))return false; if(flaggedOnly) return incentiveSuspect(s); return Number(s.incentive||0)!==d; });
   var noMatch=state.stock.filter(function(s){ return (flaggedOnly?incentiveSuspect(s):true) && !(catalogueDefaultFor(s)>0) && Number(s.incentive||0)>0; }).length;
   if(!rows.length){ toast(flaggedOnly?'No flagged VINs to reset.':'All incentives already match the catalogue.'); return; }
-  var msg='Fix '+rows.length+' VIN'+(rows.length!==1?'s':'')+' whose incentive looks wrong (far above the model default)?\\n\\nEach is set to its catalogue default \u2014 or, when the exact variant isn\u2019t in the catalogue, the model average. Kept in the sheet, nothing deleted.';
+  var msg=(flaggedOnly?('Fix '+rows.length+' VIN'+(rows.length!==1?'s':'')+' whose incentive looks wrong (far above the model default)?'):('Apply the October 2026 scheme to all '+rows.length+' car'+(rows.length!==1?'s':'')+' whose incentive differs?'))+'\\n\\nEach is set to its catalogue default \u2014 or, when the exact variant isn\u2019t in the catalogue, the model average. Kept in the sheet, nothing deleted.';
   if(noMatch) msg+='\\n\\n'+noMatch+' VIN(s) have no catalogue match (check their model/variant/spec code) and are left for manual edit.';
   if(typeof confirm==='function' && !confirm(msg)) return;
-  var n=0; rows.forEach(function(s){ s.incentive=catalogueDefaultFor(s); if(cloudActive())cloud('upsertStock',{row:s}); n++; }); persist(); renderStock(); toast('Reset '+n+' incentive'+(n!==1?'s':'')+' to catalogue default');
+  var n=0; rows.forEach(function(s){ s.incentive=catalogueDefaultFor(s); if(cloudActive())cloud('upsertStock',{row:s}); n++; }); persist(); renderStock(); toast((flaggedOnly?'Reset ':'Applied scheme to ')+n+' incentive'+(n!==1?'s':''));
 }
 function resetFlaggedIncentives(){ resetIncentivesFromCatalogue(true); }
 function specModels(){ return [...new Set((state.specs||[]).map(s=>s.model))].sort(); }

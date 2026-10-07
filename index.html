@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b78</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b79</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -489,7 +489,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b78 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b79 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1772,7 +1772,7 @@ function incentivePDF(mode){
   td{padding:5px 8px;border-bottom:1px solid #EEF2F7}@media print{@page{margin:12mm}}</style></head>
   <body><h1>RDB Hyundai — ${title}</h1><div class="sub">${sub} · ${today}</div>
   ${body}
-  <div style="margin-top:14px;color:#9AA7B4;font-size:10px">RDB Hyundai · GOING TOGETHER, GROWING TOGETHER</div>
+  <div style="margin-top:14px;color:#9AA7B4;font-size:10px"><b style="color:#C2350B">Caution:</b> the shared terms &amp; conditions apply.<br>RDB Hyundai · GOING TOGETHER, GROWING TOGETHER</div>
   <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script></body></html>`;
   const w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to download the PDF'); return; } w.document.write(html); w.document.close();
 }
@@ -1794,7 +1794,7 @@ function downloadStockPDF(){ const seg=stockSegments(); const today=new Date().t
   ${sec('JUST ARRIVED',seg.fresh,'#0E9F6E')}
   ${sec('FREE STOCK',seg.free,'#334155')}
   ${sec('BOOKED',seg.booked.map(x=>({r:{model:x.r.model,variant:x.r.variant,colour:x.r.colour,specCode:x.r.specCode,stockId:x.r.stockId,incentive:x.r.incentive},dd:x.dd})),'#9AA7B4')}
-  <div style="margin-top:14px;color:#9AA7B4;font-size:10px">RDB Hyundai \u00b7 GOING TOGETHER, GROWING TOGETHER</div>
+  <div style="margin-top:14px;color:#9AA7B4;font-size:10px"><b style="color:#C2350B">Caution:</b> the shared terms &amp; conditions apply.<br>RDB Hyundai \u00b7 GOING TOGETHER, GROWING TOGETHER</div>
   <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script></body></html>`;
   const w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to download the PDF'); return; } w.document.write(html); w.document.close();
 }

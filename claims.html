@@ -220,7 +220,7 @@ function renderConsultant(claim){
   var form;
   if(vinMode){
     form='<div class="card"><div class="h1">Add a car</div>'+sentBack
-      +'<div class="sub" style="margin-bottom:8px">From Aug 2026 a car is priced by VIN. Enter the VIN and tap Check to pull the incentive from stock.</div>'
+      +'<div class="sub" style="margin-bottom:8px">From Aug 2026 the incentive follows the stock scheme. Enter the VIN and tap Check to pull the amount from stock.</div>'
       +'<label class="f">VIN / chassis</label><div style="display:flex;gap:8px"><input class="f" id="fvin" placeholder="VIN or chassis no." style="flex:1" /><button class="btn ghost" style="width:auto" onclick="checkVin()">Check</button></div>'
       +'<div class="amtbox" id="vinbox">Enter the VIN and tap Check</div>'
       +'<label class="f">Customer name</label><input class="f" id="fcust" placeholder="Customer name" />'
@@ -242,7 +242,9 @@ function renderConsultant(claim){
   var submit=(cars>0)?'<div class="card"><button class="btn ok" onclick="submitMonth(\''+esc(claim.claimId)+'\')">Submit '+cars+' cars for '+esc(S.month)+' ('+rs(total)+')</button>'
     +'<div class="sub" style="text-align:center;margin-top:10px">Once submitted it goes to HR and locks. Add every car first.</div></div>':'';
 
-  el('app').innerHTML=head+form+linesCard(claim,true)+submit+myClaimsCard();
+  var policyNote='<div class="card" style="padding:13px 16px"><div class="sub">This is the scheme amount per car. Your final payout is set by HR after the car ladder, the quality gate and any deductions, and is released once each car is delivered and fully paid.</div></div>';
+
+  el('app').innerHTML=head+form+policyNote+linesCard(claim,true)+submit+myClaimsCard();
 }
 function linesCard(claim,editable){
   var lines=(claim&&claim.lines)||[];

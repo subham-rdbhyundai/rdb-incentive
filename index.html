@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b79</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b81</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -304,8 +304,8 @@ details.qgrp>summary>span:first-child{flex:1}
       <h1>Quotations</h1>
       <p class="sub">Live from the Quote App. Compare enquiries punched vs quotations sent, and see every quotation — including self-service ones sent via the WhatsApp link.</p>
       <div class="bar" style="align-items:end;flex-wrap:wrap">
-        <input class="viewsearch" type="search" placeholder="Search this tab…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
-        <div class="field"><label>Month</label><select id="qcMonth" onchange="renderQuotes()" style="width:150px"></select></div>
+        <input class="viewsearch" type="search" placeholder="Search by customer name, phone or quote #…" oninput="tableFilter(this)" style="min-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-right:10px">
+        <div class="field"><label>Month</label><select id="qcMonth" onchange="onQuotesMonthChange()" style="width:150px"></select></div>
         <button class="btn primary" onclick="loadQuotes()">Load / refresh</button>
         <button class="btn" onclick="setQuoteAppPass()">Set password</button>
         <span id="qcStatus" style="font-size:12px;color:var(--muted);align-self:center"></span>
@@ -489,7 +489,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b79 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b81 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -823,6 +823,8 @@ function tableFilter(inp){
   view.querySelectorAll('table').forEach(function(tbl){ tbl.querySelectorAll('tbody tr').forEach(function(tr){ tr.style.display=(!q||(tr.textContent||'').toLowerCase().indexOf(q)>=0)?'':'none'; }); });
   view.querySelectorAll('.rc-li').forEach(function(el){ el.style.display=(!q||(el.textContent||'').toLowerCase().indexOf(q)>=0)?'':'none'; });
   view.querySelectorAll('.tablewrap').forEach(function(wrap){ var any=Array.prototype.some.call(wrap.querySelectorAll('tbody tr'),function(tr){return tr.style.display!=='none';}); var prev=wrap.previousElementSibling; var title=(prev&&prev.classList&&prev.classList.contains('section-title'))?prev:null; var hide=q&&!any; wrap.style.display=hide?'none':''; if(title)title.style.display=hide?'none':''; });
+  // consultant groups: when searching, open only the consultant(s) with a match and hide the rest, so a name/number search shows who is handling that customer
+  view.querySelectorAll('details.qgrp').forEach(function(d){ var any=Array.prototype.some.call(d.querySelectorAll('tbody tr'),function(tr){return tr.style.display!=='none';}); if(q){ d.style.display=any?'':'none'; d.open=any; } else { d.style.display=''; d.open=false; } });
 }
 function reFilter(viewId){ var v=document.getElementById('view-'+viewId); if(!v)return; var inp=v.querySelector('.viewsearch'); if(inp&&inp.value)tableFilter(inp); }
 function setupSearch(){ document.querySelectorAll('.view').forEach(function(view){ var inp=view.querySelector('.viewsearch'); if(!inp||view.__searchObs)return; var obs=new MutationObserver(function(){ if(inp.value)tableFilter(inp); }); obs.observe(view,{childList:true,subtree:true}); view.__searchObs=obs; }); }
@@ -1148,48 +1150,66 @@ function renderQuotes(){
   var cfg=quoteAppCfg(); var cov=document.getElementById('quoteCoverage');
   if(cov && cov.dataset.loaded!=='1'){ cov.innerHTML='<div class="card pad" style="margin-top:6px"><div class="hint">Click <b>Load / refresh</b> to pull quotations from the Quote App'+(cfg.pass?'':' \u2014 first set the admin password')+'.</div></div>'; }
 }
+var _qCache=null;
 function loadQuotes(){
   var sel=document.getElementById('qcMonth'); var month=(((sel&&sel.value)||allMonths()[0]||currentMonthLabel())+'').toUpperCase();
-  var status=document.getElementById('qcStatus'); if(status)status.textContent='Loading\u2026';
+  var status=document.getElementById('qcStatus'); if(status)status.textContent='Loading…';
   var cfg=quoteAppCfg();
-  var cov=document.getElementById('quoteCoverage'), lst=document.getElementById('quoteList'), self=document.getElementById('quoteSelfList'), pab=document.getElementById('quotePabbly'), dash=document.getElementById('quoteDash');
+  var self=document.getElementById('quoteSelfList'), pab=document.getElementById('quotePabbly'), dash=document.getElementById('quoteDash');
   if(dash)dash.innerHTML='';
-  if(self)self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="card pad"><div class="hint">Loading\u2026</div></div>';
-  if(pab)pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="card pad"><div class="hint">Loading\u2026</div></div>';
+  if(self)self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="card pad"><div class="hint">Loading…</div></div>';
+  if(pab)pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="card pad"><div class="hint">Loading…</div></div>';
   var pCons = cfg.pass ? fetchQuoteData(cfg.url,cfg.pass).then(function(d){ if(!d||d.ok!==true) throw new Error((d&&d.error)||'password rejected'); return {rows:d.rows||[]}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   var pSelf = cloudActive() ? cloud('selfQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed'}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   var pPab  = cloudActive() ? cloud('pabblyQuotes',{}).then(function(d){ return (d&&d.ok)?{rows:d.rows||[],headers:d.headers||[]}:{__err:(d&&d.error)||'failed', tabs:(d&&d.tabs)||null}; }).catch(function(e){ return {__err:(e&&e.message)||'error'}; }) : Promise.resolve(null);
   Promise.all([pCons,pSelf,pPab]).then(function(res){
-    if(status)status.textContent='';
     var C=res[0], S=res[1], P=res[2];
     var consRows=(C&&!C.__err&&C.rows)?dedupeQuotes(C.rows):[];
-    // consultant + coverage
-    if(cfg.pass){ if(C&&C.__err){ if(cov)cov.innerHTML='<div class="note" style="border-left-color:#C2350B;background:#FEF2F2">Consultant quotes could not load: '+C.__err+' \u2014 check the password (Set password).</div>'; if(lst)lst.innerHTML=''; }
-      else { renderQuoteCoverage(consRows,month);
-        if(lst)lst.innerHTML='<div class="section-title"><h2>Consultant quotations</h2></div><div class="card pad"><div class="hint">Loading\u2026</div></div>';
-        var _qn=consRows.map(function(r){return String(r.quoteNo||'').trim().toUpperCase();}).filter(Boolean);
-        (cloudActive()?cloud('consQuoteLinks',{quotes:_qn}).then(function(d){return d;}).catch(function(e){return {ok:false,error:(e&&e.message)||'error'};}):Promise.resolve({ok:false,error:'cloud not connected'})).then(function(lr){ renderConsQuotes(consRows,month,lr); });
-      } }
-    else { if(cov)cov.innerHTML='<div class="card pad" style="margin-top:6px"><div class="hint">Set the Quote App password to load consultant quotations & coverage.</div></div>'; if(lst)lst.innerHTML=''; }
-    // self-serve
-    if(S){ if(S.__err){ if(self)self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+S.__err+'<br><span style="font-size:12px">Deploy Code.gs (b31) and make sure the incentive\u2019s Google account can open that sheet.</span></div>'; }
-      else { renderSelfQuotes(S.rows,S.headers,month); } }
-    else if(self){ self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="card pad"><div class="hint">Connect the cloud to load self-service quotes.</div></div>'; }
-    // pabbly (Sheet1)
-    if(P){ if(P.__err){ var tabsHtml=P.tabs&&P.tabs.length?'<br><span style="font-size:12px">Tabs found in that spreadsheet: <b>'+P.tabs.join('</b>, <b>')+'</b>. Tell me which one holds the Pabbly sends.</span>':'<br><span style="font-size:12px">Deploy Code.gs (b32) and make sure Sheet1 exists.</span>'; if(pab)pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+P.__err+tabsHtml+'</div>'; }
-      else { renderPabbly(P.rows,P.headers,month); } }
-    else if(pab){ pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="card pad"><div class="hint">Connect the cloud to load Pabbly sends.</div></div>'; }
-    // dashboard (aggregate)
-    renderQuoteDash( consRows, (S&&!S.__err)?S:null, (P&&!P.__err)?P:null, month );
+    var _qn=consRows.map(function(r){return String(r.quoteNo||'').trim().toUpperCase();}).filter(Boolean);
+    var linksP = (cfg.pass && !(C&&C.__err) && cloudActive()) ? cloud('consQuoteLinks',{quotes:_qn}).then(function(d){return d;}).catch(function(e){return {ok:false,error:(e&&e.message)||'error'};}) : Promise.resolve({ok:false});
+    linksP.then(function(lr){
+      if(status)status.textContent='';
+      _qCache={C:C,S:S,P:P,consRows:consRows,links:lr,hasPass:!!cfg.pass};
+      paintQuotes(month);
+    });
   });
 }
+function paintQuotes(month){
+  if(!_qCache) return;
+  var C=_qCache.C, S=_qCache.S, P=_qCache.P, consRows=_qCache.consRows, lr=_qCache.links, hasPass=_qCache.hasPass;
+  var ALL=(month==='ALL MONTHS');
+  var cov=document.getElementById('quoteCoverage'), lst=document.getElementById('quoteList'), self=document.getElementById('quoteSelfList'), pab=document.getElementById('quotePabbly'), dash=document.getElementById('quoteDash');
+  // consultant + coverage
+  if(hasPass){
+    if(C&&C.__err){ if(cov)cov.innerHTML='<div class="note" style="border-left-color:#C2350B;background:#FEF2F2">Consultant quotes could not load: '+C.__err+' — check the password (Set password).</div>'; if(lst)lst.innerHTML=''; }
+    else {
+      if(ALL){ if(cov)cov.innerHTML='<div class="section-title" style="margin-top:6px"><h2>Enquiry → Quotation coverage</h2></div><div class="card pad"><div class="hint">Pick a specific month to see coverage — it is measured against that month’s enquiries.</div></div>'; }
+      else renderQuoteCoverage(consRows,month);
+      renderConsQuotes(consRows,month,lr);
+    }
+  } else { if(cov)cov.innerHTML='<div class="card pad" style="margin-top:6px"><div class="hint">Set the Quote App password to load consultant quotations & coverage.</div></div>'; if(lst)lst.innerHTML=''; }
+  // self-serve
+  if(S){ if(S.__err){ if(self)self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+S.__err+'</div>'; }
+    else renderSelfQuotes(S.rows,S.headers,month); }
+  else if(self){ self.innerHTML='<div class="section-title"><h2>Self-service quotations (WhatsApp link)</h2></div><div class="card pad"><div class="hint">Connect the cloud to load self-service quotes.</div></div>'; }
+  // pabbly
+  if(P){ if(P.__err){ var tabsHtml=P.tabs&&P.tabs.length?'<br><span style="font-size:12px">Tabs found: <b>'+P.tabs.join('</b>, <b>')+'</b>.</span>':''; if(pab)pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="note" style="border-left-color:#C2350B;background:#FEF2F2">'+P.__err+tabsHtml+'</div>'; }
+    else renderPabbly(P.rows,P.headers,month); }
+  else if(pab){ pab.innerHTML='<div class="section-title"><h2>Quotations sent to customers (Pabbly)</h2></div><div class="card pad"><div class="hint">Connect the cloud to load Pabbly sends.</div></div>'; }
+  // dashboard
+  if(ALL){ if(dash)dash.innerHTML='<div class="card pad" style="margin-top:6px"><div class="hint">Showing <b>all months</b> — search a customer name, phone or quote # above. Pick a specific month for the dashboard and coverage.</div></div>'; }
+  else renderQuoteDash(consRows,(S&&!S.__err)?S:null,(P&&!P.__err)?P:null,month);
+  // keep an active search applied after a repaint
+  try{ var inp=document.querySelector('#view-quotes .viewsearch'); if(inp&&inp.value)tableFilter(inp); }catch(e){}
+}
+function onQuotesMonthChange(){ var sel=document.getElementById('qcMonth'); var month=((sel&&sel.value)||'').toUpperCase(); if(_qCache) paintQuotes(month); else renderQuotes(); }
 function sheetDateCol(headers,rows){ var cols=(headers&&headers.length)?headers:(rows&&rows[0]?Object.keys(rows[0]):[]); return cols.filter(function(h){return /date|time|stamp|\bts\b|when|sent/i.test(h);})[0]; }
 function parseFlexDate(v){ if(v==null||v==='')return null; if(v instanceof Date)return isNaN(v)?null:v; var s=String(v).trim();
   if(/^\d{4}-\d{1,2}-\d{1,2}/.test(s)){ var di=new Date(s.replace(' ','T')); if(!isNaN(di))return di; di=new Date(s); return isNaN(di)?null:di; }
   var m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[ ,T]+(\d{1,2}):(\d{2}))?/);
   if(m){ var dd=+m[1],mm=+m[2],yy=+m[3]; if(yy<100)yy+=2000; if(mm>12&&dd<=12){ var t=dd;dd=mm;mm=t; } var hh=m[4]?+m[4]:0,mi=m[5]?+m[5]:0; var d=new Date(yy,mm-1,dd,hh,mi); if(!isNaN(d)&&mm>=1&&mm<=12&&dd>=1&&dd<=31)return d; }
   var d2=new Date(s); return isNaN(d2)?null:d2; }
-function sheetRowsInMonth(rows,headers,month){ rows=rows||[]; var dc=sheetDateCol(headers,rows); if(!dc)return {list:rows.slice(),dateCol:null}; var list=rows.filter(function(r){ var dt=parseFlexDate(r[dc]); if(!dt)return false; return (MONTHS[dt.getMonth()]+'-'+dt.getFullYear()).toUpperCase()===month; }); return {list:list,dateCol:dc}; }
+function sheetRowsInMonth(rows,headers,month){ rows=rows||[]; var dc=sheetDateCol(headers,rows); if(!dc)return {list:rows.slice(),dateCol:null}; if(month==='ALL MONTHS')return {list:rows.slice(),dateCol:dc}; var list=rows.filter(function(r){ var dt=parseFlexDate(r[dc]); if(!dt)return false; return (MONTHS[dt.getMonth()]+'-'+dt.getFullYear()).toUpperCase()===month; }); return {list:list,dateCol:dc}; }
 function pabReplyCol(headers,rows){ var cols=(headers&&headers.length)?headers:(rows&&rows[0]?Object.keys(rows[0]):[]); return cols.filter(function(h){return /repl|response|responded|answered|customer\s*reply|status/i.test(h);})[0]; }
 function pabIsReplied(v){ if(v==null)return false; var s=String(v).trim().toLowerCase(); if(!s)return false; return !(s==='no'||s==='pending'||s==='not replied'||s==='no reply'||s==='0'||s==='false'||s==='awaiting'||s==='sent'||s==='delivered'); }
 function renderQuoteDash(consRows, selfPack, pabPack, month){
@@ -1258,17 +1278,17 @@ function renderQuoteCoverage(all,month){
 function consRowLink(r,linkMap){ var d=r['Share Link']||r['Quote Link']||r.shareLink||r.quoteLink||r.link||r.url||r.Link||r.URL||r.QuoteLink||r.ShareLink; if(d && /^https?:\/\//i.test(String(d))) return String(d).trim(); var m=linkMap&&linkMap[String(r.quoteNo||'').trim().toUpperCase()]; return m||''; }
 function renderConsQuotes(all,month,linkResp){ var linkMap=(linkResp&&linkResp.links)||{}; var _matched=0;
   var box=document.getElementById('quoteList'); if(!box)return;
-  var inMonth=(all||[]).filter(function(r){ return qMonthOf(r)===month; });
+  var _ALL=(month==='ALL MONTHS'); var inMonth=(all||[]).filter(function(r){ return _ALL?true:qMonthOf(r)===month; });
   inMonth.sort(function(a,b){ return new Date(b.ts)-new Date(a.ts); });
   var liveN=inMonth.filter(function(r){ return String(r.status||'')!=='Deleted'; }).length;
   // group by consultant (case-insensitive, keep a display name)
   var groups={}, order=[];
   inMonth.forEach(function(r){ var k=String(r.consultant||'').trim().toUpperCase()||'(NO CONSULTANT)'; if(!groups[k]){ groups[k]={name:(r.consultant||'\u2014'),rows:[],live:0}; order.push(k); } groups[k].rows.push(r); if(String(r.status||'')!=='Deleted')groups[k].live++; });
   order.sort(function(x,y){ return groups[y].live-groups[x].live || groups[y].rows.length-groups[x].rows.length; });
-  var head='<div class="section-title"><h2>Consultant quotations</h2><span style="font-size:12px;color:var(--muted)">'+month+' \u00b7 '+liveN+' live \u00b7 '+order.length+' consultant'+(order.length!==1?'s':'')+' \u00b7 click a name to expand</span></div>';
+  var head='<div class="section-title"><h2>Consultant quotations</h2><span style="font-size:12px;color:var(--muted)">'+(_ALL?'all months':month)+' \u00b7 '+liveN+' live \u00b7 '+order.length+' consultant'+(order.length!==1?'s':'')+' \u00b7 click a name to expand</span></div>';
   if(!inMonth.length){ box.innerHTML=head+'<div class="card pad"><div class="hint">No consultant quotations for '+month+'.</div></div>'; return; }
   function rowsTable(rows){ return '<div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Model</th><th>Quote #</th><th>Status</th><th>Quote</th></tr></thead><tbody>'
-    +rows.map(function(r){ var dt=new Date(r.ts); var ds=isNaN(dt)?'':dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}); var del=String(r.status||'')==='Deleted';
+    +rows.map(function(r){ var dt=new Date(r.ts); var ds=isNaN(dt)?'':dt.toLocaleDateString('en-IN',_ALL?{day:'2-digit',month:'short',year:'2-digit'}:{day:'2-digit',month:'short'}); var del=String(r.status||'')==='Deleted';
       return '<tr style="'+(del?'opacity:.5':'')+'"><td>'+ds+'</td><td>'+(r.name||r.custName||'')+'</td><td>'+(r.phone||r.custPhone||'')+'</td><td>'+(r.model||'')+'</td><td>'+(r.quoteNo||'')+'</td><td>'+(del?'<span class="tag no">Deleted</span>':(r.status?r.status:'<span class="tag yes">OK</span>'))+'</td><td>'+(function(){var _l=consRowLink(r,linkMap); if(_l)_matched++; return quoteViewBtn(_l);})()+'</td></tr>'; }).join('')
     +'</tbody></table></div>'; }
   var body=order.map(function(k){ var g=groups[k]; return '<details class="qgrp"><summary><span>'+g.name+'</span><span class="qcount">'+g.live+(g.rows.length!==g.live?' <span style="opacity:.6">(+'+(g.rows.length-g.live)+' del)</span>':'')+'</span></summary>'+rowsTable(g.rows)+'</details>'; }).join('');
@@ -1602,7 +1622,7 @@ function renderTargets(){
 function setCompanyTarget(m,k,v){ const T=state.settings.targetsByMonth[m]; T.company[k]=v.trim()===''?'':num(v); if(k==='rt') autoFillFromRetail(m); persist(); syncConfig(); renderTargets(); }
 function autoFillTargets(obj,S){ const R=S.targetRatios||{}; const rt=num(obj.rt); if(rt>0){ const enq=Math.round(rt/(R.retailOfEnq||0.08)); obj.enq=enq; obj.td=Math.round(enq*(R.tdOfEnq||0.55)); obj.bk=Math.round(enq*(R.bkOfEnq||0.20)); obj.de=Math.round(rt*(R.deOfRetail||1.0)); } }
 function autoFillFromRetail(m){ autoFillTargets(state.settings.targetsByMonth[m].company, state.settings); }
-function monthPickOptions(sel){ const set={}; allMonths().forEach(m=>set[String(m).toUpperCase()]=1); const d=new Date(); for(let i=-3;i<=12;i++){ const dd=new Date(d.getFullYear(),d.getMonth()+i,1); set[MONTHS[dd.getMonth()]+'-'+dd.getFullYear()]=1; } if(sel)set[String(sel).toUpperCase()]=1; const arr=Object.keys(set).sort((a,b)=>monthNum(b)-monthNum(a)); return arr.map(m=>`<option ${m===sel?'selected':''}>${m}</option>`).join(''); }
+function monthPickOptions(sel){ const set={}; allMonths().forEach(m=>set[String(m).toUpperCase()]=1); const d=new Date(); for(let i=-3;i<=12;i++){ const dd=new Date(d.getFullYear(),d.getMonth()+i,1); set[MONTHS[dd.getMonth()]+'-'+dd.getFullYear()]=1; } if(sel)set[String(sel).toUpperCase()]=1; const arr=Object.keys(set).sort((a,b)=>monthNum(b)-monthNum(a)); var allSel=(String(sel||'').toUpperCase()==='ALL MONTHS'); return '<option '+(allSel?'selected':'')+'>All months</option>'+arr.map(m=>`<option ${m===sel?'selected':''}>${m}</option>`).join(''); }
 function recalcTargets(month){ const S=state.settings; const T=S.targetsByMonth&&S.targetsByMonth[String(month||'').toUpperCase()]; if(!T)return; if(T.company&&num(T.company.rt)>0)autoFillTargets(T.company,S); Object.keys(T.overUnit||{}).forEach(o=>{ if(num(T.overUnit[o].rt)>0)autoFillTargets(T.overUnit[o],S); }); Object.keys(T.overSC||{}).forEach(n=>{ if(num(T.overSC[n].rt)>0)autoFillTargets(T.overSC[n],S); }); }
 function setTargetRatio(k,v){ const S=state.settings; S.targetRatios=S.targetRatios||{}; S.targetRatios[k]=(num(v)||0)/100; const mi=document.getElementById('tgtMonth'); if(mi&&mi.value)recalcTargets(mi.value); persist(); syncConfig(); renderTargets(); }
 function companyRatioHTML(S){ const R=S.targetRatios||{}; const RAT=[['retailOfEnq','Retail % of Enq'],['tdOfEnq','Drives % of Enq'],['bkOfEnq','Book % of Enq'],['deOfRetail','Deliv % of Retail']]; return '<div style="flex-basis:100%;margin:8px 0 2px"><span style="font-size:12px;color:var(--muted)">Enter <b>Retails</b> \u2014 Enq, Drives, Book and Deliv auto-fill from these ratios (every field stays editable):</span></div>'+RAT.map(function(p){ return '<div class="field"><label>'+p[1]+'</label><input type="number" value="'+Math.round((R[p[0]]||0)*100)+'" onchange="setTargetRatio(\''+p[0]+'\',this.value)" style="width:95px"></div>'; }).join(''); }

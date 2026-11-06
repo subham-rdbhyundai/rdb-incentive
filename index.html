@@ -173,7 +173,7 @@ details.qgrp>summary>span:first-child{flex:1}
 <div class="app">
   <div class="brand">
     <img id="brandRDB" class="brandlogo" alt="RDB Group">
-    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b81</span></div>
+    <div class="brandtxt"><b>RDB HYUNDAI</b><span>INCENTIVE ENGINE · 2026-08-20-b83</span></div>
     <img id="brandHY" class="brandlogo hy" alt="Hyundai">
   </div>
   <div class="topbar">
@@ -365,6 +365,7 @@ details.qgrp>summary>span:first-child{flex:1}
           <div class="bar" style="margin:0 0 6px;align-items:end">
             <div class="field"><label>Month</label><select id="tgtMonth" style="width:150px" onchange="renderTargets()"></select></div>
             <button class="btn" onclick="copyLastTargets()">Copy last month</button>
+            <button class="btn" onclick="deleteMonthTargets()" style="color:#C2350B;border-color:#F3C9BD">Delete this month</button>
           </div>
           <div class="section-title" style="margin:14px 0 8px"><h2>Company target</h2></div>
           <div id="companyTargets" class="formgrid"></div>
@@ -489,7 +490,7 @@ details.qgrp>summary>span:first-child{flex:1}
     <div class="field"><input id="keyInput" type="password" placeholder="your password" onkeydown="if(event.key==='Enter')submitKey()"></div>
     <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" onclick="submitKey()">Continue</button>
     <div class="err" id="keyErr"></div>
-    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b81 · no slab history · referral flag on</div>
+    <div style="text-align:center;font-size:11px;color:#9AA7B4;margin-top:12px">Build 2026-08-20-b83 · no slab history · referral flag on</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -925,14 +926,19 @@ function renderMonitor(){ const box=document.getElementById('monitorBox'); if(!b
     <div class="grid" style="grid-template-columns:repeat(${outlets.length+1},1fr);gap:14px">${cell('Company',cI,cM)}${outlets.map(o=>cell(o,per[o].inc,per[o].margin)).join('')}</div>
     ${covered<total?`<div style="font-size:11px;color:var(--muted);margin-top:8px">Based on ${covered} of ${total} retailed cars that have a VIN in the stock ledger.</div>`:''}</div>`;
 }
+var _dashMonth=null;
+function dashDefaultMonth(){ const months=allMonths(); const active=months.filter(mo=> state.cars.some(c=>c.MonthKey===mo) || Object.keys(state.kpi).some(k=>k.split('|')[0]===mo)); return active[0]||currentMonthLabel()||months[0]||''; }
+function setDashMonth(v){ _dashMonth=v; renderTargetHeadline(); }
 function renderTargetHeadline(){ const box=document.getElementById('tgtHeadline'); if(!box)return; const S=state.settings;
-  const month=allMonths()[0]; const T=month&&S.targetsByMonth&&S.targetsByMonth[month]&&S.targetsByMonth[month].company;
-  if(!month||!T){ box.innerHTML=''; return; }
+  const months=allMonths(); if(!months.length){ box.innerHTML=''; return; }
+  let month=(_dashMonth&&months.indexOf(_dashMonth)>=0)?_dashMonth:dashDefaultMonth(); _dashMonth=month;
+  const T=(S.targetsByMonth&&S.targetsByMonth[month]&&S.targetsByMonth[month].company)||{};
   const m=model(); let rt=0,de=0,enq=0,td=0,bk=0;
   m.cars.forEach(c=>{ if(c.MonthKey===month && !yes(c.Cancelled) && c.RetailDate){ rt++; if(c.DeliveryDate)de++; } });
   Object.keys(state.kpi).forEach(k=>{ if(k.split('|')[0]===month){ const K=state.kpi[k]; enq+=num(K.enq);td+=num(K.td);bk+=num(K.bk); } });
   const items=[['Enquiries',enq,num(T.enq)],['Test drives',td,num(T.td)],['Bookings',bk,num(T.bk)],['Retails',rt,num(T.rt)],['Deliveries',de,num(T.de)]];
-  box.innerHTML=`<div class="card pad" style="margin-top:16px"><div class="section-title" style="margin:0 0 10px"><h2>Company vs target — ${month}</h2></div><div class="grid" style="grid-template-columns:repeat(5,1fr);gap:14px">`+items.map(([l,a,t])=>{ const pc=t>0?Math.min(100,Math.round(a/t*100)):0; const col=t>0&&a>=t?'var(--green)':'var(--blue)'; return `<div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">${l}</div><div class="mono" style="font-size:18px;font-weight:750;margin:3px 0">${a}<span style="color:var(--muted);font-size:13px"> / ${t||'—'}</span></div><div style="height:6px;background:#EEF2F7;border-radius:4px;overflow:hidden"><div style="height:100%;width:${pc}%;background:${col}"></div></div></div>`; }).join('')+`</div></div>`;
+  const sel=`<select onchange="setDashMonth(this.value)" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;font-weight:600;background:#fff;cursor:pointer">`+months.map(mo=>`<option ${mo===month?'selected':''}>${mo}</option>`).join('')+`</select>`;
+  box.innerHTML=`<div class="card pad" style="margin-top:16px"><div class="section-title" style="margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Company vs target</h2>${sel}</div><div class="grid" style="grid-template-columns:repeat(5,1fr);gap:14px">`+items.map(([l,a,t])=>{ const pc=t>0?Math.min(100,Math.round(a/t*100)):0; const col=t>0&&a>=t?'var(--green)':'var(--blue)'; return `<div><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">${l}</div><div class="mono" style="font-size:18px;font-weight:750;margin:3px 0">${a}<span style="color:var(--muted);font-size:13px"> / ${t||'—'}</span></div><div style="height:6px;background:#EEF2F7;border-radius:4px;overflow:hidden"><div style="height:100%;width:${pc}%;background:${col}"></div></div></div>`; }).join('')+`</div></div>`;
 }
 function curveModels(){
   const sp=(state.specs||[]).filter(s=>s.model);
@@ -1630,6 +1636,7 @@ function setPenTarget(k,v){ state.settings.penTargets[k]=(num(v)||0)/100; persis
 function setUnitOverride(m,o,k,v){ const T=state.settings.targetsByMonth[m]; T.overUnit[o]=T.overUnit[o]||{}; if(v.trim()==='')delete T.overUnit[o][k]; else T.overUnit[o][k]=num(v); if(k==='rt')autoFillTargets(T.overUnit[o],state.settings); persist(); syncConfig(); renderTargets(); }
 function setSCOverride(m,n,k,v){ const T=state.settings.targetsByMonth[m]; T.overSC[n]=T.overSC[n]||{}; if(v.trim()==='')delete T.overSC[n][k]; else T.overSC[n][k]=num(v); if(k==='rt')autoFillTargets(T.overSC[n],state.settings); persist(); syncConfig(); renderTargets(); }
 function copyLastTargets(){ const m=(document.getElementById('tgtMonth').value||'').trim().toUpperCase(); if(!m){toast('Set a month first');return;} const earlier=Object.keys(state.settings.targetsByMonth||{}).filter(x=>monthNum(x)<monthNum(m)).sort((a,b)=>monthNum(b)-monthNum(a)); if(!earlier.length){toast('No earlier month to copy');return;} state.settings.targetsByMonth[m]=JSON.parse(JSON.stringify(state.settings.targetsByMonth[earlier[0]])); persist(); syncConfig(); renderTargets(); toast('Copied '+earlier[0]); }
+function deleteMonthTargets(){ const m=(document.getElementById('tgtMonth').value||'').trim().toUpperCase(); if(!m){toast('Pick a month first');return;} if(!state.settings.targetsByMonth||!state.settings.targetsByMonth[m]){toast('No targets set for '+m);return;} if(!confirm('Delete all targets for '+m+'? This cannot be undone.'))return; delete state.settings.targetsByMonth[m]; persist(); syncConfig(); renderTargets(); try{renderTargetHeadline();}catch(e){} toast('Deleted targets for '+m); }
 
 /* ============================ VIN STOCK LEDGER ============================ */
 function specDefault(specCode){ const s=(state.specs||[]).find(x=>x.specCode===specCode); return s?Number(s.defaultIncentive||0):0; }
